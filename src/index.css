@@ -1,0 +1,180 @@
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,700;900&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Brutalist Theme (User Facing) */
+  --color-danger: #FF0000;
+  --color-warning: #FF6600;
+  --color-caution: #FFCC00;
+  --color-safe: #00CC00;
+  --color-black: #000000;
+  --color-white: #FFFFFF;
+
+  /* Command Center Theme (Admin) */
+  --cmd-bg: #0A1929;
+  --cmd-panel: #132F4C;
+  --cmd-border: #1E4976;
+  --cmd-text: #E0E0E0;
+  --cmd-cyan: #00E5FF;
+  --cmd-amber: #FFC107;
+  --cmd-red: #FF1744;
+  --cmd-green: #00E676;
+
+  /* Accessibility */
+  --motion-duration: 0.3s;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-white);
+  color: var(--color-black);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Admin Specific Overrides */
+.admin-theme {
+  background-color: var(--cmd-bg);
+  color: var(--cmd-text);
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.admin-theme h1, .admin-theme h2, .admin-theme h3, .admin-theme h4 {
+  font-family: 'IBM Plex Sans', sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.font-mono-cmd {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Brutalist Utilities */
+.border-thick {
+  border-width: 4px;
+}
+
+.border-mega {
+  border-width: 6px;
+}
+
+/* Accessibility: Text Size */
+[data-text-size="large"] {
+  font-size: 112.5%;
+}
+
+[data-text-size="xlarge"] {
+  font-size: 125%;
+}
+
+[data-text-size="large"] h1,
+[data-text-size="xlarge"] h1 {
+  font-size: 1.2em;
+}
+
+[data-text-size="large"] button,
+[data-text-size="xlarge"] button {
+  padding: 1.2em 1.5em;
+}
+
+/* Accessibility: High Contrast */
+[data-contrast="high"] {
+  --color-black: #000000;
+  --color-white: #FFFFFF;
+  filter: contrast(1.2);
+}
+
+[data-contrast="high"] .bg-gray-50,
+[data-contrast="high"] .bg-gray-100 {
+  background-color: #FFFFFF;
+}
+
+[data-contrast="high"] .text-gray-600,
+[data-contrast="high"] .text-gray-500 {
+  color: #000000;
+}
+
+/* Accessibility: Simplified Mode */
+[data-simplified="true"] button {
+  min-height: 60px;
+  font-size: 1.1em;
+}
+
+[data-simplified="true"] .hidden-simplified {
+  display: none;
+}
+
+/* Accessibility: Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: var(--motion-duration) !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: var(--motion-duration) !important;
+  }
+}
+
+/* Accessibility: Focus Visible */
+*:focus-visible {
+  outline: 3px solid #0066FF;
+  outline-offset: 2px;
+}
+
+/* Accessibility: Skip to Content */
+.skip-to-content {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-to-content:focus {
+  top: 0;
+}
+
+/* Leaflet Map Customization */
+.leaflet-container {
+  font-family: 'Inter', sans-serif;
+  background: #f0f0f0;
+}
+
+.leaflet-tile-pane {
+  filter: grayscale(100%) contrast(1.2);
+}
+
+/* Admin Map Style */
+.admin-map .leaflet-tile-pane {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 0;
+  border: 4px solid black;
+  box-shadow: none;
+  padding: 0;
+}
+
+.leaflet-popup-tip {
+  display: none;
+}
+
+/* Screen Reader Only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
