@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import { Navigation } from './components/Navigation';
-import { ModeSelector } from './components/ModeSelector';
 import { EmergencyQuickDial } from './components/EmergencyQuickDial';
 import { VoiceNarration } from './components/VoiceNarration';
 import { AccessibilityPanel } from './components/AccessibilityPanel';
@@ -56,7 +55,6 @@ export function App() {
             {/* User Routes - With User Nav */}
             <Route path="*" element={<>
                   <Navigation />
-                  <ModeSelector />
                   <EmergencyQuickDial />
                   <VoiceNarration />
                   <AccessibilityPanel />

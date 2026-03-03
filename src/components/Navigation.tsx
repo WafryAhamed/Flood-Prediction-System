@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Map, AlertTriangle, Navigation as NavIcon, History, FlaskConical, Sprout, RefreshCw, BookOpen, User, Menu, X, ShieldAlert } from 'lucide-react';
+import { Home, Map, AlertTriangle, Navigation as NavIcon, History, FlaskConical, Sprout, RefreshCw, BookOpen, User, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
@@ -45,10 +45,6 @@ export function Navigation() {
     path: '/profile',
     label: 'Profile',
     icon: User
-  }, {
-    path: '/admin',
-    label: 'Admin',
-    icon: ShieldAlert
   }];
   const isActive = (path: string) => location.pathname === path;
   return <>
