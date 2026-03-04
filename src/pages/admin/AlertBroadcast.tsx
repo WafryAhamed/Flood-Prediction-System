@@ -139,15 +139,15 @@ export function AlertBroadcast() {
               time: '1d ago',
               status: 'Sent',
               type: 'Info'
-            }].map((alert, i) => <div key={i} className=\"p-3 bg-gray-900 border border-gray-700 flex justify-between items-center rounded-lg hover:bg-gray-800 transition-colors\">
+            }].map((alert, i) => <div key={i} className="p-3 bg-gray-900 border border-gray-700 flex justify-between items-center rounded-lg hover:bg-gray-800 transition-colors">
                   <div>
-                    <div className=\"flex items-center gap-2 mb-1\">
+                    <div className="flex items-center gap-2 mb-1">
                       <span className={`w-2 h-2 rounded-full ${alert.type === 'Critical' ? 'bg-red-600' : alert.type === 'Warning' ? 'bg-orange-500' : 'bg-blue-400'}`}></span>
-                      <span className=\"text-sm font-bold text-white\">
+                      <span className="text-sm font-bold text-white">
                         {alert.msg}
                       </span>
                     </div>
-                    <div className=\"text-xs text-gray-500\">
+                    <div className="text-xs text-gray-500">
 
                       {alert.time} • SMS, Push
                     </div>
