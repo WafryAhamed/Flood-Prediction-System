@@ -154,7 +154,7 @@ export function WhatIfLab() {
                 </p>
               </div>
             </div>
-          </div>
+          </UnifiedCard>
         </div>
 
         {/* Results Area - Center Stage */}

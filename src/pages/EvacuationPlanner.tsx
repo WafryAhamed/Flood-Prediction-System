@@ -157,7 +157,7 @@ export function EvacuationPlanner() {
                 </ol>
               </div>
             )}
-          </div>
+          </UnifiedCard>
 
           {/* Emergency Kit Alert */}
           <div className="mt-md bg-caution/10 text-text-primary border border-caution p-md rounded-card">

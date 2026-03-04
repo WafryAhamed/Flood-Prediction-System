@@ -120,7 +120,7 @@ export function HistoricalTimeline() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </UnifiedCard>
 
         {/* Historical Events List */}
         <div className="mt-xl">

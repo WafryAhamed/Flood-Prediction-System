@@ -1,7 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import React from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Users, MapPin, Briefcase, Phone, Check, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
+import { Home, Users, MapPin, Briefcase, Phone, Check, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useMode } from '../contexts/ModeContext';
 
 interface ProfileData {
@@ -29,7 +28,6 @@ interface ProfileData {
 export function SafetyProfileWizard() {
   const [step, setStep] = useState(1);
   const [showSummary, setShowSummary] = useState(false);
-  const { riskLevel } = useMode();
   
   const [profile, setProfile] = useState<ProfileData>({
     homeType: '',
@@ -349,13 +347,7 @@ export function SafetyProfileWizard() {
           onClick={nextStep}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className={`
-            px-24 py-12 rounded-lg font-bold flex items-center gap-2 text-white transition-all
-            ${riskLevel === 'critical'
-              ? 'bg-red-600 hover:bg-red-700'
-              : 'bg-blue-500 hover:bg-blue-600'
-            }
-          `}
+          className="px-24 py-12 rounded-lg font-bold flex items-center gap-2 text-white transition-all bg-blue-500 hover:bg-blue-600"
         >
           {step === 5 ? 'Complete' : 'Next'} <ChevronRight size={20} />
         </motion.button>
@@ -418,146 +410,6 @@ export function SafetyProfileWizard() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  );                >
-                  {type}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {step === 2 && (
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            <h3 className="text-lg font-black uppercase mb-section flex items-center gap-inner-lg">
-              <Users size={24} strokeWidth={2.5} />
-              Who lives with you?
-            </h3>
-            <div className="space-y-card">
-              {[
-                { key: 'adults', label: 'Adults' },
-                { key: 'children', label: 'Children' },
-                { key: 'elderly', label: 'Elderly' },
-                { key: 'disabled', label: 'Disabled' }
-              ].map(item => (
-                <div
-                  key={item.key}
-                  className="flex items-center justify-between border-b-2 border-gray-200 pb-inner"
-                >
-                  <span className="font-bold uppercase text-sm">{item.label}</span>
-                  <div className="flex items-center gap-inner-lg">
-                    <button
-                      className="w-9 h-9 border-2 border-dark-text rounded flex items-center justify-center font-black hover:bg-gray-100 text-sm"
-                      onClick={() =>
-                        setProfile({
-                          ...profile,
-                          members: {
-                            ...profile.members,
-                            [item.key]: Math.max(0, (profile.members as any)[item.key] - 1)
-                          }
-                        })
-                      }
-                    >
-                      −
-                    </button>
-                    <span className="font-mono text-lg font-bold w-8 text-center">
-                      {(profile.members as any)[item.key]}
-                    </span>
-                    <button
-                      className="w-9 h-9 border-2 border-dark-text bg-black text-white rounded flex items-center justify-center font-black hover:opacity-90 text-sm"
-                      onClick={() =>
-                        setProfile({
-                          ...profile,
-                          members: {
-                            ...profile.members,
-                            [item.key]: (profile.members as any)[item.key] + 1
-                          }
-                        })
-                      }
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={nextStep}
-              className="w-full mt-section bg-black text-white p-inner-lg font-black uppercase text-sm flex items-center justify-center gap-inner rounded hover:opacity-90 transition-opacity"
-            >
-              Next Step <ChevronRight size={18} />
-            </button>
-          </motion.div>
-        )}
-
-        {step === 3 && (
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            <h3 className="text-lg font-black uppercase mb-section flex items-center gap-inner-lg">
-              <Briefcase size={24} strokeWidth={2.5} />
-              Primary Livelihood?
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-card">
-              {['Farmer', 'Fisherman', 'Business Owner', 'Office Worker', 'Student', 'Laborer'].map(job => (
-                <button
-                  key={job}
-                  onClick={() => {
-                    setProfile({
-                      ...profile,
-                      livelihood: job
-                    });
-                    nextStep();
-                  }}
-                  className={`
-                    p-card border-3 border-dark-text text-left rounded transition-colors font-bold uppercase text-base
-                    ${profile.livelihood === job ? 'bg-safe text-white' : 'bg-white text-dark-text hover:bg-neutral'}
-                  `}
-                >
-                  {job}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {step === 4 && (
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            <h3 className="text-lg font-black uppercase mb-section flex items-center gap-inner-lg">
-              <Check size={24} strokeWidth={2.5} />
-              Profile Complete
-            </h3>
-            <div className="bg-neutral p-card border-3 border-dark-text rounded mb-section">
-              <div className="space-y-inner-lg">
-                <div>
-                  <p className="text-gray-600 uppercase text-xs font-black mb-inner-lg">
-                    Home
-                  </p>
-                  <p className="font-bold text-base">{profile.homeType}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600 uppercase text-xs font-black mb-inner-lg">
-                    Family
-                  </p>
-                  <p className="font-bold text-base">
-                    {Object.values(profile.members).reduce((a, b) => a + b, 0)} Members
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-600 uppercase text-xs font-black mb-inner-lg">
-                    Livelihood
-                  </p>
-                  <p className="font-bold text-base">{profile.livelihood}</p>
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={() => alert('Profile Saved!')}
-              className="w-full bg-safe text-white border-3 border-dark-text p-inner-lg font-black uppercase text-base rounded hover:opacity-90 shadow-medium transition-all"
-            >
-              Save Profile
-            </button>
-          </motion.div>
-        )}
-      </div>
     </div>
   );
 }

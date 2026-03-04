@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Bell, AlertTriangle, Info, Volume2, Settings, X, Trash2, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -91,7 +91,7 @@ export function SmartAlertCenter({ alerts: initialAlerts = [], onAlertDismiss }:
   );
 
   // If no alerts passed, use demo
-  React.useEffect(() => {
+  useEffect(() => {
     if (initialAlerts.length === 0 && alerts.length === 0) {
       setAlerts(demoAlerts);
     }
@@ -102,7 +102,6 @@ export function SmartAlertCenter({ alerts: initialAlerts = [], onAlertDismiss }:
   const markAsRead = (id: string) => {
     const updated = alerts.map((a) => (a.id === id ? { ...a, read: true } : a));
     setAlerts(updated);
-    setHasUnread(updated.some((a) => !a.read));
   };
 
   const deleteAlert = (id: string) => {

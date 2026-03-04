@@ -1,7 +1,5 @@
-import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
-import { useI18nStore } from './config/i18nConfig';
 import { Navigation } from './components/Navigation';
 import { EmergencyQuickDial } from './components/EmergencyQuickDial';
 import { VoiceNarration } from './components/VoiceNarration';

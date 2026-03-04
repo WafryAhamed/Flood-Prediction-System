@@ -1,4 +1,4 @@
-import React, { useState, ReactNode } from 'react';
+import { useState, ReactNode } from 'react';
 import { useFloodMode, useModeSpacing } from '../hooks/useFloodMode';
 import { ModeContextType, FloodMode, modeConfigs, ModeContext } from './ModeContextDef';
 
@@ -54,6 +54,13 @@ export function ModeProvider({ children }: { children: ReactNode }) {
  * Usage: const { currentMode, config, setMode } = useFloodMode();
  * (Moved to useFloodMode.ts for Fast Refresh compatibility)
  */
+
+/**
+ * Re-export useFloodMode as useMode for compatibility
+ */
+export function useMode() {
+  return useFloodMode();
+}
 
 /**
  * Component to display current mode and allow manual switching

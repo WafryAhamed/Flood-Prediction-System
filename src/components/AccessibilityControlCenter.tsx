@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Settings, Volume2, Eye, Keyboard, Type, Moon } from 'lucide-react';
 import { motion } from 'framer-motion';
 

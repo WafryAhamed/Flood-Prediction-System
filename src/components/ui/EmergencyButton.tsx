@@ -1,10 +1,9 @@
-import React from 'react';
 import { motion } from 'framer-motion';
-import { BoxIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface EmergencyButtonProps {
   label: string;
-  icon: BoxIcon;
+  icon: LucideIcon;
   variant: 'critical' | 'warning' | 'caution' | 'safe';
   onClick?: () => void;
   className?: string;

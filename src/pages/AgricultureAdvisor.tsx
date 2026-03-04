@@ -96,7 +96,7 @@ export function AgricultureAdvisor() {
                 Map Visualization Placeholder
               </p>
             </div>
-          </div>
+          </UnifiedCard>
         </div>
 
         {/* Risk Zones Grid */}

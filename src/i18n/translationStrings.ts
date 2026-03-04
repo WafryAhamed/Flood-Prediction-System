@@ -1,7 +1,9 @@
 // Translation records for EN/SI/TA
 // Structure: English keys with translations in each language
 
-export type TranslationValue = string | Record<string, TranslationValue>;
+export type TranslationValue = string | { [key: string]: TranslationValue };
+
+export type Language = 'en' | 'si' | 'ta';
 
 export const translations: Record<Language, Record<string, TranslationValue>> = {
   en: {
@@ -41,8 +43,6 @@ export const translations: Record<Language, Record<string, TranslationValue>> = 
     message: { success: 'வெற்றி!', error: 'பிழை', loading: 'ஏற்றுதல்...', noData: 'தரவு இல்லை', tryAgain: 'மீண்டும் முயல்க' },
   },
 };
-
-export type Language = 'en' | 'si' | 'ta';
 
 // Get translated text
 export function getTranslation(language: Language, key: string): string {
