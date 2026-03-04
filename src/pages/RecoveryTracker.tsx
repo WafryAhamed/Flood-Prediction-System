@@ -129,7 +129,7 @@ export function RecoveryTracker() {
 
             {/* Recovery Resources */}
             <UnifiedCard title="Recovery Resources" accentColor="info">
-              <ul className="space-y-md text-sm" className="text-text-secondary">
+              <ul className="space-y-md text-sm text-text-secondary">
                 <li>
                   <p className="font-bold text-text-primary">Crisis Hotline</p>
                   <p className="text-xs text-text-secondary">+94-11-2-345-678</p>
@@ -143,7 +143,7 @@ export function RecoveryTracker() {
                   <p className="text-xs text-text-secondary">Disaster Relief Desk</p>
                 </li>
               </ul>
-            </div>
+            </UnifiedCard>
           </div>
         </div>
 
