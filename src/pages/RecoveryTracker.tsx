@@ -1,8 +1,15 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircle, Truck, Hammer, HeartHandshake } from 'lucide-react';
 import { UnifiedCard } from '../components/ui/UnifiedCard';
+import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
 
 export function RecoveryTracker() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 700);
+    return () => clearTimeout(timer);
+  }, []);
   return (
     <div className="min-h-screen px-4 sm:px-6 md:px-8 pb-xl bg-bg-primary">
       <div className="max-w-6xl mx-auto">
@@ -15,6 +22,14 @@ export function RecoveryTracker() {
             Recovery Tracker
           </h1>
         </header>
+
+        {isLoading ? (
+          <div className="space-y-6">
+            <LoadingSkeleton count={2} variant="card" height="h-48" />
+            <LoadingSkeleton count={3} variant="list" />
+          </div>
+        ) : (
+        <>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-xl mb-xl">
           {/* Main Recovery Progress */}
@@ -174,6 +189,8 @@ export function RecoveryTracker() {
             </div>
           </div>
         </div>
+        </>
+        )}
       </div>
     </div>
   );

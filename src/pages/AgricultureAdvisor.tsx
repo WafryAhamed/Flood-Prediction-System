@@ -1,8 +1,15 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sprout, CloudRain, Droplets, ShieldCheck } from 'lucide-react';
 import { UnifiedCard } from '../components/ui/UnifiedCard';
+import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
 
 export function AgricultureAdvisor() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 700);
+    return () => clearTimeout(timer);
+  }, []);
   const crops = [
     {
       name: 'Paddy',
@@ -46,6 +53,14 @@ export function AgricultureAdvisor() {
             Agriculture Advisor
           </h1>
         </header>
+
+        {isLoading ? (
+          <div className="space-y-6">
+            <LoadingSkeleton count={4} variant="metric" />
+            <LoadingSkeleton count={2} variant="card" height="h-32" />
+          </div>
+        ) : (
+        <>
 
         {/* Metric Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-lg mb-xl">
@@ -120,6 +135,8 @@ export function AgricultureAdvisor() {
             </UnifiedCard>
           </div>
         </div>
+        </>
+        )}
       </div>
     </div>
   );

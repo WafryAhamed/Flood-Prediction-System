@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Sliders, RefreshCw, X } from 'lucide-react';
+import { Sliders, RefreshCw, X, HelpCircle } from 'lucide-react';
 import { UnifiedCard } from '../components/ui/UnifiedCard';
 import { RiskIndicator } from '../components/ui/RiskIndicator';
+import { Tooltip } from '../components/ui/Tooltip';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function WhatIfLab() {
@@ -37,14 +38,21 @@ export function WhatIfLab() {
           Simulation Mode
         </div>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-md">
-          <h1 className="text-3xl md:text-4xl font-bold uppercase leading-tight text-text-primary">
-            What-If Lab
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl md:text-4xl font-bold uppercase leading-tight text-text-primary">
+              What-If Lab
+            </h1>
+            <Tooltip text="Simulate rainfall scenarios to understand possible flood impact in your area.">
+              <button className="text-text-secondary hover:text-info transition-colors" aria-label="What is the What-If Lab?">
+                <HelpCircle size={20} />
+              </button>
+            </Tooltip>
+          </div>
           <button
             onClick={handleReset}
             className="flex items-center justify-center gap-md font-bold uppercase text-sm text-critical hover:opacity-70 transition-opacity w-full md:w-auto px-lg py-md"
           >
-            <RefreshCw size={18} /> Reset Defaults
+            <RefreshCw size={18} /> Reset Simulation
           </button>
         </div>
       </header>
@@ -147,7 +155,7 @@ export function WhatIfLab() {
               {/* Model Info */}
               <div className="mt-lg pt-lg border-t border-border-light">
                 <p className="text-xs font-semibold text-text-secondary uppercase">
-                  AI Model: Surrogate-v2.1
+                  Flood risk prediction model
                 </p>
                 <p className="text-xs font-semibold text-safe mt-xs">
                   Confidence: 94%

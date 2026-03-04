@@ -4,9 +4,16 @@ import { UnifiedCard } from '../components/ui/UnifiedCard';
 import { AlertBanner } from '../components/ui/AlertBanner';
 import { RiskMap } from '../components/RiskMap';
 import { motion } from 'framer-motion';
+import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
 
 export function EmergencyDashboard() {
   const [time, setTime] = useState(new Date());
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 600);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -35,6 +42,15 @@ export function EmergencyDashboard() {
     <div className="min-h-screen bg-bg-primary pb-20 md:pb-section flex flex-col gap-section">
       <AlertBanner message="FLASH FLOOD WARNING IN EFFECT - SECTOR 7" type="danger" />
 
+      {isLoading ? (
+        <div className="px-4 sm:px-6 md:px-8 py-8">
+          <div className="max-w-7xl mx-auto space-y-6">
+            <LoadingSkeleton count={4} variant="metric" />
+            <LoadingSkeleton count={1} variant="map" />
+          </div>
+        </div>
+      ) : (
+      <>
       {/* Hero Section */}
       <section className="px-4 sm:px-6 md:px-8">
         <div className="max-w-7xl mx-auto">
@@ -231,6 +247,8 @@ export function EmergencyDashboard() {
           </UnifiedCard>
         </div>
       </section>
+      </>
+      )}
     </div>
   );
 }

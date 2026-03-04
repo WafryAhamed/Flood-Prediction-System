@@ -1,12 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { RiskMap } from '../components/RiskMap';
 import { UnifiedCard } from '../components/ui/UnifiedCard';
 import { Layers, X } from 'lucide-react';
+import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
 
 export function RiskMapPage() {
   const [activeLayers, setActiveLayers] = useState(['flood', 'reports']);
   const [showLayers, setShowLayers] = useState(true);
   const [showLegend, setShowLegend] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 600);
+    return () => clearTimeout(timer);
+  }, []);
   
   const layers = [
     { id: 'flood', label: 'Flood Risk', color: 'bg-critical' },
@@ -64,6 +71,12 @@ export function RiskMapPage() {
 
       {/* Main Map Container */}
       <div className="flex-1 w-full h-full bg-gray-100 relative overflow-hidden">
+        {isLoading ? (
+          <div className="w-full h-full flex items-center justify-center">
+            <LoadingSkeleton variant="map" />
+          </div>
+        ) : (
+        <>
         <RiskMap />
 
         {/* Legend Panel - Bottom Right */}
@@ -121,6 +134,8 @@ export function RiskMapPage() {
               </div>
             </UnifiedCard>
           </div>
+        )}
+        </>
         )}
       </div>
     </div>

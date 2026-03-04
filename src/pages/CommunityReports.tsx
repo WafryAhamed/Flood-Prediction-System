@@ -1,11 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Camera, MapPin, Send, AlertTriangle, Plus, X } from 'lucide-react';
 import { UnifiedCard } from '../components/ui/UnifiedCard';
 import { motion, AnimatePresence } from 'framer-motion';
+import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
+import { EmptyState } from '../components/ui/EmptyState';
 
 export function CommunityReports() {
   const [reportType, setReportType] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [reports, setReports] = useState<number[]>([]);
+
+  useEffect(() => {
+    // Simulate data loading
+    const timer = setTimeout(() => {
+      setReports([1, 2, 3, 4]);
+      setIsLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="min-h-screen md:pt-lg px-4 sm:px-6 md:px-8 pb-xl bg-bg-primary md:mr-[384px] lg:mr-[400px]">
@@ -32,8 +45,25 @@ export function CommunityReports() {
       {/* Recent Reports Grid */}
       <div className="max-w-4xl mx-auto">
         <h2 className="font-bold text-lg uppercase mb-lg text-text-primary">Recent Reports</h2>
+
+        {/* Loading state */}
+        {isLoading && <LoadingSkeleton count={4} variant="card" height="h-48" />}
+
+        {/* Empty state */}
+        {!isLoading && reports.length === 0 && (
+          <EmptyState
+            emoji="👍"
+            title="No flooding reported in your area yet"
+            description="When your neighbors report flooding, you'll see their reports here."
+            actionLabel="Report Flooding"
+            onAction={() => setShowForm(true)}
+          />
+        )}
+
+        {/* Reports grid */}
+        {!isLoading && reports.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
-          {[1, 2, 3, 4].map(i => (
+          {reports.map(i => (
             <UnifiedCard key={i} noPadding className="overflow-hidden">
               {/* Image */}
               <div className="w-full h-48 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center border-b border-border-light">
@@ -83,6 +113,7 @@ export function CommunityReports() {
             </UnifiedCard>
           ))}
         </div>
+        )}
       </div>
 
       {/* Report Form Drawer */}
@@ -167,7 +198,7 @@ export function CommunityReports() {
 
                 {/* Submit Button */}
                 <button className="w-full bg-critical-red text-white py-md font-bold uppercase text-sm rounded-soft hover:opacity-90 shadow-md transition-opacity flex items-center justify-center gap-md">
-                  <Send strokeWidth={2.5} size={18} /> Submit Report
+                  <Send strokeWidth={2.5} size={18} /> Report Flooding
                 </button>
               </div>
             </motion.div>
@@ -235,7 +266,7 @@ export function CommunityReports() {
 
           {/* Submit Button */}
           <button className="w-full bg-critical-red text-white py-md font-bold uppercase text-sm rounded-soft hover:opacity-90 shadow-md transition-opacity flex items-center justify-center gap-md">
-            <Send strokeWidth={2.5} size={18} /> Submit Report
+            <Send strokeWidth={2.5} size={18} /> Report Flooding
           </button>
         </div>
       </div>

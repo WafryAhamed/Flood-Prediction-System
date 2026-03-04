@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Map, AlertTriangle, Navigation as NavIcon, History, FlaskConical, Sprout, RefreshCw, BookOpen, User, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SystemLogo } from './SystemLogo';
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,7 +27,7 @@ export function Navigation() {
   return (
     <>
       {/* Mobile Bottom Navigation - Dark Navy */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-bg-sidebar border-t border-gray-700 md:hidden flex justify-around items-center h-20">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-bg-sidebar border-t border-gray-700 md:hidden flex justify-around items-center h-20 safe-area-bottom">
         {navItems.slice(0, 5).map(item => (
           <Link
             key={item.path}
@@ -57,6 +58,12 @@ export function Navigation() {
 
       {/* Desktop Icon Sidebar - Dark Navy 80px Fixed */}
       <div className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-20 bg-bg-sidebar z-40 items-center pt-lg gap-sm px-0 py-lg overflow-y-auto border-r border-gray-800">
+        {/* Logo */}
+        <div className="mb-4 pb-3 border-b border-gray-700 w-full flex justify-center">
+          <Link to="/" aria-label="Flood Resilience System home">
+            <SystemLogo size="sm" variant="light" showText={false} />
+          </Link>
+        </div>
         {navItems.map(item => (
           <div key={item.path} className="relative group w-full">
             <Link
@@ -108,7 +115,7 @@ export function Navigation() {
               onClick={e => e.stopPropagation()}
             >
               <div className="p-lg border-b border-gray-700 flex justify-between items-center sticky top-0 bg-bg-sidebar">
-                <h2 className="text-lg font-bold text-white">Menu</h2>
+                <SystemLogo size="sm" variant="light" />
                 <button
                   onClick={() => setIsOpen(false)}
                   className="p-sm text-gray-400 hover:text-white transition-colors"
