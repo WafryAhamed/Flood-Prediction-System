@@ -2,8 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import { Navigation } from './components/Navigation';
 import { EmergencyQuickDial } from './components/EmergencyQuickDial';
-import { VoiceNarration } from './components/VoiceNarration';
-import { AccessibilityPanel } from './components/AccessibilityPanel';
 import { CitizenChatbot } from './components/CitizenChatbot';
 // Pages
 import { EmergencyDashboard } from './pages/EmergencyDashboard';
@@ -54,10 +52,11 @@ export function App() {
             {/* User Routes - With User Nav */}
             <Route path="*" element={<>
                   <Navigation />
-                  <EmergencyQuickDial />
-                  <VoiceNarration />
-                  <AccessibilityPanel />
-                  <CitizenChatbot />
+                  {/* Floating Action Buttons: Chatbot + Emergency */}
+                  <div className="fixed right-5 bottom-[90px] md:right-6 md:bottom-6 flex flex-col items-center gap-4 z-50">
+                    <CitizenChatbot />
+                    <EmergencyQuickDial />
+                  </div>
                   <div className="md:pl-20 pb-20 md:pb-0 transition-all duration-300">
                     <Routes>
                       <Route path="/" element={<EmergencyDashboard />} />

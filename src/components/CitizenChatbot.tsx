@@ -26,8 +26,8 @@ export function CitizenChatbot() {
     action: 'protect'
   }];
   return <>
-    <button onClick={() => setIsOpen(true)} className="fixed right-6 bottom-44 z-[9999] pointer-events-auto bg-[#0066FF] text-white w-14 h-14 flex items-center justify-center rounded-full shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:scale-105 active:scale-95 transition-transform border-4 border-white" aria-label="Open Safety Assistant">
-      <MessageCircle size={28} strokeWidth={2.5} />
+    <button onClick={() => setIsOpen(true)} className="w-12 h-12 md:w-[52px] md:h-[52px] rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-md hover:shadow-lg transition-all flex items-center justify-center" aria-label="Open Safety Assistant">
+      <MessageCircle size={24} strokeWidth={2} />
     </button>
 
     <AnimatePresence>
@@ -43,7 +43,7 @@ export function CitizenChatbot() {
         opacity: 0,
         y: 20,
         scale: 0.9
-      }} className="fixed bottom-24 right-6 z-40 w-96 max-w-[calc(100vw-3rem)] bg-white border-4 border-black shadow-2xl flex flex-col" style={{
+      }} className="fixed bottom-24 right-6 z-[9999] w-96 max-w-[calc(100vw-3rem)] bg-white border border-gray-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{
         height: '600px',
         maxHeight: 'calc(100vh - 8rem)'
       }}>

@@ -6,38 +6,29 @@ interface FloatingActionButtonProps {
   onSOSClick?: () => void;
   onAccessibilityClick?: () => void;
   onChatClick?: () => void;
+  inlineOnly?: boolean; // If true, only render the accessibility button inline
 }
 
 export function FloatingActionButtons({
   onSOSClick,
   onAccessibilityClick,
-  onChatClick
+  onChatClick,
+  inlineOnly
 }: FloatingActionButtonProps) {
   const [expanded, setExpanded] = useState(false);
 
-  const buttons = [
-    {
-      icon: AlertCircle,
-      label: 'SOS',
-      color: 'bg-red-600 hover:bg-red-700',
-      onClick: onSOSClick,
-      ariaLabel: 'Emergency SOS Alert'
-    },
-    {
-      icon: Volume2,
-      label: 'Accessibility',
-      color: 'bg-blue-600 hover:bg-blue-700',
-      onClick: onAccessibilityClick,
-      ariaLabel: 'Accessibility Options'
-    },
-    {
-      icon: MessageCircle,
-      label: 'Chat',
-      color: 'bg-indigo-600 hover:bg-indigo-700',
-      onClick: onChatClick,
-      ariaLabel: 'AI Chat Assistant'
-    }
-  ];
+  if (inlineOnly) {
+    // Only render the accessibility button for sidebar
+    return (
+      <button
+        onClick={onAccessibilityClick}
+        aria-label="Accessibility Options"
+        className="w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg flex items-center justify-center"
+      >
+        <Volume2 size={28} strokeWidth={2} />
+      </button>
+    );
+  }
 
   return (
     <div className="fixed bottom-28 right-6 md:bottom-8 md:right-8 z-30 flex flex-col gap-3">
