@@ -34,7 +34,7 @@ import { Analytics } from './pages/admin/Analytics';
 export function App() {
   return <AccessibilityProvider>
       <Router>
-        <div className="min-h-screen bg-white font-sans text-black">
+        <div className="min-h-screen bg-bg-primary font-sans text-text-primary">
           <Routes>
             {/* Admin Routes - No User Nav */}
             <Route path="/admin" element={<AdminLayout />}>
@@ -59,7 +59,7 @@ export function App() {
                   <VoiceNarration />
                   <AccessibilityPanel />
                   <CitizenChatbot />
-                  <div className="md:pl-64 transition-all duration-300">
+                  <div className="md:pl-20 pb-20 md:pb-0 transition-all duration-300">
                     <Routes>
                       <Route path="/" element={<EmergencyDashboard />} />
                       <Route path="/map" element={<RiskMapPage />} />

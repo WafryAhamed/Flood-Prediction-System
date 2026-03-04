@@ -1,19 +1,19 @@
 import React from 'react';
 import { Shield, FileText, Lock, Search, Download, UserCheck } from 'lucide-react';
 export function AuditLogs() {
-  return <div className="space-y-6">
-      <div className="flex justify-between items-end">
+  return <div className="space-y-8">
+      <div className="flex justify-between items-center mb-8">
         <div>
-          <h2 className="text-2xl font-bold uppercase tracking-widest text-white">
+          <h2 className="text-4xl font-bold uppercase tracking-tight text-white mb-2">
             Security & Governance
           </h2>
-          <p className="text-xs font-mono-cmd text-gray-400">
+          <p className="text-sm font-semibold text-gray-400">
             AUDIT TRAIL: ACTIVE • ENCRYPTION: AES-256
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="px-4 py-2 bg-[#132F4C] border border-[#1E4976] text-[#00E5FF] font-bold uppercase text-xs hover:bg-[#1E4976] flex items-center gap-2">
-            <Download size={14} /> Export Logs
+          <button className="px-6 py-3 bg-gray-800 border border-gray-700 text-blue-400 font-bold uppercase text-sm hover:bg-gray-700 flex items-center gap-2 rounded transition-colors">
+            <Download size={18} /> Export Logs
           </button>
         </div>
       </div>
@@ -21,29 +21,29 @@ export function AuditLogs() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Security Status */}
         <div className="lg:col-span-1 space-y-4">
-          <div className="bg-[#132F4C] border border-[#1E4976] p-6">
-            <h3 className="text-xs font-bold uppercase text-[#00E5FF] mb-6 flex items-center gap-2">
-              <Shield size={14} /> System Security
+          <div className="bg-gray-800 border border-gray-700 p-6 rounded-lg">
+            <h3 className="text-sm font-bold uppercase text-blue-400 mb-6 flex items-center gap-2">
+              <Shield size={18} /> System Security
             </h3>
             <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-[#0A1929] border border-[#1E4976]">
-                <span className="text-xs font-bold text-gray-300">
+              <div className="flex justify-between items-center p-4 bg-gray-900 border border-gray-700 rounded">
+                <span className="text-sm font-bold text-gray-300">
                   2FA Enforcement
                 </span>
-                <span className="text-[10px] font-bold uppercase text-[#00E676] bg-[#00E676]/10 px-2 py-1">
+                <span className="text-[10px] font-bold uppercase text-green-500 bg-green-500/10 px-2 py-1 rounded">
                   Active
                 </span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-[#0A1929] border border-[#1E4976]">
-                <span className="text-xs font-bold text-gray-300">
+              <div className="flex justify-between items-center p-4 bg-gray-900 border border-gray-700 rounded">
+                <span className="text-sm font-bold text-gray-300">
                   Role-Based Access
                 </span>
-                <span className="text-[10px] font-bold uppercase text-[#00E676] bg-[#00E676]/10 px-2 py-1">
+                <span className="text-[10px] font-bold uppercase text-green-500 bg-green-500/10 px-2 py-1 rounded">
                   Strict
                 </span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-[#0A1929] border border-[#1E4976]">
-                <span className="text-xs font-bold text-gray-300">
+              <div className="flex justify-between items-center p-4 bg-gray-900 border border-gray-700 rounded">
+                <span className="text-sm font-bold text-gray-300">
                   Last Pen-Test
                 </span>
                 <span className="text-[10px] font-bold uppercase text-gray-400">
@@ -53,9 +53,9 @@ export function AuditLogs() {
             </div>
           </div>
 
-          <div className="bg-[#132F4C] border border-[#1E4976] p-6">
-            <h3 className="text-xs font-bold uppercase text-gray-400 mb-4 flex items-center gap-2">
-              <UserCheck size={14} /> Active Sessions
+          <div className="bg-gray-800 border border-gray-700 p-6 rounded-lg">
+            <h3 className="text-sm font-bold uppercase text-gray-400 mb-4 flex items-center gap-2">
+              <UserCheck size={18} /> Active Sessions
             </h3>
             <div className="space-y-3">
               {[{
@@ -73,11 +73,11 @@ export function AuditLogs() {
               role: 'Researcher',
               ip: '10.0.0.8',
               loc: 'Remote'
-            }].map((s, i) => <div key={i} className="flex items-center gap-3 p-2 hover:bg-[#0A1929]">
-                  <div className="w-2 h-2 rounded-full bg-[#00E676]"></div>
+            }].map((s, i) => <div key={i} className="flex items-center gap-3 p-2 hover:bg-gray-900 rounded">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
                   <div className="flex-1">
-                    <div className="text-xs font-bold text-white">{s.user}</div>
-                    <div className="text-[10px] text-gray-500 font-mono-cmd">
+                    <div className="text-sm font-bold text-white">{s.user}</div>
+                    <div className="text-[10px] text-gray-500 font-semibold">
                       {s.role} • {s.ip}
                     </div>
                   </div>
@@ -87,29 +87,29 @@ export function AuditLogs() {
         </div>
 
         {/* Audit Log Table */}
-        <div className="lg:col-span-2 bg-[#132F4C] border border-[#1E4976] flex flex-col h-[600px]">
-          <div className="p-4 border-b border-[#1E4976] flex justify-between items-center bg-[#0A1929]">
-            <h3 className="text-xs font-bold uppercase text-gray-400 flex items-center gap-2">
-              <FileText size={14} /> Incident & Action Logs
+        <div className="lg:col-span-2 bg-gray-800 border border-gray-700 flex flex-col h-[600px] rounded-lg">
+          <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-gray-900">
+            <h3 className="text-sm font-bold uppercase text-gray-400 flex items-center gap-2">
+              <FileText size={18} /> Incident & Action Logs
             </h3>
             <div className="relative">
-              <input type="text" placeholder="Search logs..." className="bg-[#132F4C] border border-[#1E4976] text-white pl-8 pr-4 py-1 text-xs focus:border-[#00E5FF] outline-none w-64" />
-              <Search size={12} className="absolute left-2.5 top-2 text-gray-500" />
+              <input type="text" placeholder="Search logs..." className="bg-gray-800 border border-gray-700 text-white pl-8 pr-4 py-2 text-sm focus:border-blue-400 outline-none w-64 rounded" />
+              <Search size={14} className="absolute left-2.5 top-2.5 text-gray-500" />
             </div>
           </div>
 
           <div className="flex-1 overflow-y-auto">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-[#050B14] text-gray-500 text-[10px] uppercase font-bold sticky top-0">
+              <thead className="bg-gray-950 text-gray-500 text-[10px] uppercase font-bold sticky top-0">
                 <tr>
-                  <th className="p-3 border-b border-[#1E4976]">Timestamp</th>
-                  <th className="p-3 border-b border-[#1E4976]">User</th>
-                  <th className="p-3 border-b border-[#1E4976]">Action</th>
-                  <th className="p-3 border-b border-[#1E4976]">Resource</th>
-                  <th className="p-3 border-b border-[#1E4976]">Status</th>
+                  <th className="p-4 border-b border-gray-700">Timestamp</th>
+                  <th className="p-4 border-b border-gray-700">User</th>
+                  <th className="p-4 border-b border-gray-700">Action</th>
+                  <th className="p-4 border-b border-gray-700">Resource</th>
+                  <th className="p-4 border-b border-gray-700">Status</th>
                 </tr>
               </thead>
-              <tbody className="text-xs font-mono-cmd text-gray-300">
+              <tbody className="text-sm font-semibold text-gray-300">
                 {[{
                 time: '14:02:45',
                 user: 'Cmd. Perera',
@@ -146,13 +146,13 @@ export function AuditLogs() {
                 action: 'CHANGE_RISK',
                 res: 'Gampaha',
                 status: 'Success'
-              }].map((log, i) => <tr key={i} className="hover:bg-[#0A1929] border-b border-[#1E4976]/50">
-                    <td className="p-3 text-gray-500">{log.time}</td>
-                    <td className="p-3 font-bold text-white">{log.user}</td>
-                    <td className="p-3 text-[#00E5FF]">{log.action}</td>
-                    <td className="p-3">{log.res}</td>
-                    <td className="p-3">
-                      <span className={`px-1.5 py-0.5 text-[10px] font-bold uppercase ${log.status === 'Success' ? 'bg-[#00E676]/10 text-[#00E676]' : 'bg-[#FF1744]/10 text-[#FF1744]'}`}>
+              }].map((log, i) => <tr key={i} className="hover:bg-gray-900 border-b border-gray-700/50">
+                    <td className="p-4 text-gray-500">{log.time}</td>
+                    <td className="p-4 font-bold text-white">{log.user}</td>
+                    <td className="p-4 text-blue-400">{log.action}</td>
+                    <td className="p-4">{log.res}</td>
+                    <td className="p-4">
+                      <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${log.status === 'Success' ? 'bg-green-500/10 text-green-500' : 'bg-red-600/10 text-red-600'}`}>
                         {log.status}
                       </span>
                     </td>

@@ -1,107 +1,244 @@
 import React, { useState } from 'react';
-import { Camera, MapPin, Send, AlertTriangle } from 'lucide-react';
-import { StatusCard } from '../components/ui/StatusCard';
+import { Camera, MapPin, Send, AlertTriangle, Plus, X } from 'lucide-react';
+import { UnifiedCard } from '../components/ui/UnifiedCard';
+import { motion, AnimatePresence } from 'framer-motion';
+
 export function CommunityReports() {
   const [reportType, setReportType] = useState('');
-  return <div className="min-h-screen pt-24 px-4 md:pl-72 pb-20">
-      <div className="max-w-3xl mx-auto">
-        <header className="mb-8">
-          <div className="inline-block bg-[#FF6600] text-black px-3 py-1 font-black uppercase text-sm mb-2 border-2 border-black">
-            Crowdsourced Intelligence
+  const [showForm, setShowForm] = useState(false);
+
+  return (
+    <div className="min-h-screen md:pt-lg px-lg md:px-xl pb-xl bg-bg-primary">
+      {/* Header Section */}
+      <section className="max-w-4xl mx-auto mb-xl">
+        <div className="inline-block bg-orange-500 text-white px-lg py-sm font-bold text-xs uppercase mb-md rounded-card">
+          Crowdsourced Intelligence
+        </div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-md">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold uppercase leading-tight text-text-primary">
+              Report Flooding
+            </h1>
           </div>
-          <h1 className="text-4xl md:text-6xl font-black uppercase leading-none mb-4">
-            Report
-            <br />
-            Flooding
-          </h1>
-        </header>
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center justify-center gap-md px-lg py-md bg-critical text-white font-bold text-sm uppercase rounded-card hover:opacity-90 transition-opacity w-full md:w-auto"
+          >
+            <Plus size={20} /> New Report
+          </button>
+        </div>
+      </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Report Form */}
-          <div className="border-4 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <h2 className="text-2xl font-black uppercase mb-6 flex items-center gap-2">
-              <AlertTriangle className="text-red-600" strokeWidth={3} />
-              New Report
-            </h2>
-
-            <div className="space-y-6">
-              <div>
-                <label className="block font-bold uppercase text-sm mb-2">
-                  1. Severity Level
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {['Low', 'Medium', 'Critical'].map(level => <button key={level} onClick={() => setReportType(level)} className={`
-                        py-3 border-4 border-black font-black uppercase text-sm hover:translate-y-1 transition-transform
-                        ${reportType === level ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}
-                      `}>
-                      {level}
-                    </button>)}
-                </div>
+      {/* Recent Reports Grid */}
+      <div className="max-w-4xl mx-auto">
+        <h2 className="font-bold text-lg uppercase mb-lg text-text-primary">Recent Reports</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
+          {[1, 2, 3, 4].map(i => (
+            <UnifiedCard key={i} noPadding className="overflow-hidden">
+              {/* Image */}
+              <div className="w-full h-48 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center border-b border-border-light">
+                <Camera size={32} className="text-gray-400" />
               </div>
 
-              <div>
-                <label className="block font-bold uppercase text-sm mb-2">
-                  2. Add Photo
-                </label>
-                <button className="w-full h-32 border-4 border-black border-dashed flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors">
-                  <Camera size={32} strokeWidth={2} />
-                  <span className="font-bold uppercase mt-2 text-sm text-gray-500">
-                    Tap to take photo
-                  </span>
+              {/* Content */}
+              <div className="p-lg">
+                <div className="flex items-start justify-between mb-md">
+                  <div className="flex items-center gap-md">
+                    <span className="bg-critical/10 text-critical text-xs font-bold px-md py-xs rounded-card">
+                      Verified
+                    </span>
+                    <span className="text-xs font-semibold text-text-secondary">
+                      2 mins ago
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-xs">
+                    <div className="w-3 h-3 bg-critical rounded-full"></div>
+                    <span className="text-xs font-bold uppercase text-critical">Critical</span>
+                  </div>
+                </div>
+
+                <p className="font-semibold text-sm leading-snug mb-md text-text-primary">
+                  Water level rising rapidly near the bridge. Road impassable.
+                </p>
+
+                <div className="flex items-center gap-md text-xs font-semibold text-text-secondary mb-lg">
+                  <MapPin size={16} /> Colombo 07
+                </div>
+
+                <div className="pt-lg border-t border-border-light flex justify-around">
+                  <button className="flex flex-col items-center gap-xs text-text-secondary hover:text-critical transition-colors">
+                    <AlertTriangle size={18} />
+                    <span className="text-xs font-bold">Verify</span>
+                  </button>
+                  <button className="flex flex-col items-center gap-xs text-text-secondary hover:text-info transition-colors">
+                    <MapPin size={18} />
+                    <span className="text-xs font-bold">Map</span>
+                  </button>
+                  <button className="flex flex-col items-center gap-xs text-text-secondary hover:text-safe transition-colors">
+                    <Send size={18} />
+                    <span className="text-xs font-bold">Share</span>
+                  </button>
+                </div>
+              </div>
+            </UnifiedCard>
+          ))}
+        </div>
+      </div>
+
+      {/* Report Form Drawer */}
+      <AnimatePresence>
+        {showForm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 md:hidden flex justify-end"
+            onClick={() => setShowForm(false)}
+          >
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+              className="w-full bg-card-bg h-full border-l border-gray-200 overflow-y-auto"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="p-lg border-b border-gray-200 flex justify-between items-center sticky top-0 bg-card-bg">
+                <h2 className="text-lg font-bold text-primary-text uppercase">New Report</h2>
+                <button
+                  onClick={() => setShowForm(false)}
+                  className="text-secondary-text hover:text-primary-text transition-colors"
+                >
+                  <X size={24} />
                 </button>
               </div>
 
-              <div>
-                <label className="block font-bold uppercase text-sm mb-2">
-                  3. Location
-                </label>
-                <div className="flex items-center gap-2 p-3 border-4 border-black bg-gray-100">
-                  <MapPin size={20} />
-                  <span className="font-mono font-bold text-sm">
-                    6.9271° N, 79.8612° E
-                  </span>
-                  <span className="ml-auto text-xs font-black uppercase bg-[#00CC00] text-white px-2 py-1">
-                    GPS Locked
-                  </span>
+              <div className="p-lg space-y-lg">
+                {/* Severity Level */}
+                <div>
+                  <label className="block font-bold uppercase text-xs mb-md tracking-tight text-primary-text">
+                    1. Severity Level
+                  </label>
+                  <div className="grid grid-cols-3 gap-md">
+                    {['Low', 'Medium', 'Critical'].map(level => (
+                      <button
+                        key={level}
+                        onClick={() => setReportType(level)}
+                        className={`py-md font-bold uppercase text-xs rounded-soft transition-all border ${
+                          reportType === level
+                            ? 'bg-critical-red text-white border-critical-red'
+                            : 'bg-primary-bg text-primary-text border-gray-200 hover:border-gray-400'
+                        }`}
+                      >
+                        {level}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <button className="w-full bg-[#FF0000] text-white py-4 font-black uppercase text-xl border-4 border-black hover:bg-[#D00000] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-1 transition-all flex items-center justify-center gap-2">
-                <Send strokeWidth={3} /> Submit Report
-              </button>
+                {/* Photo Upload */}
+                <div>
+                  <label className="block font-bold uppercase text-xs mb-md tracking-tight text-primary-text">
+                    2. Add Photo
+                  </label>
+                  <div className="w-full h-32 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center bg-primary-bg hover:bg-gray-50 transition-colors rounded-soft cursor-pointer">
+                    <Camera size={32} className="text-gray-400 mb-md" />
+                    <span className="font-semibold uppercase text-xs text-secondary-text">
+                      Tap to take photo
+                    </span>
+                  </div>
+                </div>
+
+                {/* Location */}
+                <div>
+                  <label className="block font-bold uppercase text-xs mb-md tracking-tight text-primary-text">
+                    3. Location
+                  </label>
+                  <div className="flex items-center gap-md p-md border border-gray-200 bg-primary-bg rounded-soft">
+                    <MapPin size={18} className="text-primary-text shrink-0" />
+                    <span className="font-mono font-semibold text-xs text-secondary-text flex-1">
+                      6.9271° N, 79.8612° E
+                    </span>
+                    <span className="text-xs font-bold uppercase bg-safe-green text-white px-md py-xs rounded-soft shrink-0">
+                      GPS
+                    </span>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <button className="w-full bg-critical-red text-white py-md font-bold uppercase text-sm rounded-soft hover:opacity-90 shadow-md transition-opacity flex items-center justify-center gap-md">
+                  <Send strokeWidth={2.5} size={18} /> Submit Report
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Desktop Form Panel */}
+      <div className="hidden md:block fixed right-0 top-0 bottom-0 w-96 bg-card-bg border-l border-gray-200 overflow-y-auto shadow-lg">
+        <div className="p-lg border-b border-gray-200 sticky top-0 bg-card-bg">
+          <h2 className="text-lg font-bold text-primary-text uppercase">New Report</h2>
+        </div>
+
+        <div className="p-lg space-y-lg">
+          {/* Severity Level */}
+          <div>
+            <label className="block font-bold uppercase text-xs mb-md tracking-tight text-primary-text">
+              1. Severity Level
+            </label>
+            <div className="grid grid-cols-3 gap-md">
+              {['Low', 'Medium', 'Critical'].map(level => (
+                <button
+                  key={level}
+                  onClick={() => setReportType(level)}
+                  className={`py-md font-bold uppercase text-xs rounded-soft transition-all border ${
+                    reportType === level
+                      ? 'bg-critical-red text-white border-critical-red'
+                      : 'bg-primary-bg text-primary-text border-gray-200 hover:border-gray-400'
+                  }`}
+                >
+                  {level}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Recent Reports Feed */}
-          <div className="space-y-4">
-            <h3 className="font-black uppercase text-xl border-b-4 border-black pb-2">
-              Recent Reports Nearby
-            </h3>
-
-            {[1, 2, 3].map(i => <StatusCard key={i} className="border-2" accentColor="orange">
-                <div className="flex gap-4">
-                  <div className="w-20 h-20 bg-gray-200 border-2 border-black shrink-0"></div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="bg-black text-white text-[10px] font-bold px-1 uppercase">
-                        Verified
-                      </span>
-                      <span className="text-xs font-bold text-gray-500">
-                        2 mins ago
-                      </span>
-                    </div>
-                    <p className="font-bold text-sm leading-tight mb-2">
-                      Water level rising rapidly near the bridge. Road
-                      impassable.
-                    </p>
-                    <div className="flex items-center gap-1 text-xs font-bold text-gray-500">
-                      <MapPin size={12} /> Colombo 07
-                    </div>
-                  </div>
-                </div>
-              </StatusCard>)}
+          {/* Photo Upload */}
+          <div>
+            <label className="block font-bold uppercase text-xs mb-md tracking-tight text-primary-text">
+              2. Add Photo
+            </label>
+            <div className="w-full h-32 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center bg-primary-bg hover:bg-gray-50 transition-colors rounded-soft cursor-pointer">
+              <Camera size={32} className="text-gray-400 mb-md" />
+              <span className="font-semibold uppercase text-xs text-secondary-text">
+                Tap to take photo
+              </span>
+            </div>
           </div>
+
+          {/* Location */}
+          <div>
+            <label className="block font-bold uppercase text-xs mb-md tracking-tight text-primary-text">
+              3. Location
+            </label>
+            <div className="flex items-center gap-md p-md border border-gray-200 bg-primary-bg rounded-soft">
+              <MapPin size={18} className="text-primary-text shrink-0" />
+              <span className="font-mono font-semibold text-xs text-secondary-text flex-1">
+                6.9271° N, 79.8612° E
+              </span>
+              <span className="text-xs font-bold uppercase bg-safe-green text-white px-md py-xs rounded-soft shrink-0">
+                GPS
+              </span>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <button className="w-full bg-critical-red text-white py-md font-bold uppercase text-sm rounded-soft hover:opacity-90 shadow-md transition-opacity flex items-center justify-center gap-md">
+            <Send strokeWidth={2.5} size={18} /> Submit Report
+          </button>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 }

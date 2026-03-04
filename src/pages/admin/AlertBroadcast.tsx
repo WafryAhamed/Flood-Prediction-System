@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Radio, Send, Globe, Clock, BarChart2, CheckCircle } from 'lucide-react';
 export function AlertBroadcast() {
   const [lang, setLang] = useState('en');
-  return <div className="space-y-6">
-      <div className="flex justify-between items-end">
+  return <div className="space-y-8">
+      <div className="flex justify-between items-center mb-8">
         <div>
-          <h2 className="text-2xl font-bold uppercase tracking-widest text-white">
+          <h2 className="text-4xl font-bold uppercase tracking-tight text-white mb-2">
             Alert & Comms Center
           </h2>
-          <p className="text-xs font-mono-cmd text-gray-400">
+          <p className="text-sm font-semibold text-gray-400">
             GATEWAY STATUS: ONLINE • SMS QUOTA: 85%
           </p>
         </div>
@@ -16,9 +16,9 @@ export function AlertBroadcast() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Composer */}
-        <div className="bg-[#132F4C] border border-[#1E4976] p-6">
-          <h3 className="text-xs font-bold uppercase text-[#FF1744] mb-6 flex items-center gap-2">
-            <Radio size={14} /> New Emergency Broadcast
+        <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
+          <h3 className="text-sm font-bold uppercase text-red-500 mb-6 flex items-center gap-2">
+            <Radio size={18} /> New Emergency Broadcast
           </h3>
 
           <div className="space-y-4">
@@ -27,7 +27,7 @@ export function AlertBroadcast() {
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-2">
                   Target Area
                 </label>
-                <select className="w-full bg-[#0A1929] border border-[#1E4976] text-white p-2 text-sm focus:border-[#00E5FF] outline-none">
+                <select className="w-full bg-gray-900 border border-gray-700 text-white p-2 text-sm focus:border-blue-400 outline-none rounded-lg">
                   <option>All Districts</option>
                   <option>Colombo</option>
                   <option>Gampaha</option>
@@ -37,7 +37,7 @@ export function AlertBroadcast() {
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-2">
                   Severity
                 </label>
-                <select className="w-full bg-[#0A1929] border border-[#1E4976] text-white p-2 text-sm focus:border-[#00E5FF] outline-none">
+                <select className="w-full bg-gray-900 border border-gray-700 text-white p-2 text-sm focus:border-blue-400 outline-none rounded-lg">
                   <option>Critical (Red)</option>
                   <option>Warning (Orange)</option>
                   <option>Info (Blue)</option>
@@ -51,35 +51,35 @@ export function AlertBroadcast() {
                   Message Content
                 </label>
                 <div className="flex gap-1">
-                  {['en', 'si', 'ta'].map(l => <button key={l} onClick={() => setLang(l)} className={`px-2 py-0.5 text-[10px] font-bold uppercase ${lang === l ? 'bg-[#00E5FF] text-black' : 'bg-[#0A1929] text-gray-400 border border-[#1E4976]'}`}>
+                  {['en', 'si', 'ta'].map(l => <button key={l} onClick={() => setLang(l)} className={`px-3 py-1 text-xs font-bold uppercase rounded-lg ${lang === l ? 'bg-blue-400 text-white' : 'bg-gray-900 text-gray-400 border border-gray-700'}`}>
                       {l === 'en' ? 'English' : l === 'si' ? 'Sinhala' : 'Tamil'}
                     </button>)}
                 </div>
               </div>
-              <textarea className="w-full bg-[#0A1929] border border-[#1E4976] text-white p-3 text-sm h-32 focus:border-[#00E5FF] outline-none font-mono-cmd" placeholder="Type alert message here..."></textarea>
+              <textarea className="w-full bg-gray-900 border border-gray-700 text-white p-3 text-sm h-32 focus:border-blue-400 outline-none rounded-lg font-mono" placeholder="Type alert message here..."></textarea>
             </div>
 
-            <div className="flex gap-4 pt-2 border-t border-[#1E4976]">
+            <div className="flex gap-4 pt-2 border-t border-gray-700">
               <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
-                <input type="checkbox" className="accent-[#00E5FF]" defaultChecked />{' '}
+                <input type="checkbox" className="accent-blue-400 rounded" defaultChecked />{' '}
                 SMS
               </label>
               <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
-                <input type="checkbox" className="accent-[#00E5FF]" defaultChecked />{' '}
+                <input type="checkbox" className="accent-blue-400 rounded" defaultChecked />{' '}
                 Push
               </label>
               <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
-                <input type="checkbox" className="accent-[#00E5FF]" /> TV/Radio
+                <input type="checkbox" className="accent-blue-400 rounded" /> TV/Radio
                 API
               </label>
             </div>
 
             <div className="flex gap-2 pt-4">
-              <button className="flex-1 py-3 bg-[#FF1744] text-white font-bold uppercase text-sm hover:bg-[#D50000] flex items-center justify-center gap-2">
-                <Send size={16} /> Broadcast Now
+              <button className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase text-sm flex items-center justify-center gap-2 rounded-lg transition-colors">
+                <Send size={18} /> Broadcast Now
               </button>
-              <button className="px-4 py-3 bg-[#132F4C] border border-[#1E4976] text-gray-300 font-bold uppercase text-sm hover:bg-[#1E4976] flex items-center justify-center gap-2">
-                <Clock size={16} /> Schedule
+              <button className="px-4 py-3 bg-gray-700 hover:bg-gray-600 text-gray-200 font-bold uppercase text-sm flex items-center justify-center gap-2 rounded-lg transition-colors">
+                <Clock size={18} /> Schedule
               </button>
             </div>
           </div>
@@ -87,43 +87,43 @@ export function AlertBroadcast() {
 
         {/* History & Analytics */}
         <div className="space-y-6">
-          <div className="bg-[#132F4C] border border-[#1E4976] p-6 h-64">
-            <h3 className="text-xs font-bold uppercase text-gray-400 mb-4 flex items-center gap-2">
-              <BarChart2 size={14} /> Reach Analytics
+          <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 h-80">
+            <h3 className="text-sm font-bold uppercase text-gray-400 mb-4 flex items-center gap-2">
+              <BarChart2 size={18} /> Reach Analytics
             </h3>
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              <div className="bg-[#0A1929] p-3 text-center">
-                <div className="text-2xl font-mono-cmd font-bold text-[#00E5FF]">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-gray-900 p-4 text-center rounded-lg">
+                <div className="text-3xl font-bold text-blue-400 mb-1">
                   98%
                 </div>
-                <div className="text-[10px] text-gray-500 uppercase">
+                <div className="text-xs text-gray-500 uppercase">
                   Delivery Rate
                 </div>
               </div>
-              <div className="bg-[#0A1929] p-3 text-center">
-                <div className="text-2xl font-mono-cmd font-bold text-[#00E676]">
+              <div className="bg-gray-900 p-4 text-center rounded-lg">
+                <div className="text-3xl font-bold text-green-500 mb-1">
                   2.1M
                 </div>
-                <div className="text-[10px] text-gray-500 uppercase">
+                <div className="text-xs text-gray-500 uppercase">
                   People Reached
                 </div>
               </div>
-              <div className="bg-[#0A1929] p-3 text-center">
-                <div className="text-2xl font-mono-cmd font-bold text-[#FFC107]">
+              <div className="bg-gray-900 p-4 text-center rounded-lg">
+                <div className="text-3xl font-bold text-yellow-400 mb-1">
                   45s
                 </div>
-                <div className="text-[10px] text-gray-500 uppercase">
+                <div className="text-xs text-gray-500 uppercase">
                   Avg. Latency
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-[#132F4C] border border-[#1E4976] p-6 flex-1">
-            <h3 className="text-xs font-bold uppercase text-gray-400 mb-4">
+          <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 flex-1">
+            <h3 className="text-sm font-bold uppercase text-gray-400 mb-4">
               Recent Broadcasts
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {[{
               msg: 'Evacuation order for Sector 7',
               time: '2h ago',
@@ -139,20 +139,21 @@ export function AlertBroadcast() {
               time: '1d ago',
               status: 'Sent',
               type: 'Info'
-            }].map((alert, i) => <div key={i} className="p-3 bg-[#0A1929] border border-[#1E4976] flex justify-between items-center opacity-80 hover:opacity-100 transition-opacity">
+            }].map((alert, i) => <div key={i} className=\"p-3 bg-gray-900 border border-gray-700 flex justify-between items-center rounded-lg hover:bg-gray-800 transition-colors\">
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`w-2 h-2 rounded-full ${alert.type === 'Critical' ? 'bg-[#FF1744]' : alert.type === 'Warning' ? 'bg-[#FFC107]' : 'bg-[#00E5FF]'}`}></span>
-                      <span className="text-xs font-bold text-white">
+                    <div className=\"flex items-center gap-2 mb-1\">
+                      <span className={`w-2 h-2 rounded-full ${alert.type === 'Critical' ? 'bg-red-600' : alert.type === 'Warning' ? 'bg-orange-500' : 'bg-blue-400'}`}></span>
+                      <span className=\"text-sm font-bold text-white\">
                         {alert.msg}
                       </span>
                     </div>
-                    <div className="text-[10px] text-gray-500 font-mono-cmd">
+                    <div className=\"text-xs text-gray-500\">
+
                       {alert.time} • SMS, Push
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 text-[10px] text-[#00E676] font-bold uppercase">
-                    <CheckCircle size={12} /> {alert.status}
+                  <div className="flex items-center gap-1 text-xs text-green-500 font-bold uppercase">
+                    <CheckCircle size={14} /> {alert.status}
                   </div>
                 </div>)}
             </div>

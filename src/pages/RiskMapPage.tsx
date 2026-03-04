@@ -1,76 +1,128 @@
 import React, { useState } from 'react';
 import { RiskMap } from '../components/RiskMap';
-import { Layers, Filter, Map as MapIcon } from 'lucide-react';
+import { UnifiedCard } from '../components/ui/UnifiedCard';
+import { Layers, X } from 'lucide-react';
+
 export function RiskMapPage() {
   const [activeLayers, setActiveLayers] = useState(['flood', 'reports']);
-  const layers = [{
-    id: 'flood',
-    label: 'Flood Risk',
-    color: 'bg-red-500'
-  }, {
-    id: 'reports',
-    label: 'Community Reports',
-    color: 'bg-orange-500'
-  }, {
-    id: 'evac',
-    label: 'Evacuation Centers',
-    color: 'bg-green-500'
-  }, {
-    id: 'infra',
-    label: 'Infrastructure',
-    color: 'bg-blue-500'
-  }, {
-    id: 'agri',
-    label: 'Agriculture',
-    color: 'bg-yellow-500'
-  }];
+  const [showLayers, setShowLayers] = useState(true);
+  const [showLegend, setShowLegend] = useState(true);
+  
+  const layers = [
+    { id: 'flood', label: 'Flood Risk', color: 'bg-critical' },
+    { id: 'reports', label: 'Community Reports', color: 'bg-warning' },
+    { id: 'evac', label: 'Evacuation Centers', color: 'bg-safe' },
+    { id: 'infra', label: 'Infrastructure', color: 'bg-info' },
+    { id: 'agri', label: 'Agriculture', color: 'bg-caution' },
+  ];
+
   const toggleLayer = (id: string) => {
-    setActiveLayers(prev => prev.includes(id) ? prev.filter(l => l !== id) : [...prev, id]);
+    setActiveLayers(prev =>
+      prev.includes(id) ? prev.filter(l => l !== id) : [...prev, id]
+    );
   };
-  return <div className="h-screen pt-16 md:pt-0 md:pl-64 flex flex-col relative">
-      {/* Map Controls Overlay */}
-      <div className="absolute top-20 left-4 z-[1000] md:top-4 md:left-68 flex flex-col gap-2">
-        <div className="bg-white border-4 border-black p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-          <h3 className="font-black uppercase text-sm mb-2 flex items-center gap-2">
-            <Layers size={16} /> Map Layers
-          </h3>
-          <div className="flex flex-col gap-1">
-            {layers.map(layer => <button key={layer.id} onClick={() => toggleLayer(layer.id)} className={`
-                  flex items-center gap-2 px-2 py-1 text-xs font-bold uppercase border-2 border-black transition-all
-                  ${activeLayers.includes(layer.id) ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'}
-                `}>
-                <div className={`w-3 h-3 ${layer.color} border border-white`}></div>
-                {layer.label}
-              </button>)}
-          </div>
+
+  return (
+    <div className="h-screen flex flex-col relative bg-bg-primary">
+      {/* Map Layers Control - Top Left */}
+      {showLayers && (
+        <div className="absolute top-lg left-lg z-[1000] w-72">
+          <UnifiedCard noPadding className="w-full">
+            <div className="flex justify-between items-center mb-inner">
+              <h3 className="font-bold uppercase text-sm flex items-center gap-md text-text-primary">
+                <Layers size={18} /> Map Layers
+              </h3>
+              <button
+                onClick={() => setShowLayers(false)}
+                className="text-text-secondary hover:text-text-primary transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex flex-col gap-sm">
+              {layers.map(layer => (
+                <button
+                  key={layer.id}
+                  onClick={() => toggleLayer(layer.id)}
+                  className={`
+                    flex items-center gap-md px-md py-md text-xs font-semibold uppercase border border-border-light rounded-card transition-all
+                    ${
+                      activeLayers.includes(layer.id)
+                        ? 'bg-critical/10 text-critical border-critical'
+                        : 'bg-bg-primary text-text-primary hover:bg-gray-50'
+                    }
+                  `}
+                >
+                  <div className={`w-3 h-3 ${layer.color} rounded-full`}></div>
+                  {layer.label}
+                </button>
+              ))}
+            </div>
+          </UnifiedCard>
         </div>
-      </div>
+      )}
 
       {/* Main Map Container */}
-      <div className="flex-1 w-full h-full bg-gray-200 relative">
+      <div className="flex-1 w-full h-full bg-gray-100 relative overflow-hidden">
         <RiskMap />
 
-        {/* Bottom Legend */}
-        <div className="absolute bottom-20 md:bottom-8 left-4 right-4 md:left-auto md:right-8 bg-white border-4 border-black p-4 z-[1000] max-w-md shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-          <h4 className="font-black uppercase text-lg mb-2">Live Situation</h4>
-          <p className="text-sm font-bold text-gray-600 mb-3">
-            Updated 5 mins ago • 12 Active Reports
-          </p>
-          <div className="flex gap-4">
-            <div className="flex items-center gap-2">
-              <span className="w-4 h-4 bg-red-500 border-2 border-black"></span>
-              <span className="text-xs font-bold uppercase">Critical</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-4 h-4 bg-orange-500 border-2 border-black"></span>
-              <span className="text-xs font-bold uppercase">Warning</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-4 h-4 bg-green-500 border-2 border-black"></span>
-              <span className="text-xs font-bold uppercase">Safe</span>
-            </div>
+        {/* Legend Panel - Bottom Right */}
+        {showLegend && (
+          <div className="absolute bottom-lg md:bottom-xl right-lg md:right-xl z-[1000] w-80">
+            <UnifiedCard noPadding>
+              <div className="flex justify-between items-center mb-inner">
+                <div>
+                  <h4 className="font-bold uppercase text-sm text-text-primary">Live Situation</h4>
+                  <p className="text-xs text-text-secondary mt-xs">
+                    Updated 5 mins ago • 12 Active Reports
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowLegend(false)}
+                  className="text-text-secondary hover:text-text-primary transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Legend Items */}
+              <div className="grid grid-cols-2 gap-md">
+                <div className="flex items-center gap-md p-md bg-bg-primary rounded-card border border-border-light">
+                  <span className="w-4 h-4 bg-critical rounded-full"></span>
+                  <span className="text-xs font-bold uppercase text-text-primary">Critical</span>
+                </div>
+                <div className="flex items-center gap-md p-md bg-bg-primary rounded-card border border-border-light">
+                  <span className="w-4 h-4 bg-warning rounded-full"></span>
+                  <span className="text-xs font-bold uppercase text-text-primary">Warning</span>
+                </div>
+                <div className="flex items-center gap-md p-md bg-bg-primary rounded-card border border-border-light">
+                  <span className="w-4 h-4 bg-safe rounded-full"></span>
+                  <span className="text-xs font-bold uppercase text-text-primary">Safe</span>
+                </div>
+                <div className="flex items-center gap-md p-md bg-bg-primary rounded-card border border-border-light">
+                  <span className="w-4 h-4 bg-caution rounded-full"></span>
+                  <span className="text-xs font-bold uppercase text-text-primary">Caution</span>
+                </div>
+              </div>
+
+              {/* Active Layers */}
+              <div className="mt-inner pt-inner border-t border-border-light">
+                <p className="text-xs font-semibold text-text-secondary uppercase mb-md">Active Layers:</p>
+                <div className="flex flex-wrap gap-xs">
+                  {activeLayers.map(layerId => {
+                    const layer = layers.find(l => l.id === layerId);
+                    return layer ? (
+                      <span key={layer.id} className="inline-block bg-bg-primary text-text-primary text-xs font-semibold px-md py-xs rounded-card border border-border-light">
+                        {layer.label}
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              </div>
+            </UnifiedCard>
           </div>
-        </div>
+        )}
       </div>
-    </div>;
+    </div>
+  );
 }

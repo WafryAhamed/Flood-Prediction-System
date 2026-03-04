@@ -1,60 +1,60 @@
 import React from 'react';
 import { Building2, Plus, AlertTriangle, Users, MapPin, Bus } from 'lucide-react';
 export function FacilityManagement() {
-  return <div className="space-y-6">
-      <div className="flex justify-between items-end">
+  return <div className="space-y-8">
+      <div className="flex justify-between items-center mb-8">
         <div>
-          <h2 className="text-2xl font-bold uppercase tracking-widest text-white">
+          <h2 className="text-4xl font-bold uppercase tracking-tight text-white mb-2">
             Evacuation Operations
           </h2>
-          <p className="text-xs font-mono-cmd text-gray-400">
+          <p className="text-sm font-semibold text-gray-400">
             NETWORK STATUS: 85% OPERATIONAL • 12 ACTIVE SHELTERS
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="px-4 py-2 bg-[#00E5FF] text-black font-bold uppercase text-xs hover:bg-[#00B8D4] flex items-center gap-2">
-            <Plus size={14} /> Activate New Shelter
+          <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-sm flex items-center gap-2 rounded-lg transition-colors">
+            <Plus size={18} /> Activate New Shelter
           </button>
         </div>
       </div>
 
       {/* Overview Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-[#132F4C] border border-[#1E4976] p-4">
-          <div className="text-xs text-gray-400 uppercase font-bold mb-1">
+        <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 border-l-4 border-l-green-600">
+          <div className="text-xs text-gray-400 uppercase font-bold mb-2">
             Total Capacity
           </div>
-          <div className="text-2xl font-mono-cmd font-bold text-white">
+          <div className="text-2xl font-bold text-white">
             12,500
           </div>
-          <div className="text-[10px] text-[#00E676]">85% Available</div>
+          <div className="text-xs text-green-500 font-semibold">85% Available</div>
         </div>
-        <div className="bg-[#132F4C] border border-[#1E4976] p-4">
-          <div className="text-xs text-gray-400 uppercase font-bold mb-1">
+        <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 border-l-4 border-l-yellow-400">
+          <div className="text-xs text-gray-400 uppercase font-bold mb-2">
             Current Occupancy
           </div>
-          <div className="text-2xl font-mono-cmd font-bold text-[#FFC107]">
+          <div className="text-2xl font-bold text-yellow-400">
             1,842
           </div>
-          <div className="text-[10px] text-[#FFC107]">+120 last hour</div>
+          <div className="text-xs text-yellow-400 font-semibold">+120 last hour</div>
         </div>
-        <div className="bg-[#132F4C] border border-[#1E4976] p-4">
-          <div className="text-xs text-gray-400 uppercase font-bold mb-1">
+        <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 border-l-4 border-l-red-600">
+          <div className="text-xs text-gray-400 uppercase font-bold mb-2">
             At Risk Facilities
           </div>
-          <div className="text-2xl font-mono-cmd font-bold text-[#FF1744]">
+          <div className="text-2xl font-bold text-red-600">
             3
           </div>
-          <div className="text-[10px] text-[#FF1744]">Flood imminent</div>
+          <div className="text-xs text-red-600 font-semibold">Flood imminent</div>
         </div>
-        <div className="bg-[#132F4C] border border-[#1E4976] p-4">
-          <div className="text-xs text-gray-400 uppercase font-bold mb-1">
+        <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 border-l-4 border-l-blue-400">
+          <div className="text-xs text-gray-400 uppercase font-bold mb-2">
             Transport Units
           </div>
-          <div className="text-2xl font-mono-cmd font-bold text-[#00E5FF]">
+          <div className="text-2xl font-bold text-blue-400">
             24
           </div>
-          <div className="text-[10px] text-[#00E5FF]">Active on routes</div>
+          <div className="text-xs text-blue-400 font-semibold">Active on routes</div>
         </div>
       </div>
 
@@ -103,30 +103,30 @@ export function FacilityManagement() {
 
                 <div className="flex items-center gap-4 text-xs text-gray-400 mb-2">
                   <span className="flex items-center gap-1">
-                    <MapPin size={12} /> Sector 4
+                    <MapPin size={14} /> Sector 4
                   </span>
                   <span className="flex items-center gap-1">
-                    <Bus size={12} /> Route A-12
+                    <Bus size={14} /> Route A-12
                   </span>
-                  {f.risk === 'High' && <span className="text-[#FF1744] font-bold flex items-center gap-1">
-                      <AlertTriangle size={12} /> HIGH RISK
+                  {f.risk === 'High' && <span className="text-red-600 font-bold flex items-center gap-1">
+                      <AlertTriangle size={14} /> HIGH RISK
                     </span>}
                 </div>
 
-                <div className="w-full bg-[#0A1929] h-1.5 rounded-full overflow-hidden">
-                  <div className={`h-full ${f.cap > 90 ? 'bg-[#FF1744]' : f.cap > 70 ? 'bg-[#FFC107]' : 'bg-[#00E5FF]'}`} style={{
+                <div className="w-full bg-gray-900 h-2 rounded-full overflow-hidden">
+                  <div className={`h-full ${f.cap > 90 ? 'bg-red-600' : f.cap > 70 ? 'bg-yellow-400' : 'bg-blue-400'}`} style={{
                 width: `${f.cap}%`
               }}></div>
                 </div>
-                <div className="flex justify-between mt-1 text-[10px] font-mono-cmd">
+                <div className="flex justify-between mt-1 text-xs font-semibold">
                   <span className="text-gray-500">Occupancy</span>
-                  <span className={f.cap > 90 ? 'text-[#FF1744]' : 'text-gray-300'}>
+                  <span className={f.cap > 90 ? 'text-red-600' : 'text-gray-300'}>
                     {f.cap}% Full
                   </span>
                 </div>
               </div>
 
-              <button className="px-3 py-1 border border-[#1E4976] text-xs font-bold uppercase text-gray-300 hover:bg-[#1E4976]">
+              <button className="px-3 py-1 border border-gray-700 text-xs font-bold uppercase text-gray-300 hover:bg-gray-700 rounded transition-colors">
                 Manage
               </button>
             </div>)}
@@ -134,26 +134,26 @@ export function FacilityManagement() {
 
         {/* Map/Alerts Panel */}
         <div className="space-y-4">
-          <div className="bg-[#132F4C] border border-[#1E4976] p-4 h-64 flex flex-col">
-            <h3 className="text-xs font-bold uppercase text-gray-400 mb-2 flex items-center gap-2">
-              <MapPin size={14} /> Shelter Map
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 h-64 flex flex-col">
+            <h3 className="text-sm font-bold uppercase text-gray-400 mb-3 flex items-center gap-2">
+              <MapPin size={18} /> Shelter Map
             </h3>
-            <div className="flex-1 bg-[#050B14] border border-[#1E4976] flex items-center justify-center text-gray-600 text-xs font-mono-cmd">
+            <div className="flex-1 bg-gray-950 border border-gray-700 rounded-lg flex items-center justify-center text-gray-600 text-xs font-semibold">
               [MAP VISUALIZATION]
             </div>
           </div>
 
-          <div className="bg-[#FF1744]/10 border border-[#FF1744] p-4">
-            <h3 className="text-xs font-bold uppercase text-[#FF1744] mb-2 flex items-center gap-2">
-              <AlertTriangle size={14} /> Critical Alerts
+          <div className="bg-red-600/10 border border-red-600 rounded-lg p-6">
+            <h3 className="text-sm font-bold uppercase text-red-600 mb-3 flex items-center gap-2">
+              <AlertTriangle size={18} /> Critical Alerts
             </h3>
             <ul className="space-y-2 text-xs">
               <li className="flex gap-2 text-gray-300">
-                <span className="text-[#FF1744] font-bold">•</span>
+                <span className="text-red-600 font-bold">•</span>
                 Temple Shelter approaching max capacity (92%)
               </li>
               <li className="flex gap-2 text-gray-300">
-                <span className="text-[#FF1744] font-bold">•</span>
+                <span className="text-red-600 font-bold">•</span>
                 Access road to Hospital blocked by water
               </li>
             </ul>

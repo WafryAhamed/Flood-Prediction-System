@@ -1,43 +1,75 @@
 import React from 'react';
 import { SafetyProfileWizard } from '../components/SafetyProfileWizard';
+import { UnifiedCard } from '../components/ui/UnifiedCard';
+
 export function SafetyProfile() {
-  return <div className="min-h-screen pt-24 px-4 md:pl-72 pb-20">
+  return (
+    <div className="min-h-screen px-lg px-lg md:px-xl pb-xl bg-bg-primary">
       <div className="max-w-4xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-4xl md:text-6xl font-black uppercase leading-none mb-4">
-            My Safety
-            <br />
-            Profile
+        {/* Header */}
+        <header className="mb-xl">
+          <h1 className="text-3xl md:text-4xl font-bold uppercase leading-tight text-text-primary mb-md">
+            My Safety Profile
           </h1>
-          <p className="text-xl font-bold text-gray-600 max-w-2xl">
-            Customize your alerts and recommendations. This data is stored
-            locally on your device.
+          <p className="text-sm font-semibold text-text-secondary max-w-2xl leading-relaxed">
+            Customize your alerts and recommendations. This data is stored locally on your device and helps us provide personalized emergency support.
           </p>
         </header>
 
-        <SafetyProfileWizard />
-
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="border-4 border-black p-6 bg-gray-50">
-            <h3 className="font-black uppercase text-xl mb-2">
-              Why create a profile?
-            </h3>
-            <ul className="list-disc list-inside space-y-2 font-medium">
-              <li>Get personalized evacuation routes</li>
-              <li>Receive specific tips for your home type</li>
-              <li>Protect your livelihood (crops/business)</li>
-              <li>Faster emergency response</li>
-            </ul>
-          </div>
-
-          <div className="border-4 border-black p-6 bg-[#E0F7FA]">
-            <h3 className="font-black uppercase text-xl mb-2">Privacy Note</h3>
-            <p className="font-medium">
-              Your data never leaves your phone until you choose to share it
-              during an emergency. We value your privacy and safety above all.
-            </p>
-          </div>
+        {/* Wizard Component */}
+        <div className="mb-xl">
+          <SafetyProfileWizard />
         </div>
+
+        {/* Info Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
+          {/* Benefits Card */}
+          <UnifiedCard title="Why create a profile?" accentColor="safe">
+            <ul className="space-y-md">
+              {[
+                'Get personalized evacuation routes',
+                'Receive specific tips for your home type',
+                'Protect your livelihood (crops/business)',
+                'Faster emergency response'
+              ].map((benefit, i) => (
+                <li key={i} className="flex items-start gap-md">
+                  <span className="text-safe font-bold text-lg leading-none mt-0.5">✓</span>
+                  <span className="font-semibold text-sm text-text-primary">{benefit}</span>
+                </li>
+              ))}
+            </ul>
+          </UnifiedCard>
+
+          {/* Privacy Card */}
+          <UnifiedCard title="Privacy & Security" accentColor="info">
+            <p className="font-semibold text-sm text-text-primary leading-relaxed mb-lg">
+              Your data never leaves your phone until you choose to share it during an emergency. We prioritize your privacy and security above all else.
+            </p>
+            <div className="bg-info/5 p-md rounded-card border border-info/30">
+              <p className="text-xs font-bold text-info uppercase mb-xs">Encryption Status</p>
+              <p className="text-xs text-text-secondary">End-to-end encrypted • Local storage only</p>
+            </div>
+          </UnifiedCard>
+        </div>
+
+        {/* Additional Information */}
+        <UnifiedCard title="Important Notes" className="mt-xl">
+          <ul className="space-y-md text-sm">
+            <li className="flex items-start gap-md">
+              <span className="font-bold text-info">•</span>
+              <span className="text-text-secondary">Update your profile regularly, especially when your household composition or living situation changes</span>
+            </li>
+            <li className="flex items-start gap-md">
+              <span className="font-bold text-info">•</span>
+              <span className="text-text-secondary">During emergencies, your profile helps responders provide targeted assistance and personalized guidance</span>
+            </li>
+            <li className="flex items-start gap-md">
+              <span className="font-bold text-info">•</span>
+              <span className="text-text-secondary">You can change your preferences at any time without losing your saved data</span>
+            </li>
+          </ul>
+        </UnifiedCard>
       </div>
-    </div>;
+    </div>
+  );
 }

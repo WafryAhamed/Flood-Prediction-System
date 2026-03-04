@@ -25,17 +25,17 @@ const data = [{
 }];
 export function DistrictControl() {
   const [selectedDistrict, setSelectedDistrict] = useState('Colombo');
-  return <div className="space-y-6">
-      <div className="flex justify-between items-end">
+  return <div className="space-y-8">
+      <div className="flex justify-between items-center mb-8">
         <div>
-          <h2 className="text-2xl font-bold uppercase tracking-widest text-white">
+          <h2 className="text-4xl font-bold uppercase tracking-tight text-white mb-2">
             District Command
           </h2>
-          <p className="text-xs font-mono-cmd text-gray-400">
+          <p className="text-sm font-semibold text-gray-400">
             SELECT DISTRICT FOR DETAILED INTEL
           </p>
         </div>
-        <select value={selectedDistrict} onChange={e => setSelectedDistrict(e.target.value)} className="bg-[#132F4C] border border-[#1E4976] text-white px-4 py-2 font-bold uppercase text-xs focus:border-[#00E5FF] outline-none">
+        <select value={selectedDistrict} onChange={e => setSelectedDistrict(e.target.value)} className="bg-gray-800 border border-gray-700 text-white px-4 py-3 font-bold uppercase text-sm focus:border-blue-400 outline-none rounded-lg transition-colors">
           <option>Colombo</option>
           <option>Gampaha</option>
           <option>Kalutara</option>
@@ -47,45 +47,45 @@ export function DistrictControl() {
         {/* Main Stats */}
         <div className="lg:col-span-2 space-y-6">
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-[#132F4C] border border-[#1E4976] p-4">
-              <div className="text-xs text-gray-400 uppercase font-bold mb-1">
+            <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 border-l-4 border-l-red-600">
+              <div className="text-xs text-gray-400 uppercase font-bold mb-2">
                 Current Risk
               </div>
-              <div className="text-3xl font-mono-cmd font-bold text-[#FF1744]">
+              <div className="text-3xl font-bold text-red-600">
                 CRITICAL
               </div>
             </div>
-            <div className="bg-[#132F4C] border border-[#1E4976] p-4">
-              <div className="text-xs text-gray-400 uppercase font-bold mb-1">
+            <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 border-l-4 border-l-blue-400">
+              <div className="text-xs text-gray-400 uppercase font-bold mb-2">
                 Population Exposed
               </div>
-              <div className="text-3xl font-mono-cmd font-bold text-white">
+              <div className="text-3xl font-bold text-white">
                 2.3M
               </div>
             </div>
-            <div className="bg-[#132F4C] border border-[#1E4976] p-4">
-              <div className="text-xs text-gray-400 uppercase font-bold mb-1">
+            <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 border-l-4 border-l-yellow-400">
+              <div className="text-xs text-gray-400 uppercase font-bold mb-2">
                 Shelter Status
               </div>
-              <div className="text-3xl font-mono-cmd font-bold text-[#FFC107]">
+              <div className="text-3xl font-bold text-yellow-400">
                 82%
               </div>
             </div>
           </div>
 
-          <div className="bg-[#132F4C] border border-[#1E4976] p-4 h-64">
-            <h3 className="text-xs font-bold uppercase text-gray-400 mb-4 flex items-center gap-2">
-              <TrendingUp size={14} /> Risk Trend (7 Days)
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 h-64">
+            <h3 className="text-sm font-bold uppercase text-gray-400 mb-4 flex items-center gap-2">
+              <TrendingUp size={18} /> Risk Trend (7 Days)
             </h3>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data}>
                 <defs>
                   <linearGradient id="colorRisk" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#FF1744" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#FF1744" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#DC2626" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#DC2626" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <Area type="monotone" dataKey="risk" stroke="#FF1744" fillOpacity={1} fill="url(#colorRisk)" />
+                <Area type="monotone" dataKey="risk" stroke="#DC2626" fillOpacity={1} fill="url(#colorRisk)" />
                 <XAxis dataKey="name" hide />
                 <YAxis hide />
               </AreaChart>
@@ -93,41 +93,41 @@ export function DistrictControl() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[#132F4C] border border-[#1E4976] p-4">
-              <h3 className="text-xs font-bold uppercase text-gray-400 mb-4">
+            <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+              <h3 className="text-sm font-bold uppercase text-gray-400 mb-4">
                 High Priority Zones
               </h3>
               <ul className="space-y-2 text-sm text-gray-300">
-                <li className="flex justify-between border-b border-[#1E4976] pb-1">
+                <li className="flex justify-between border-b border-gray-700 pb-2">
                   <span>Zone A (Coastal)</span>
-                  <span className="text-[#FF1744] font-bold">EVACUATE</span>
+                  <span className="text-red-600 font-bold">EVACUATE</span>
                 </li>
-                <li className="flex justify-between border-b border-[#1E4976] pb-1">
+                <li className="flex justify-between border-b border-gray-700 pb-2">
                   <span>Zone B (Urban)</span>
-                  <span className="text-[#FFC107] font-bold">ALERT</span>
+                  <span className="text-yellow-400 font-bold">ALERT</span>
                 </li>
-                <li className="flex justify-between border-b border-[#1E4976] pb-1">
+                <li className="flex justify-between border-b border-gray-700 pb-2">
                   <span>Zone C (Inland)</span>
-                  <span className="text-[#00E676] font-bold">SAFE</span>
+                  <span className="text-green-600 font-bold">SAFE</span>
                 </li>
               </ul>
             </div>
-            <div className="bg-[#132F4C] border border-[#1E4976] p-4">
-              <h3 className="text-xs font-bold uppercase text-gray-400 mb-4">
+            <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+              <h3 className="text-sm font-bold uppercase text-gray-400 mb-4">
                 Resource Allocation
               </h3>
               <ul className="space-y-2 text-sm text-gray-300">
-                <li className="flex justify-between border-b border-[#1E4976] pb-1">
+                <li className="flex justify-between border-b border-gray-700 pb-2">
                   <span>Boats</span>
-                  <span className="font-mono-cmd">12/15</span>
+                  <span className="font-semibold">12/15</span>
                 </li>
-                <li className="flex justify-between border-b border-[#1E4976] pb-1">
+                <li className="flex justify-between border-b border-gray-700 pb-2">
                   <span>Trucks</span>
-                  <span className="font-mono-cmd">8/10</span>
+                  <span className="font-semibold">8/10</span>
                 </li>
-                <li className="flex justify-between border-b border-[#1E4976] pb-1">
+                <li className="flex justify-between border-b border-gray-700 pb-2">
                   <span>Personnel</span>
-                  <span className="font-mono-cmd">145</span>
+                  <span className="font-semibold">145</span>
                 </li>
               </ul>
             </div>
@@ -136,20 +136,20 @@ export function DistrictControl() {
 
         {/* Side Panel */}
         <div className="space-y-4">
-          <div className="bg-[#132F4C] border border-[#1E4976] p-4 h-64 flex flex-col">
-            <h3 className="text-xs font-bold uppercase text-gray-400 mb-2 flex items-center gap-2">
-              <Map size={14} /> District Map
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 h-64 flex flex-col">
+            <h3 className="text-sm font-bold uppercase text-gray-400 mb-3 flex items-center gap-2">
+              <Map size={18} /> District Map
             </h3>
-            <div className="flex-1 bg-[#050B14] border border-[#1E4976] flex items-center justify-center text-gray-600 text-xs font-mono-cmd">
+            <div className="flex-1 bg-gray-950 border border-gray-700 rounded-lg flex items-center justify-center text-gray-600 text-xs font-semibold">
               [DISTRICT MAP]
             </div>
           </div>
 
-          <button className="w-full py-3 bg-[#00E5FF] text-black font-bold uppercase text-sm hover:bg-[#00B8D4]">
+          <button className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-sm rounded-lg transition-colors">
             Generate Briefing (PDF)
           </button>
 
-          <button className="w-full py-3 bg-[#132F4C] border border-[#FF1744] text-[#FF1744] font-bold uppercase text-sm hover:bg-[#FF1744]/10">
+          <button className="w-full py-3 px-6 bg-gray-800 border border-red-600 text-red-600 font-bold uppercase text-sm hover:bg-red-600/10 rounded-lg transition-colors">
             Declare Emergency
           </button>
         </div>

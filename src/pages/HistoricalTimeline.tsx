@@ -1,113 +1,152 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calendar, TrendingUp, AlertOctagon } from 'lucide-react';
-const data = [{
-  year: '2018',
-  floods: 2,
-  rainfall: 1200
-}, {
-  year: '2019',
-  floods: 1,
-  rainfall: 900
-}, {
-  year: '2020',
-  floods: 3,
-  rainfall: 1500
-}, {
-  year: '2021',
-  floods: 4,
-  rainfall: 1800
-}, {
-  year: '2022',
-  floods: 2,
-  rainfall: 1100
-}, {
-  year: '2023',
-  floods: 5,
-  rainfall: 2100
-}];
+import { UnifiedCard } from '../components/ui/UnifiedCard';
+import { TrendingUp, AlertOctagon, Calendar } from 'lucide-react';
+
+const data = [
+  { year: '2018', floods: 2, rainfall: 1200 },
+  { year: '2019', floods: 1, rainfall: 900 },
+  { year: '2020', floods: 3, rainfall: 1500 },
+  { year: '2021', floods: 4, rainfall: 1800 },
+  { year: '2022', floods: 2, rainfall: 1100 },
+  { year: '2023', floods: 5, rainfall: 2100 },
+];
+
 export function HistoricalTimeline() {
-  return <div className="min-h-screen pt-24 px-4 md:pl-72 pb-20">
+  const [selectedDistrict, setSelectedDistrict] = useState('Colombo District');
+
+  return (
+    <div className="min-h-screen px-lg px-lg md:px-xl pb-xl bg-bg-primary">
       <div className="max-w-6xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-4xl md:text-6xl font-black uppercase leading-none mb-4">
-            Flood
-            <br />
-            History
+        {/* Header */}
+        <header className="mb-xl">
+          <h1 className="text-3xl md:text-4xl font-bold uppercase leading-tight text-text-primary mb-lg">
+            Flood History
           </h1>
-          <div className="flex flex-wrap gap-4">
-            <select className="border-4 border-black p-3 font-bold uppercase bg-white text-xl">
-              <option>Colombo District</option>
-              <option>Gampaha District</option>
-              <option>Kalutara District</option>
-            </select>
-          </div>
+          <select
+            value={selectedDistrict}
+            onChange={(e) => setSelectedDistrict(e.target.value)}
+            className="border border-border-light px-lg py-md font-semibold uppercase bg-bg-card text-text-primary text-sm rounded-card focus:outline-none focus:border-critical transition-colors"
+          >
+            <option>Colombo District</option>
+            <option>Gampaha District</option>
+            <option>Kalutara District</option>
+          </select>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-          <div className="bg-black text-white p-6 border-4 border-black">
-            <div className="flex items-start justify-between mb-4">
-              <h3 className="text-xl font-black uppercase">Total Events</h3>
-              <AlertOctagon />
+        {/* Metric Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-lg mb-xl">
+          {/* Total Events Card */}
+          <UnifiedCard className="bg-gradient-to-br from-red-600 to-red-700 text-white border-none">
+            <div className="flex items-start justify-between mb-lg">
+              <h3 className="font-bold uppercase text-sm">Total Events</h3>
+              <AlertOctagon size={22} strokeWidth={2} />
             </div>
-            <p className="text-6xl font-black">17</p>
-            <p className="text-sm font-bold uppercase text-gray-400 mt-2">
-              Last 5 Years
-            </p>
-          </div>
+            <p className="text-5xl font-bold mb-md">17</p>
+            <p className="text-xs font-semibold opacity-90">Last 5 Years</p>
+          </UnifiedCard>
 
-          <div className="bg-white text-black p-6 border-4 border-black">
-            <div className="flex items-start justify-between mb-4">
-              <h3 className="text-xl font-black uppercase">Peak Month</h3>
-              <Calendar />
+          {/* Peak Month Card */}
+          <UnifiedCard>
+            <div className="flex items-start justify-between mb-lg">
+              <h3 className="font-bold uppercase text-sm text-text-primary">Peak Month</h3>
+              <Calendar size={22} strokeWidth={2} className="text-text-primary" />
             </div>
-            <p className="text-6xl font-black">MAY</p>
-            <p className="text-sm font-bold uppercase text-gray-500 mt-2">
-              Monsoon Season
-            </p>
-          </div>
+            <p className="text-5xl font-bold mb-md text-text-primary">MAY</p>
+            <p className="text-xs font-semibold text-text-secondary">Monsoon Season</p>
+          </UnifiedCard>
 
-          <div className="bg-[#FFCC00] text-black p-6 border-4 border-black">
-            <div className="flex items-start justify-between mb-4">
-              <h3 className="text-xl font-black uppercase">Risk Trend</h3>
-              <TrendingUp />
+          {/* Risk Trend Card */}
+          <UnifiedCard accentColor="warning">
+            <div className="flex items-start justify-between mb-lg">
+              <h3 className="font-bold uppercase text-sm text-text-primary">Risk Trend</h3>
+              <TrendingUp size={22} strokeWidth={2} className="text-orange-500" />
             </div>
-            <p className="text-6xl font-black">+15%</p>
-            <p className="text-sm font-bold uppercase text-black/60 mt-2">
-              Year over Year
-            </p>
-          </div>
+            <p className="text-5xl font-bold mb-md text-orange-500">+15%</p>
+            <p className="text-xs font-semibold text-text-secondary">Year over Year</p>
+          </UnifiedCard>
         </div>
 
-        <div className="bg-white border-4 border-black p-6 h-[400px]">
-          <h3 className="text-xl font-black uppercase mb-6">
+        {/* Chart Container */}
+        <UnifiedCard>
+          <h3 className="font-bold uppercase text-sm mb-lg text-text-primary">
             Annual Flood Frequency
           </h3>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-              <XAxis dataKey="year" tick={{
-              fontFamily: 'Inter',
-              fontWeight: 'bold'
-            }} />
-              <YAxis tick={{
-              fontFamily: 'Inter',
-              fontWeight: 'bold'
-            }} />
-              <Tooltip contentStyle={{
-              border: '4px solid black',
-              borderRadius: 0,
-              boxShadow: '4px 4px 0 0 black'
-            }} itemStyle={{
-              fontFamily: 'Inter',
-              fontWeight: 'bold',
-              textTransform: 'uppercase'
-            }} />
-              <Bar dataKey="floods" fill="#000000" />
-              <Bar dataKey="rainfall" fill="#FFCC00" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="h-96 -mx-lg -mb-lg px-lg pb-lg">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                <XAxis
+                  dataKey="year"
+                  tick={{
+                    fontFamily: 'Inter, sans-serif',
+                    fontWeight: 600,
+                    fontSize: 12,
+                    fill: '#5F6B7A'
+                  }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                />
+                <YAxis
+                  tick={{
+                    fontFamily: 'Inter, sans-serif',
+                    fontWeight: 600,
+                    fontSize: 12,
+                    fill: '#5F6B7A'
+                  }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    backgroundColor: '#FFFFFF',
+                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                  }}
+                  itemStyle={{
+                    fontFamily: 'Inter, sans-serif',
+                    fontWeight: 600,
+                    fontSize: 12,
+                    color: '#1E1E1E'
+                  }}
+                  labelStyle={{
+                    fontFamily: 'Inter, sans-serif',
+                    fontWeight: 700,
+                    fontSize: 12,
+                    color: '#1E1E1E'
+                  }}
+                />
+                <Bar dataKey="floods" fill="#E63946" name="Floods" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="rainfall" fill="#FFD60A" name="Rainfall (mm)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Historical Events List */}
+        <div className="mt-xl">
+          <h3 className="font-bold uppercase text-sm text-text-primary mb-lg">Recent Events</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
+            {[
+              { year: 2023, events: 5, description: 'Severe monsoon rainfall caused widespread flooding in urban areas' },
+              { year: 2022, events: 2, description: 'Two localized flood events in coastal regions' },
+              { year: 2021, events: 4, description: 'Increased frequency due to climate variability' },
+              { year: 2020, events: 3, description: 'Recovery phase with moderate flood incidents' }
+            ].map((item, idx) => (
+              <div key={idx} className="bg-bg-card border border-border-light p-lg rounded-card shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-md">
+                  <span className="font-bold text-lg text-text-primary">{item.year}</span>
+                  <span className="inline-block bg-critical/10 text-critical text-xs font-bold px-md py-xs rounded-card">
+                    {item.events} Event{item.events !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <p className="text-xs font-semibold text-text-secondary leading-snug">
+                  {item.description}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 }

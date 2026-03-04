@@ -52,31 +52,31 @@ const scatterData = [{
   z: 500
 }];
 export function Analytics() {
-  return <div className="space-y-6">
-      <div className="flex justify-between items-end">
+  return <div className="space-y-8">
+      <div className="flex justify-between items-center mb-8">
         <div>
-          <h2 className="text-2xl font-bold uppercase tracking-widest text-white">
+          <h2 className="text-4xl font-bold uppercase tracking-tight text-white mb-2">
             Research & Policy Lab
           </h2>
-          <p className="text-xs font-mono-cmd text-gray-400">
+          <p className="text-sm font-semibold text-gray-400">
             DATA EXPLORER • CLIMATE MODELING
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="px-4 py-2 bg-[#132F4C] border border-[#1E4976] text-white font-bold uppercase text-xs hover:bg-[#1E4976] flex items-center gap-2">
-            <Database size={14} /> Connect Data Source
+          <button className="px-6 py-3 bg-gray-800 border border-gray-700 text-white font-bold uppercase text-sm hover:bg-gray-700 flex items-center gap-2 rounded transition-colors">
+            <Database size={18} /> Connect Data Source
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-[#132F4C] border border-[#1E4976] p-6 h-[400px]">
-          <h3 className="text-xs font-bold uppercase text-gray-400 mb-4">
+        <div className="bg-gray-800 border border-gray-700 p-6 h-[400px] rounded-lg">
+          <h3 className="text-sm font-bold uppercase text-gray-400 mb-4">
             Long-term Flood Trend Analysis
           </h3>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1E4976" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="year" stroke="#64748B" tick={{
               fill: '#64748B',
               fontSize: 10
@@ -86,26 +86,26 @@ export function Analytics() {
               fontSize: 10
             }} />
               <Tooltip contentStyle={{
-              backgroundColor: '#0A1929',
-              borderColor: '#1E4976',
-              color: '#E0E0E0'
+              backgroundColor: '#111827',
+              borderColor: '#374151',
+              color: '#D1D5DB'
             }} cursor={{
-              fill: '#1E4976',
+              fill: '#374151',
               opacity: 0.2
             }} />
-              <Bar dataKey="events" fill="#00E5FF" />
-              <Bar dataKey="damage" fill="#FF1744" />
+              <Bar dataKey="events" fill="#2563EB" />
+              <Bar dataKey="damage" fill="#DC2626" />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-[#132F4C] border border-[#1E4976] p-6 h-[400px]">
-          <h3 className="text-xs font-bold uppercase text-gray-400 mb-4">
+        <div className="bg-gray-800 border border-gray-700 p-6 h-[400px] rounded-lg">
+          <h3 className="text-sm font-bold uppercase text-gray-400 mb-4">
             Infrastructure vs Risk Correlation
           </h3>
           <ResponsiveContainer width="100%" height="100%">
             <ScatterChart>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1E4976" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis type="number" dataKey="x" name="Rainfall" stroke="#64748B" tick={{
               fill: '#64748B',
               fontSize: 10
@@ -118,40 +118,40 @@ export function Analytics() {
               <Tooltip cursor={{
               strokeDasharray: '3 3'
             }} contentStyle={{
-              backgroundColor: '#0A1929',
-              borderColor: '#1E4976',
-              color: '#E0E0E0'
+              backgroundColor: '#111827',
+              borderColor: '#374151',
+              color: '#D1D5DB'
             }} />
-              <Scatter name="Districts" data={scatterData} fill="#FFC107" />
+              <Scatter name="Districts" data={scatterData} fill="#F97316" />
             </ScatterChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      <div className="bg-[#132F4C] border border-[#1E4976] p-6">
+      <div className="bg-gray-800 border border-gray-700 p-6 rounded-lg">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xs font-bold uppercase text-[#00E5FF]">
+          <h3 className="text-sm font-bold uppercase text-blue-400">
             Data Export Portal
           </h3>
           <div className="flex gap-2">
-            <input type="text" placeholder="Filter datasets..." className="bg-[#0A1929] border border-[#1E4976] text-white px-3 py-1 text-xs focus:border-[#00E5FF] outline-none" />
-            <button className="p-1 bg-[#1E4976] text-white">
-              <Filter size={14} />
+            <input type="text" placeholder="Filter datasets..." className="bg-gray-900 border border-gray-700 text-white px-4 py-2 text-sm focus:border-blue-400 outline-none rounded" />
+            <button className="p-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors">
+              <Filter size={16} />
             </button>
           </div>
         </div>
 
         <table className="w-full text-left border-collapse">
-          <thead className="bg-[#050B14] text-gray-500 text-[10px] uppercase font-bold">
+          <thead className="bg-gray-950 text-gray-500 text-[10px] uppercase font-bold">
             <tr>
-              <th className="p-3 border-b border-[#1E4976]">Dataset Name</th>
-              <th className="p-3 border-b border-[#1E4976]">Type</th>
-              <th className="p-3 border-b border-[#1E4976]">Size</th>
-              <th className="p-3 border-b border-[#1E4976]">Last Updated</th>
-              <th className="p-3 border-b border-[#1E4976]">Action</th>
+              <th className="p-4 border-b border-gray-700">Dataset Name</th>
+              <th className="p-4 border-b border-gray-700">Type</th>
+              <th className="p-4 border-b border-gray-700">Size</th>
+              <th className="p-4 border-b border-gray-700">Last Updated</th>
+              <th className="p-4 border-b border-gray-700">Action</th>
             </tr>
           </thead>
-          <tbody className="text-xs font-mono-cmd text-gray-300">
+          <tbody className="text-sm font-semibold text-gray-300">
             {[{
             name: 'National_Rainfall_2023_Q4.csv',
             type: 'CSV',
@@ -167,14 +167,14 @@ export function Analytics() {
             type: 'PDF',
             size: '2.4 MB',
             date: '1 week ago'
-          }].map((file, i) => <tr key={i} className="hover:bg-[#0A1929] border-b border-[#1E4976]/50">
-                <td className="p-3 font-bold text-white">{file.name}</td>
-                <td className="p-3">{file.type}</td>
-                <td className="p-3">{file.size}</td>
-                <td className="p-3 text-gray-500">{file.date}</td>
-                <td className="p-3">
-                  <button className="text-[#00E5FF] hover:text-white flex items-center gap-1">
-                    <Download size={14} /> Download
+          }].map((file, i) => <tr key={i} className="hover:bg-gray-900 border-b border-gray-700/50">
+                <td className="p-4 font-bold text-white">{file.name}</td>
+                <td className="p-4">{file.type}</td>
+                <td className="p-4">{file.size}</td>
+                <td className="p-4 text-gray-500">{file.date}</td>
+                <td className="p-4">
+                  <button className="text-blue-400 hover:text-white flex items-center gap-1 transition-colors">
+                    <Download size={16} /> Download
                   </button>
                 </td>
               </tr>)}

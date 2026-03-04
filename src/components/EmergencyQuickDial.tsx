@@ -1,15 +1,85 @@
 import React from 'react';
-import { Phone, Ambulance } from 'lucide-react';
+import { Phone, Ambulance, HelpCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
 export function EmergencyQuickDial() {
-  return <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end gap-4 pointer-events-auto">
-      {/* Secondary emergency action (ambulance) */}
-      <button className="w-14 h-14 bg-white border-4 border-black text-[#FF0000] flex items-center justify-center rounded-full shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:scale-105 active:scale-95 transition-transform" aria-label="Call Ambulance">
-        <Ambulance size={24} strokeWidth={3} />
-      </button>
-      
-      {/* Primary emergency action - large, prominent */}
-      <button className="w-16 h-16 bg-[#FF0000] border-4 border-black text-white flex items-center justify-center rounded-full shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:scale-105 active:scale-95 transition-transform animate-pulse" aria-label="Emergency Call 911">
-        <Phone size={32} strokeWidth={3} />
-      </button>
-    </div>;
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  const secondaryActions = [
+    {
+      icon: Ambulance,
+      label: 'Ambulance',
+      color: 'bg-warning',
+      onClick: () => console.log('Calling Ambulance...')
+    },
+    {
+      icon: HelpCircle,
+      label: 'Get Help',
+      color: 'bg-info',
+      onClick: () => console.log('Opening Help...')
+    }
+  ];
+
+  return (
+    <div className="fixed bottom-xl md:bottom-lg right-lg z-[10000] md:mb-20 flex flex-col items-end gap-md pointer-events-auto">
+      {/* Secondary Actions - Above Primary */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            transition={{ duration: 0.2 }}
+            className="flex flex-col gap-md items-end"
+          >
+            {secondaryActions.map((action, i) => {
+              const Icon = action.icon;
+              return (
+                <motion.button
+                  key={i}
+                  onClick={action.onClick}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`
+                    w-14 h-14 ${action.color} text-white
+                    flex items-center justify-center rounded-card
+                    border border-border-light shadow-card
+                    hover:opacity-90 transition-opacity
+                  `}
+                  title={action.label}
+                  aria-label={action.label}
+                >
+                  <Icon size={22} strokeWidth={2} />
+                </motion.button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Primary Emergency Action - Always Visible */}
+      <motion.button
+        onClick={() => setIsOpen(!isOpen)}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        animate={{
+          scale: [1, 1.08, 1]
+        }}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          ease: 'easeInOut'
+        }}
+        className="
+          w-16 h-16 bg-critical text-white
+          flex items-center justify-center rounded-card
+          border border-border-light shadow-lg
+          hover:opacity-90 transition-opacity
+        "
+        aria-label="Emergency Call 911"
+      >
+        <Phone size={28} strokeWidth={2} />
+      </motion.button>
+    </div>
+  );
 }

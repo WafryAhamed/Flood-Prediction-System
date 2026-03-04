@@ -54,67 +54,66 @@ export function AdminLayout() {
     label: 'Research',
     icon: BarChart3
   }];
-  return <div className="min-h-screen bg-[#0A1929] text-[#E0E0E0] font-sans admin-theme flex flex-col">
+  return <div className="min-h-screen bg-bg-dark text-gray-200 font-sans admin-theme flex flex-col">
       {/* Top Bar */}
-      <header className="bg-[#050B14] h-14 flex items-center justify-between px-6 border-b border-[#1E4976] z-20">
+      <header className="bg-bg-sidebar h-16 flex items-center justify-between px-8 border-b border-gray-700 z-20">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-[#FF1744] rounded-full animate-pulse shadow-[0_0_8px_#FF1744]"></div>
-            <h1 className="font-bold uppercase tracking-widest text-[#00E5FF] text-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse shadow-[0_0_8px_#DC2626]"></div>
+            <h1 className="font-bold uppercase tracking-widest text-blue-400 text-base">
               National Flood Ops Center
             </h1>
           </div>
-          <div className="h-4 w-[1px] bg-[#1E4976]"></div>
-          <div className="text-xs font-mono-cmd text-gray-400">
+          <div className="h-5 w-[1px] bg-gray-700"></div>
+          <div className="text-xs font-semibold text-gray-400">
             DEFCON 4 • MONITORING
           </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="text-right">
             <div className="text-xs font-bold text-white">CMD. PERERA</div>
-            <div className="text-[10px] font-mono-cmd text-[#00E676]">
+            <div className="text-[10px] font-semibold text-green-400">
               SUPER_ADMIN
             </div>
           </div>
-          <div className="w-8 h-8 bg-[#132F4C] border border-[#1E4976] flex items-center justify-center">
-            <span className="font-bold text-xs">CP</span>
+          <div className="w-10 h-10 bg-gray-700 border border-gray-600 flex items-center justify-center rounded-lg">
+            <span className="font-bold text-xs text-white">CP</span>
           </div>
         </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className="w-64 bg-[#050B14] border-r border-[#1E4976] hidden md:flex flex-col z-10">
-          <nav className="flex-1 overflow-y-auto py-4">
+        <aside className="w-80 bg-bg-sidebar border-r border-gray-700 hidden lg:flex flex-col z-10">
+          <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
             {navItems.map(item => <Link key={item.path} to={item.path} className={`
-                  flex items-center gap-3 px-4 py-3 border-l-2 transition-colors
-                  ${isActive(item.path) ? 'bg-[#132F4C] border-[#00E5FF] text-[#00E5FF]' : 'border-transparent text-gray-400 hover:bg-[#132F4C]/50 hover:text-white'}
+                  flex items-center gap-3 px-4 py-3 border-l-4 transition-colors rounded-lg text-sm font-semibold uppercase tracking-wide
+                  ${isActive(item.path) ? 'bg-blue-600/20 border-l-blue-400 text-blue-400' : 'border-l-transparent text-gray-400 hover:bg-gray-800/50 hover:text-white'}
                 `}>
-                <item.icon size={18} />
-                <span className="font-medium text-xs uppercase tracking-wide">
+                <item.icon size={20} />
+                <span>
                   {item.label}
                 </span>
               </Link>)}
           </nav>
 
-          <div className="p-4 border-t border-[#1E4976]">
-            <div className="text-[10px] text-gray-500 font-mono-cmd">
-              SYS: v2.4.1-STABLE
-              <br />
-              LAT: 5ms
+          <div className="p-4 border-t border-gray-700">
+            <div className="text-xs text-gray-500 font-semibold space-y-1">
+              <div>SYS: v2.4.1-STABLE</div>
+              <div>LAT: 5ms</div>
             </div>
           </div>
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto bg-[#0A1929] relative">
+        <main className="flex-1 overflow-y-auto bg-gray-900 relative">
           {/* Grid Background Effect */}
           <div className="absolute inset-0 pointer-events-none opacity-5" style={{
-          backgroundImage: 'linear-gradient(#1E4976 1px, transparent 1px), linear-gradient(90deg, #1E4976 1px, transparent 1px)',
+          backgroundImage: 'linear-gradient(#374151 1px, transparent 1px), linear-gradient(90deg, #374151 1px, transparent 1px)',
           backgroundSize: '40px 40px'
         }}></div>
 
-          <div className="p-6 relative z-0">
+          <div className="p-8 relative z-0">
             <Outlet />
           </div>
         </main>
