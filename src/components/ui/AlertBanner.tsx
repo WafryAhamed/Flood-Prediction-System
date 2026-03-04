@@ -44,7 +44,13 @@ export function AlertBanner({
         >
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 md:gap-inner-lg">
             <div className="flex items-center gap-2 md:gap-inner-lg min-w-0">
-              <AlertTriangle size={20} strokeWidth={2.5} className="shrink-0 md:w-6 md:h-6" />
+              {/* Animated siren indicator */}
+              <span className="relative flex shrink-0">
+                <span className="animate-siren inline-flex">
+                  <AlertTriangle size={20} strokeWidth={2.5} className="shrink-0 md:w-6 md:h-6" />
+                </span>
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-white animate-live-dot" />
+              </span>
               <p className="text-sm md:text-lg font-black uppercase tracking-tight truncate">
                 {message}
               </p>

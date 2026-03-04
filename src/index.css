@@ -208,6 +208,86 @@ body {
   border-width: 0;
 }
 
+/* === Dashboard Contextual Animations === */
+
+/* Wind blowing – subtle sway */
+@keyframes windSway {
+  0%, 100% { transform: rotate(0deg) translateX(0); }
+  25% { transform: rotate(-6deg) translateX(-1px); }
+  50% { transform: rotate(4deg) translateX(1px); }
+  75% { transform: rotate(-3deg) translateX(-0.5px); }
+}
+.animate-wind {
+  animation: windSway 2.5s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+/* Water ripple – expanding rings */
+@keyframes waterRipple {
+  0% { transform: scale(0.85); opacity: 0.7; }
+  50% { transform: scale(1.15); opacity: 0.3; }
+  100% { transform: scale(0.85); opacity: 0.7; }
+}
+.animate-water-ripple {
+  animation: waterRipple 2s ease-in-out infinite;
+}
+
+/* Warning pulse – for CRITICAL risk */
+@keyframes warningFlash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.animate-warning-flash {
+  animation: warningFlash 1.2s ease-in-out infinite;
+}
+
+/* Slow warning – for HIGH risk */
+@keyframes warningSlow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+.animate-warning-slow {
+  animation: warningSlow 2.5s ease-in-out infinite;
+}
+
+/* Pulsing green dot – active system status */
+@keyframes pulseGreen {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.5); }
+  50% { box-shadow: 0 0 0 6px rgba(22, 163, 74, 0); }
+}
+.animate-pulse-green {
+  animation: pulseGreen 2s ease-in-out infinite;
+}
+
+/* Radar sweep – real-time map indicator */
+@keyframes radarSweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.animate-radar {
+  animation: radarSweep 3s linear infinite;
+}
+
+/* Siren flash – for alert banner */
+@keyframes sirenFlash {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  25% { opacity: 0.6; transform: scale(1.1); }
+  50% { opacity: 1; transform: scale(1); }
+  75% { opacity: 0.6; transform: scale(1.1); }
+}
+.animate-siren {
+  animation: sirenFlash 1.8s ease-in-out infinite;
+}
+
+/* Live dot blink */
+@keyframes liveDot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.animate-live-dot {
+  animation: liveDot 1.5s ease-in-out infinite;
+}
+
 /* Page Transition Animation */
 @keyframes pageIn {
   from {

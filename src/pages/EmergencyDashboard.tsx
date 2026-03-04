@@ -32,10 +32,10 @@ export function EmergencyDashboard() {
   };
 
   const metrics = [
-    { icon: Wind, label: 'Wind Speed', value: '85', unit: 'km/h', color: 'bg-blue-100 text-blue-600' },
-    { icon: Droplets, label: 'Water Level', value: '+2.4', unit: 'm', color: 'bg-red-100 text-red-600' },
-    { icon: AlertTriangle, label: 'Risk Level', value: 'CRITICAL', unit: '', color: 'bg-orange-100 text-orange-600' },
-    { icon: CheckCircle, label: 'System Status', value: 'ACTIVE', unit: '', color: 'bg-green-100 text-green-600' }
+    { icon: Wind, label: 'Wind Speed', value: '85', unit: 'km/h', color: 'bg-blue-100 text-blue-600', animation: 'animate-wind' },
+    { icon: Droplets, label: 'Water Level', value: '+2.4', unit: 'm', color: 'bg-red-100 text-red-600', animation: 'animate-water-ripple' },
+    { icon: AlertTriangle, label: 'Risk Level', value: 'CRITICAL', unit: '', color: 'bg-orange-100 text-orange-600', animation: 'animate-warning-flash' },
+    { icon: CheckCircle, label: 'System Status', value: 'ACTIVE', unit: '', color: 'bg-green-100 text-green-600', animation: 'animate-pulse-green' }
   ];
 
   return (
@@ -99,7 +99,7 @@ export function EmergencyDashboard() {
                     transition={{ delay: 0.1 + index * 0.05 }}
                     className="flex flex-col items-center text-center p-md bg-gray-50 rounded-lg"
                   >
-                    <div className={`w-12 h-12 rounded-full ${metric.color} flex items-center justify-center mb-md`}>
+                    <div className={`w-12 h-12 rounded-full ${metric.color} flex items-center justify-center mb-md ${metric.animation}`}>
                       <metric.icon size={24} />
                     </div>
                     <div className="text-text-secondary text-xs uppercase font-semibold mb-xs">
@@ -127,6 +127,17 @@ export function EmergencyDashboard() {
           <UnifiedCard noPadding className="relative h-[50vh] md:h-[60vh] lg:h-[70vh] min-h-[300px]">
             <div className="absolute inset-0 z-10">
               <RiskMap />
+            </div>
+
+            {/* Radar Indicator */}
+            <div className="absolute top-3 left-3 md:top-6 md:left-6 z-20 flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-md px-2 py-1.5 border border-border-light">
+              <svg width="20" height="20" viewBox="0 0 20 20" className="animate-radar" aria-hidden="true">
+                <circle cx="10" cy="10" r="8" fill="none" stroke="#2563EB" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.4" />
+                <line x1="10" y1="10" x2="10" y2="2" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="10" cy="10" r="2" fill="#2563EB" />
+              </svg>
+              <span className="text-[10px] md:text-xs font-bold text-blue-600 uppercase tracking-wide">Live</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-live-dot"></span>
             </div>
 
             {/* Map Controls - Floating Legend */}

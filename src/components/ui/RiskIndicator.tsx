@@ -63,11 +63,18 @@ export function RiskIndicator({
 
   const config = getConfig();
 
+  const animationClass = level === 'CRITICAL'
+    ? 'animate-warning-flash'
+    : level === 'HIGH'
+      ? 'animate-warning-slow'
+      : '';
+
   return (
     <div className={`flex flex-col ${className}`}>
       <div className={`
         ${config.bg} ${config.text} ${config.weight} border-4 border-dark-text
         px-card py-section flex items-center justify-center text-center shadow-medium
+        ${animationClass}
       `}>
         <h2 className="text-display-lg font-black uppercase tracking-tight leading-none">
           {config.label}
