@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { RiskMap } from '../components/RiskMap';
 import { UnifiedCard } from '../components/ui/UnifiedCard';
 import { Layers, X } from 'lucide-react';
@@ -26,7 +26,7 @@ export function RiskMapPage() {
     <div className="h-screen flex flex-col relative bg-bg-primary">
       {/* Map Layers Control - Top Left */}
       {showLayers && (
-        <div className="absolute top-lg left-lg z-[1000] w-72">
+        <div className="absolute top-2 left-2 md:top-lg md:left-lg z-[1000] w-56 md:w-72">
           <UnifiedCard noPadding className="w-full">
             <div className="flex justify-between items-center mb-inner">
               <h3 className="font-bold uppercase text-sm flex items-center gap-md text-text-primary">
@@ -68,7 +68,7 @@ export function RiskMapPage() {
 
         {/* Legend Panel - Bottom Right */}
         {showLegend && (
-          <div className="absolute bottom-lg md:bottom-xl right-lg md:right-xl z-[1000] w-80">
+          <div className="absolute bottom-2 right-2 md:bottom-xl md:right-xl z-[1000] w-64 md:w-80">
             <UnifiedCard noPadding>
               <div className="flex justify-between items-center mb-inner">
                 <div>

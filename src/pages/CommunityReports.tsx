@@ -8,7 +8,7 @@ export function CommunityReports() {
   const [showForm, setShowForm] = useState(false);
 
   return (
-    <div className="min-h-screen md:pt-lg px-lg md:px-xl pb-xl bg-bg-primary">
+    <div className="min-h-screen md:pt-lg px-4 sm:px-6 md:px-8 pb-xl bg-bg-primary md:mr-[384px] lg:mr-[400px]">
       {/* Header Section */}
       <section className="max-w-4xl mx-auto mb-xl">
         <div className="inline-block bg-orange-500 text-white px-lg py-sm font-bold text-xs uppercase mb-md rounded-card">
@@ -176,7 +176,7 @@ export function CommunityReports() {
       </AnimatePresence>
 
       {/* Desktop Form Panel */}
-      <div className="hidden md:block fixed right-0 top-0 bottom-0 w-96 bg-card-bg border-l border-gray-200 overflow-y-auto shadow-lg">
+      <div className="hidden md:block fixed right-0 top-0 bottom-0 w-80 lg:w-96 bg-card-bg border-l border-gray-200 overflow-y-auto shadow-lg">
         <div className="p-lg border-b border-gray-200 sticky top-0 bg-card-bg">
           <h2 className="text-lg font-bold text-primary-text uppercase">New Report</h2>
         </div>

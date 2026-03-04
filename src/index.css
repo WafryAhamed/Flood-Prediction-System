@@ -29,11 +29,21 @@
   --motion-duration: 0.3s;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 body {
   font-family: 'Inter', sans-serif;
   background-color: var(--color-white);
   color: var(--color-black);
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
 }
 
 /* Admin Specific Overrides */

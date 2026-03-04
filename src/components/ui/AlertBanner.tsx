@@ -42,10 +42,10 @@ export function AlertBanner({
             px-card py-inner-lg shadow-medium
           `}
         >
-          <div className="max-w-7xl mx-auto flex items-center justify-between gap-inner-lg">
-            <div className="flex items-center gap-inner-lg">
-              <AlertTriangle size={24} strokeWidth={2.5} className="shrink-0" />
-              <p className="text-lg font-black uppercase tracking-tight">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 md:gap-inner-lg">
+            <div className="flex items-center gap-2 md:gap-inner-lg min-w-0">
+              <AlertTriangle size={20} strokeWidth={2.5} className="shrink-0 md:w-6 md:h-6" />
+              <p className="text-sm md:text-lg font-black uppercase tracking-tight truncate">
                 {message}
               </p>
             </div>

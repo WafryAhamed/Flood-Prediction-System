@@ -50,7 +50,7 @@ export function UnifiedCard({
       className={`
         bg-bg-card border border-border-light rounded-xl shadow-md
         ${getAccentClass()}
-        ${noPadding ? '' : 'p-6'}
+        ${noPadding ? '' : 'p-4 md:p-6'}
         ${interactive ? 'cursor-pointer hover:shadow-lg hover:border-gray-300 transition-all' : ''}
         overflow-hidden
         ${className}

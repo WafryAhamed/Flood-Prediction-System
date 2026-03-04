@@ -16,7 +16,7 @@ export function HistoricalTimeline() {
   const [selectedDistrict, setSelectedDistrict] = useState('Colombo District');
 
   return (
-    <div className="min-h-screen px-lg px-lg md:px-xl pb-xl bg-bg-primary">
+    <div className="min-h-screen px-4 sm:px-6 md:px-8 pb-xl bg-bg-primary">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <header className="mb-xl">
@@ -72,7 +72,7 @@ export function HistoricalTimeline() {
           <h3 className="font-bold uppercase text-sm mb-lg text-text-primary">
             Annual Flood Frequency
           </h3>
-          <div className="h-96 -mx-lg -mb-lg px-lg pb-lg">
+          <div className="h-64 md:h-80 lg:h-96 -mx-lg -mb-lg px-lg pb-lg">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />

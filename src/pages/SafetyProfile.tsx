@@ -4,7 +4,7 @@ import { UnifiedCard } from '../components/ui/UnifiedCard';
 
 export function SafetyProfile() {
   return (
-    <div className="min-h-screen px-lg px-lg md:px-xl pb-xl bg-bg-primary">
+    <div className="min-h-screen px-4 sm:px-6 md:px-8 pb-xl bg-bg-primary">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <header className="mb-xl">

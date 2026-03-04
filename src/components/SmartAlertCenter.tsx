@@ -165,7 +165,7 @@ export function SmartAlertCenter({ alerts: initialAlerts = [], onAlertDismiss }:
   return (
     <div className="w-full max-w-2xl mx-auto">
       {/* Floating Alert Button */}
-      <div className="fixed bottom-24 right-6 z-40">
+      <div className="fixed bottom-[160px] md:bottom-24 right-4 md:right-6 z-40">
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
@@ -192,7 +192,7 @@ export function SmartAlertCenter({ alerts: initialAlerts = [], onAlertDismiss }:
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-40 right-6 w-96 max-h-96 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 overflow-hidden flex flex-col"
+            className="fixed bottom-[230px] md:bottom-40 right-4 md:right-6 w-[calc(100vw-2rem)] sm:w-96 max-h-[60vh] md:max-h-96 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 overflow-hidden flex flex-col"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-4 flex justify-between items-center">

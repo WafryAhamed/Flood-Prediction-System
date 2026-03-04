@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { AlertTriangle, CheckCircle, Radio, Wind, Droplets, MapPin, Navigation as NavIcon } from 'lucide-react';
 import { UnifiedCard } from '../components/ui/UnifiedCard';
 import { AlertBanner } from '../components/ui/AlertBanner';
@@ -36,10 +36,10 @@ export function EmergencyDashboard() {
       <AlertBanner message="FLASH FLOOD WARNING IN EFFECT - SECTOR 7" type="danger" />
 
       {/* Hero Section */}
-      <section className="px-lg md:px-xl">
+      <section className="px-4 sm:px-6 md:px-8">
         <div className="max-w-7xl mx-auto">
           <UnifiedCard noPadding>
-            <div className="p-6 space-y-6">
+            <div className="p-4 md:p-6 space-y-4 md:space-y-6">
               <div className="flex flex-col md:flex-row md:items-start justify-between gap-lg">
                 <div className="flex-1">
                   <motion.div
@@ -64,7 +64,7 @@ export function EmergencyDashboard() {
                   transition={{ delay: 0.2 }}
                   className="text-right"
                 >
-                  <div className="text-4xl md:text-5xl font-bold font-mono text-text-primary tracking-tighter">
+                  <div className="text-3xl sm:text-4xl md:text-5xl font-bold font-mono text-text-primary tracking-tighter">
                     {formatTime(time)}
                   </div>
                   <div className="text-xs font-semibold uppercase tracking-widest text-text-secondary mt-xs">
@@ -106,15 +106,15 @@ export function EmergencyDashboard() {
       </section>
 
       {/* Map Card Section */}
-      <section className="px-lg md:px-xl flex-1">
+      <section className="px-4 sm:px-6 md:px-8 flex-1">
         <div className="max-w-7xl mx-auto">
-          <UnifiedCard noPadding className="relative h-96 md:h-[500px]">
+          <UnifiedCard noPadding className="relative h-[50vh] md:h-[60vh] lg:h-[70vh] min-h-[300px]">
             <div className="absolute inset-0 z-10">
               <RiskMap />
             </div>
 
             {/* Map Controls - Floating Legend */}
-            <div className="absolute top-6 right-6 z-20 bg-white rounded-lg shadow-lg p-md border border-border-light max-w-xs">
+            <div className="absolute top-3 right-3 md:top-6 md:right-6 z-20 bg-white rounded-lg shadow-lg p-2 md:p-md border border-border-light max-w-[160px] md:max-w-xs">
               <div className="text-sm font-bold text-text-primary mb-md">Risk Zones</div>
               <div className="space-y-xs">
                 <div className="flex items-center gap-md">
@@ -145,7 +145,7 @@ export function EmergencyDashboard() {
       </section>
 
       {/* Emergency Action Buttons */}
-      <section className="px-lg md:px-xl">
+      <section className="px-4 sm:px-6 md:px-8">
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-md">
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -187,7 +187,7 @@ export function EmergencyDashboard() {
       </section>
 
       {/* Information Cards Grid */}
-      <section className="px-lg md:px-xl">
+      <section className="px-4 sm:px-6 md:px-8">
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-md">
           <UnifiedCard title="Broadcast Feed" subtitle="Latest emergency updates" accentColor="critical">
             <div className="space-y-md max-h-96 overflow-y-auto">

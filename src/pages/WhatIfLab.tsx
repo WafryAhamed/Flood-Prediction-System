@@ -30,7 +30,7 @@ export function WhatIfLab() {
   };
 
   return (
-    <div className="min-h-screen px-lg px-lg md:px-xl pb-xl bg-bg-primary">
+    <div className="min-h-screen px-4 sm:px-6 md:px-8 pb-xl bg-bg-primary">
       {/* Header */}
       <header className="max-w-6xl mx-auto mb-xl">
         <div className="inline-block bg-info text-white px-lg py-sm font-bold text-xs uppercase tracking-widest mb-md rounded-card">
@@ -221,7 +221,7 @@ export function WhatIfLab() {
             <h4 className="font-bold uppercase text-sm mb-lg text-text-primary">
               Scenario Breakdown
             </h4>
-            <div className="grid grid-cols-3 gap-md">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
               <div className="text-center p-md bg-bg-primary rounded-card border border-border-light">
                 <p className="text-xs font-semibold text-text-secondary uppercase mb-md">Input Rainfall</p>
                 <p className="text-2xl font-bold text-critical">{params.rainfall}%</p>
@@ -244,7 +244,7 @@ export function WhatIfLab() {
       {/* Mobile Controls Button */}
       <button
         onClick={() => setShowControls(true)}
-        className="lg:hidden fixed bottom-lg right-lg z-20 bg-critical text-white p-md rounded-full shadow-lg hover:opacity-90 transition-opacity"
+        className="lg:hidden fixed bottom-[160px] md:bottom-lg right-4 md:right-lg z-20 bg-critical text-white p-md rounded-full shadow-lg hover:opacity-90 transition-opacity"
         title="Open controls"
       >
         <Sliders size={24} strokeWidth={2} />

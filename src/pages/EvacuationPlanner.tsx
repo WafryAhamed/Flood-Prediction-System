@@ -62,12 +62,12 @@ export function EvacuationPlanner() {
         {!routeActive ? (
           <button
             onClick={() => setRouteActive(true)}
-            className="absolute bottom-lg left-1/2 transform -translate-x-1/2 z-20 bg-critical text-white px-xl py-md font-bold text-sm uppercase rounded-card shadow-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-md md:left-lg md:bottom-lg md:translate-x-0"
+            className="absolute bottom-24 md:bottom-lg left-1/2 transform -translate-x-1/2 z-20 bg-critical text-white px-xl py-md font-bold text-sm uppercase rounded-card shadow-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-md md:left-lg md:translate-x-0"
           >
             <Navigation strokeWidth={2.5} size={20} /> Find Safe Route
           </button>
         ) : (
-          <div className="absolute bottom-lg left-lg z-20 bg-bg-card border border-border-light px-lg py-md font-bold uppercase rounded-card shadow-card text-xs text-text-primary">
+          <div className="absolute bottom-24 md:bottom-lg left-lg z-20 bg-bg-card border border-border-light px-lg py-md font-bold uppercase rounded-card shadow-card text-xs text-text-primary">
             Route Active • 1.2km • 15 mins
           </div>
         )}
@@ -175,7 +175,7 @@ export function EvacuationPlanner() {
 
         {/* Elevation Profile - Floating Bottom Right */}
         {routeActive && (
-          <div className="absolute bottom-lg right-lg z-10 w-96 bg-bg-card border border-border-light p-inner rounded-card shadow-card">
+          <div className="absolute bottom-24 md:bottom-lg right-2 md:right-lg z-10 w-[calc(100vw-1rem)] sm:w-80 md:w-96 bg-bg-card border border-border-light p-inner rounded-card shadow-card">
             <h4 className="font-bold text-xs uppercase mb-md text-text-primary">Elevation Profile</h4>
             <div className="w-full h-16 bg-bg-primary flex items-end gap-xs rounded-card overflow-hidden">
               {[20, 30, 40, 50, 45, 60, 70, 80, 85, 90].map((h, i) => (
