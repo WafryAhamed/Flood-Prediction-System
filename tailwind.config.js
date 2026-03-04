@@ -31,17 +31,26 @@ export default {
         
         // Status Colors (Semantic)
         'critical': '#DC2626',
+        'high': '#F97316',
         'warning': '#F59E0B',
         'caution': '#FBBF24',
-        'safe': '#10B981',
-        'info': '#3B82F6',
+        'safe': '#16A34A',
+        'info': '#2563EB',
+
+        // Semantic Risk Tokens
+        'risk-critical': '#DC2626',
+        'risk-high': '#F97316',
+        'risk-warning': '#F59E0B',
+        'risk-info': '#2563EB',
+        'risk-safe': '#16A34A',
         
         // Extended Palette
-        'red': { 600: '#DC2626' },
-        'orange': { 500: '#F97316' },
+        'red': { 600: '#DC2626', 700: '#B91C1C' },
+        'orange': { 500: '#F97316', 600: '#EA580C' },
+        'amber': { 500: '#F59E0B', 600: '#D97706' },
         'yellow': { 400: '#FACC15' },
-        'green': { 600: '#16A34A' },
-        'blue': { 600: '#2563EB' },
+        'green': { 500: '#22C55E', 600: '#16A34A' },
+        'blue': { 600: '#2563EB', 700: '#1D4ED8' },
       },
       borderRadius: {
         'card': '12px',

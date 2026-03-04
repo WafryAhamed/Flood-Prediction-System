@@ -6,12 +6,31 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Semantic Risk Color System */
+@layer components {
+  .risk-critical {
+    @apply bg-red-600 text-white border-red-600 font-bold;
+  }
+  .risk-high {
+    @apply bg-orange-500 text-white border-orange-500;
+  }
+  .risk-warning {
+    @apply bg-amber-500 text-black border-amber-500;
+  }
+  .risk-info {
+    @apply bg-blue-600 text-white border-blue-600;
+  }
+  .risk-safe {
+    @apply bg-green-600 text-white border-green-600;
+  }
+}
+
 :root {
   /* Brutalist Theme (User Facing) */
-  --color-danger: #FF0000;
-  --color-warning: #FF6600;
-  --color-caution: #FFCC00;
-  --color-safe: #00CC00;
+  --color-danger: #DC2626;
+  --color-warning: #F97316;
+  --color-caution: #F59E0B;
+  --color-safe: #16A34A;
   --color-black: #000000;
   --color-white: #FFFFFF;
 

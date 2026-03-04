@@ -129,7 +129,7 @@ export function SmartAlertCenter({ alerts: initialAlerts = [], onAlertDismiss }:
       case 'critical':
         return <AlertTriangle className={iconClass + ' text-red-600'} />;
       case 'warning':
-        return <AlertTriangle className={iconClass + ' text-orange-600'} />;
+        return <AlertTriangle className={iconClass + ' text-orange-500'} />;
       case 'info':
         return <Info className={iconClass + ' text-blue-600'} />;
       case 'all-clear':
@@ -140,13 +140,13 @@ export function SmartAlertCenter({ alerts: initialAlerts = [], onAlertDismiss }:
   const getAlertBgColor = (type: Alert['type']) => {
     switch (type) {
       case 'critical':
-        return 'bg-red-50 border-red-400';
+        return 'bg-red-50 border-red-600';
       case 'warning':
-        return 'bg-orange-50 border-orange-400';
+        return 'bg-orange-50 border-orange-500';
       case 'info':
-        return 'bg-blue-50 border-blue-400';
+        return 'bg-blue-50 border-blue-600';
       case 'all-clear':
-        return 'bg-green-50 border-green-400';
+        return 'bg-green-50 border-green-600';
     }
   };
 
@@ -170,7 +170,7 @@ export function SmartAlertCenter({ alerts: initialAlerts = [], onAlertDismiss }:
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowAlerts(!showAlerts)}
-          className="relative w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 text-white rounded-full shadow-lg flex items-center justify-center font-bold text-xs hover:shadow-xl transition-shadow"
+          className="relative w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-full shadow-lg flex items-center justify-center font-bold text-xs hover:shadow-xl transition-shadow"
         >
           <Bell size={24} />
           {unreadCount > 0 && (
@@ -195,7 +195,7 @@ export function SmartAlertCenter({ alerts: initialAlerts = [], onAlertDismiss }:
             className="fixed bottom-[230px] md:bottom-40 right-4 md:right-6 w-[calc(100vw-2rem)] sm:w-96 max-h-[60vh] md:max-h-96 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 overflow-hidden flex flex-col"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-4 flex justify-between items-center">
+            <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white p-4 flex justify-between items-center">
               <div>
                 <h3 className="font-bold text-lg">🔔 Alerts</h3>
                 <p className="text-xs opacity-90">{unreadCount} unread</p>

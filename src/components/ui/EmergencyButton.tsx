@@ -19,13 +19,13 @@ export function EmergencyButton({
   const getVariantStyles = () => {
     switch (variant) {
       case 'critical':
-        return 'bg-critical text-white hover:bg-opacity-90';
+        return 'bg-red-600 text-white hover:bg-red-700 font-bold shadow-md';
       case 'warning':
-        return 'bg-warning text-black hover:bg-opacity-90';
+        return 'bg-orange-500 text-white hover:bg-orange-600';
       case 'caution':
-        return 'bg-caution text-black hover:bg-opacity-90';
+        return 'bg-amber-500 text-black hover:bg-amber-600';
       case 'safe':
-        return 'bg-safe text-white hover:bg-opacity-90';
+        return 'bg-green-600 text-white hover:bg-green-700';
       default:
         return 'bg-black text-white';
     }

@@ -6,7 +6,7 @@ interface UnifiedCardProps {
   title?: string;
   subtitle?: string;
   className?: string;
-  accentColor?: 'critical' | 'warning' | 'caution' | 'safe' | 'info' | 'neutral';
+  accentColor?: 'critical' | 'high' | 'warning' | 'caution' | 'safe' | 'info' | 'neutral';
   delay?: number;
   interactive?: boolean;
   onClick?: () => void;
@@ -28,8 +28,10 @@ export function UnifiedCard({
     switch (accentColor) {
       case 'critical':
         return 'border-l-4 border-l-red-600';
-      case 'warning':
+      case 'high':
         return 'border-l-4 border-l-orange-500';
+      case 'warning':
+        return 'border-l-4 border-l-amber-500';
       case 'caution':
         return 'border-l-4 border-l-yellow-400';
       case 'safe':

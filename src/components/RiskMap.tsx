@@ -22,7 +22,7 @@ export function RiskMap() {
         <Polygon positions={floodZone as any} pathOptions={{
         color: '#000000',
         weight: 3,
-        fillColor: '#FF0000',
+        fillColor: '#DC2626',
         fillOpacity: 0.5
       }}>
           <Popup>
@@ -37,7 +37,7 @@ export function RiskMap() {
         <Polygon positions={safeZone as any} pathOptions={{
         color: '#000000',
         weight: 3,
-        fillColor: '#00CC00',
+        fillColor: '#16A34A',
         fillOpacity: 0.5
       }}>
           <Popup>
@@ -61,15 +61,15 @@ export function RiskMap() {
           Risk Zones
         </h4>
         <div className="flex items-center gap-1.5 md:gap-2">
-          <div className="w-4 h-4 md:w-6 md:h-6 bg-[#FF0000] border-2 border-black opacity-80"></div>
+          <div className="w-4 h-4 md:w-6 md:h-6 bg-red-600 border-2 border-black opacity-80"></div>
           <span className="font-bold text-[10px] md:text-xs uppercase">Critical</span>
         </div>
         <div className="flex items-center gap-1.5 md:gap-2">
-          <div className="w-4 h-4 md:w-6 md:h-6 bg-[#FF6600] border-2 border-black opacity-80"></div>
+          <div className="w-4 h-4 md:w-6 md:h-6 bg-orange-500 border-2 border-black opacity-80"></div>
           <span className="font-bold text-[10px] md:text-xs uppercase">High</span>
         </div>
         <div className="flex items-center gap-1.5 md:gap-2">
-          <div className="w-4 h-4 md:w-6 md:h-6 bg-[#00CC00] border-2 border-black opacity-80"></div>
+          <div className="w-4 h-4 md:w-6 md:h-6 bg-green-600 border-2 border-black opacity-80"></div>
           <span className="font-bold text-[10px] md:text-xs uppercase">Safe</span>
         </div>
       </div>

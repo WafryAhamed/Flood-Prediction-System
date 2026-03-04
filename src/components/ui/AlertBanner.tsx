@@ -16,11 +16,11 @@ export function AlertBanner({
   const getColors = () => {
     switch (type) {
       case 'danger':
-        return 'bg-critical text-white';
+        return 'bg-red-600 text-white font-bold';
       case 'warning':
-        return 'bg-warning text-black';
+        return 'bg-orange-500 text-white';
       default:
-        return 'bg-black text-white';
+        return 'bg-blue-600 text-white';
     }
   };
 

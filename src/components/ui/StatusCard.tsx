@@ -5,7 +5,7 @@ interface StatusCardProps {
   children: React.ReactNode;
   title?: string;
   className?: string;
-  accentColor?: 'critical' | 'warning' | 'caution' | 'safe' | 'neutral';
+  accentColor?: 'critical' | 'high' | 'warning' | 'caution' | 'safe' | 'neutral';
   delay?: number;
 }
 
@@ -20,13 +20,15 @@ export function StatusCard({
     if (accentColor === 'neutral') return '';
     switch (accentColor) {
       case 'critical':
-        return 'border-l-4 border-l-critical';
+        return 'border-l-4 border-l-red-600';
+      case 'high':
+        return 'border-l-4 border-l-orange-500';
       case 'warning':
-        return 'border-l-4 border-l-warning';
+        return 'border-l-4 border-l-amber-500';
       case 'caution':
         return 'border-l-4 border-l-caution';
       case 'safe':
-        return 'border-l-4 border-l-safe';
+        return 'border-l-4 border-l-green-600';
       default:
         return '';
     }

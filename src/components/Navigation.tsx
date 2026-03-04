@@ -58,12 +58,7 @@ export function Navigation() {
 
       {/* Desktop Icon Sidebar - Dark Navy 80px Fixed */}
       <div className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-20 bg-bg-sidebar z-40 items-center pt-lg gap-sm px-0 py-lg overflow-y-auto border-r border-gray-800">
-        {/* Logo */}
-        <div className="mb-4 pb-3 border-b border-gray-700 w-full flex justify-center">
-          <Link to="/" aria-label="Flood Resilience System home">
-            <SystemLogo size="sm" variant="light" showText={false} />
-          </Link>
-        </div>
+
         {navItems.map(item => (
           <div key={item.path} className="relative group w-full">
             <Link
@@ -114,8 +109,7 @@ export function Navigation() {
               className="ml-auto w-64 bg-bg-sidebar h-full border-l border-gray-700 overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
-              <div className="p-lg border-b border-gray-700 flex justify-between items-center sticky top-0 bg-bg-sidebar">
-                <SystemLogo size="sm" variant="light" />
+              <div className="p-lg border-b border-gray-700 flex justify-end items-center sticky top-0 bg-bg-sidebar">
                 <button
                   onClick={() => setIsOpen(false)}
                   className="p-sm text-gray-400 hover:text-white transition-colors"

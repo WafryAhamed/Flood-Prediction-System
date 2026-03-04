@@ -13,38 +13,43 @@ export function RiskIndicator({
     switch (level) {
       case 'CRITICAL':
         return {
-          bg: 'bg-critical',
+          bg: 'bg-red-600',
           text: 'text-white',
           label: 'CRITICAL RISK',
-          border: 'border-critical'
+          border: 'border-red-600',
+          weight: 'font-bold'
         };
       case 'HIGH':
         return {
-          bg: 'bg-warning',
-          text: 'text-black',
+          bg: 'bg-orange-500',
+          text: 'text-white',
           label: 'HIGH RISK',
-          border: 'border-warning'
+          border: 'border-orange-500',
+          weight: ''
         };
       case 'MODERATE':
         return {
-          bg: 'bg-caution',
+          bg: 'bg-amber-500',
           text: 'text-black',
           label: 'MODERATE RISK',
-          border: 'border-caution'
+          border: 'border-amber-500',
+          weight: ''
         };
       case 'LOW':
         return {
-          bg: 'bg-safe',
+          bg: 'bg-green-600',
           text: 'text-white',
           label: 'LOW RISK',
-          border: 'border-safe'
+          border: 'border-green-600',
+          weight: ''
         };
       case 'SAFE':
         return {
           bg: 'bg-white',
-          text: 'text-safe',
-          border: 'border-safe',
-          label: 'AREA SAFE'
+          text: 'text-green-600',
+          border: 'border-green-600',
+          label: 'AREA SAFE',
+          weight: ''
         };
       default:
         return {
@@ -61,7 +66,7 @@ export function RiskIndicator({
   return (
     <div className={`flex flex-col ${className}`}>
       <div className={`
-        ${config.bg} ${config.text} border-4 border-dark-text
+        ${config.bg} ${config.text} ${config.weight} border-4 border-dark-text
         px-card py-section flex items-center justify-center text-center shadow-medium
       `}>
         <h2 className="text-display-lg font-black uppercase tracking-tight leading-none">
