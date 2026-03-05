@@ -5,10 +5,12 @@ import { AlertBanner } from '../components/ui/AlertBanner';
 import { RiskMap } from '../components/RiskMap';
 import { motion } from 'framer-motion';
 import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
+import { useWeatherData } from '../hooks/useWeatherData';
 
 export function EmergencyDashboard() {
   const [time, setTime] = useState(new Date());
   const [isLoading, setIsLoading] = useState(true);
+  const { weather } = useWeatherData();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 600);
@@ -32,15 +34,15 @@ export function EmergencyDashboard() {
   };
 
   const metrics = [
-    { icon: Wind, label: 'Wind Speed', value: '85', unit: 'km/h', color: 'bg-blue-100 text-blue-600', animation: 'animate-wind' },
-    { icon: Droplets, label: 'Water Level', value: '+2.4', unit: 'm', color: 'bg-red-100 text-red-600', animation: 'animate-water-ripple' },
-    { icon: AlertTriangle, label: 'Risk Level', value: 'CRITICAL', unit: '', color: 'bg-orange-100 text-orange-600', animation: 'animate-warning-flash' },
+    { icon: Wind, label: 'Wind Speed', value: weather ? `${weather.windSpeed}` : '—', unit: 'km/h', color: 'bg-blue-100 text-blue-600', animation: 'animate-wind' },
+    { icon: Droplets, label: 'Rainfall', value: weather ? `${weather.rainfall}` : '—', unit: 'mm', color: 'bg-red-100 text-red-600', animation: 'animate-water-ripple' },
+    { icon: AlertTriangle, label: 'Risk Level', value: weather && weather.rainfall > 5 ? 'CRITICAL' : weather && weather.rainfall > 2 ? 'HIGH' : 'MODERATE', unit: '', color: 'bg-orange-100 text-orange-600', animation: 'animate-warning-flash' },
     { icon: CheckCircle, label: 'System Status', value: 'ACTIVE', unit: '', color: 'bg-green-100 text-green-600', animation: 'animate-pulse-green' }
   ];
 
   return (
     <div className="min-h-screen bg-bg-primary pb-20 md:pb-section flex flex-col gap-section">
-      <AlertBanner message="FLASH FLOOD WARNING IN EFFECT - SECTOR 7" type="danger" />
+      <AlertBanner message="FLOOD MONITORING ACTIVE — MIHINTALE DISTRICT" type="danger" />
 
       {isLoading ? (
         <div className="px-4 sm:px-6 md:px-8 py-8">
@@ -84,7 +86,7 @@ export function EmergencyDashboard() {
                     {formatTime(time)}
                   </div>
                   <div className="text-xs font-semibold uppercase tracking-widest text-text-secondary mt-xs">
-                    Local Time • UTC-5
+                    Local Time • Mihintale, Sri Lanka
                   </div>
                 </motion.div>
               </div>

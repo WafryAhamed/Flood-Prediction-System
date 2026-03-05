@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, Polyline, Marker, Popup } from 'react-leaflet'
 import { UnifiedCard } from '../components/ui/UnifiedCard';
 import { Navigation, AlertTriangle, ChevronDown, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SRI_LANKA_CENTER, SRI_LANKA_BOUNDS, DEFAULT_ZOOM } from '../hooks/useWeatherData';
+import { LatLngBoundsExpression } from 'leaflet';
 
 export function EvacuationPlanner() {
   const [routeActive, setRouteActive] = useState(false);
@@ -13,7 +15,13 @@ export function EvacuationPlanner() {
     elderlyFriendly: true
   });
 
-  const route = [[51.505, -0.09], [51.51, -0.1], [51.51, -0.12]];
+  // Evacuation route: Mihintale → Anuradhapura hospital via highland road
+  const route = [
+    [8.3593, 80.5103],  // Mihintale
+    [8.3450, 80.4800],  // Intermediate
+    [8.3300, 80.4500],  // Intermediate
+    [8.3114, 80.4037],  // Anuradhapura
+  ];
 
   return (
     <div className="h-screen flex flex-col relative bg-bg-primary">
@@ -26,11 +34,17 @@ export function EvacuationPlanner() {
       <div className="flex-1 relative overflow-hidden">
         {/* Map Container */}
         <MapContainer
-          center={[51.505, -0.09]}
-          zoom={13}
+          center={SRI_LANKA_CENTER}
+          zoom={DEFAULT_ZOOM + 2}
           className="h-full w-full"
+          maxBounds={SRI_LANKA_BOUNDS as LatLngBoundsExpression}
+          maxBoundsViscosity={1.0}
+          minZoom={7}
         >
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
           {routeActive && (
             <>
               <Polyline
@@ -48,11 +62,11 @@ export function EvacuationPlanner() {
                   weight: 3
                 }}
               />
-              <Marker position={[51.505, -0.09]}>
-                <Popup>Start</Popup>
+              <Marker position={[8.3593, 80.5103]}>
+                <Popup>Start — Mihintale</Popup>
               </Marker>
-              <Marker position={[51.51, -0.12]}>
-                <Popup>Safe Zone</Popup>
+              <Marker position={[8.3114, 80.4037]}>
+                <Popup>Safe Zone — Anuradhapura Hospital</Popup>
               </Marker>
             </>
           )}
@@ -68,7 +82,7 @@ export function EvacuationPlanner() {
           </button>
         ) : (
           <div className="absolute bottom-24 md:bottom-lg left-lg z-20 bg-bg-card border border-border-light px-lg py-md font-bold uppercase rounded-card shadow-card text-xs text-text-primary">
-            Route Active • 1.2km • 15 mins
+            Route Active • 12.4km • 25 mins
           </div>
         )}
 
@@ -150,10 +164,10 @@ export function EvacuationPlanner() {
               <div className="p-inner border-t border-border-light">
                 <h4 className="font-bold text-xs uppercase mb-md text-text-primary">Directions</h4>
                 <ol className="list-decimal list-inside space-y-md text-xs font-semibold text-text-secondary">
-                  <li>Head North on Main St (200m)</li>
-                  <li>Turn Right onto High Ground Rd</li>
-                  <li className="text-caution">CAUTION: Wet Surface</li>
-                  <li>Arrive at Temple Shelter</li>
+                  <li>Head South from Mihintale on A12 (3km)</li>
+                  <li>Turn Right onto Anuradhapura Rd</li>
+                  <li className="text-caution">CAUTION: Low-lying area ahead</li>
+                  <li>Arrive at Anuradhapura General Hospital</li>
                 </ol>
               </div>
             )}
@@ -258,10 +272,10 @@ export function EvacuationPlanner() {
                 <div className="p-inner border-t border-border-light">
                   <h4 className="font-bold text-xs uppercase mb-md text-text-primary">Directions</h4>
                   <ol className="list-decimal list-inside space-y-md text-xs font-semibold text-text-secondary">
-                    <li>Head North on Main St (200m)</li>
-                    <li>Turn Right onto High Ground Rd</li>
-                    <li className="text-caution">CAUTION: Wet Surface</li>
-                    <li>Arrive at Temple Shelter</li>
+                    <li>Head South from Mihintale on A12 (3km)</li>
+                    <li>Turn Right onto Anuradhapura Rd</li>
+                    <li className="text-caution">CAUTION: Low-lying area ahead</li>
+                    <li>Arrive at Anuradhapura General Hospital</li>
                   </ol>
                 </div>
               )}
