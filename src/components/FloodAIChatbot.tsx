@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, MessageCircle, X, Loader, AlertTriangle, MapPin, Home, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
 /*  Types                                                              */
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -17,11 +17,16 @@ interface ApiMessage {
   content: string;
 }
 
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
 /*  Constants                                                          */
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = 'qwen/qwen3-vl-30b-a3b-thinking';
+const FALLBACK_MODELS = [
+  'qwen/qwen3-vl-30b-a3b-thinking',
+  'google/gemma-3-1b-it:free',
+  'mistralai/mistral-small-3.1-24b-instruct:free',
+  'openai/gpt-4o-mini',
+];
 const MAX_HISTORY = 10;
 
 const SYSTEM_PROMPT = `You are the Flood Safety Assistant for Sri Lanka. Help citizens during floods and heavy rainfall.
@@ -60,9 +65,75 @@ const QUICK_ACTIONS = [
   { icon: ShieldCheck, label: 'Emergency numbers', prompt: 'What are the emergency hotline numbers in Sri Lanka for floods?' },
 ];
 
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
+/*  Local fallback response engine                                     */
+/*  Used when the API key is invalid / network fails / quota exceeded  */
+/* ================================================================== */
+function getLocalResponse(userText: string): string {
+  const q = userText.toLowerCase();
+
+  // Greetings
+  if (/^(hi|hello|hey|good morning|good evening|ayubowan)/i.test(q)) {
+    return "Hello! I'm your flood safety assistant for Sri Lanka. How can I help you today? Ask me about flood safety, evacuation, shelters, or emergency contacts.";
+  }
+
+  // Danger / risk
+  if (q.includes('danger') || q.includes('risk') || q.includes('safe') || q.includes('am i')) {
+    return 'If water levels are rising near you, move to higher ground immediately. Avoid flooded roads and stay away from rivers. Call the Disaster Management Centre at 117 for live updates.';
+  }
+
+  // Emergency numbers
+  if (q.includes('emergency') || q.includes('number') || q.includes('hotline') || q.includes('call') || q.includes('phone') || q.includes('contact')) {
+    return 'Emergency Hotline: 112 | Police: 119 | Ambulance/Fire: 110 | Disaster Management Centre (DMC): 117. Call 117 for flood-specific assistance.';
+  }
+
+  // Shelter
+  if (q.includes('shelter') || q.includes('safe place') || q.includes('safe zone') || q.includes('relief') || q.includes('refuge')) {
+    return 'Head to the nearest school, temple, or government building designated as a relief shelter. Follow evacuation signs and local authority directions. Carry water, medicine, and important documents.';
+  }
+
+  // Evacuation
+  if (q.includes('evacuat') || q.includes('leave') || q.includes('move') || q.includes('escape') || q.includes('route')) {
+    return 'Follow evacuation notices from local authorities. Move to higher ground or the nearest designated shelter. Carry essential documents, drinking water, medicine, and a flashlight.';
+  }
+
+  // Weather / rain / monsoon
+  if (q.includes('weather') || q.includes('rain') || q.includes('monsoon') || q.includes('forecast') || q.includes('storm')) {
+    return "Sri Lanka's southwest monsoon runs May–September and the northeast monsoon December–February. Flood risk is highest during these periods. Monitor the DMC (117) and local weather reports closely.";
+  }
+
+  // Home protection
+  if (q.includes('home') || q.includes('house') || q.includes('protect') || q.includes('sandbag') || q.includes('property')) {
+    return 'Place sandbags around entry points and move valuables to upper floors. Turn off electricity if water enters your home. Seal ground-level doors and windows with plastic sheeting.';
+  }
+
+  // Flood areas / districts
+  if (q.includes('area') || q.includes('district') || q.includes('prone') || q.includes('colombo') || q.includes('ratnapura') || q.includes('kalutara') || q.includes('galle') || q.includes('matara') || q.includes('batticaloa')) {
+    return 'High-risk flood districts include Colombo, Gampaha, Kalutara, Ratnapura, Matara, Galle, Anuradhapura, and Batticaloa. Residents in low-lying areas should monitor warnings closely.';
+  }
+
+  // Warning signs
+  if (q.includes('warning') || q.includes('sign') || q.includes('alert') || q.includes('landslide')) {
+    return 'Watch for: rapidly rising river water levels, continuous heavy rainfall, blocked drainage systems, and landslides in hilly areas. If you observe these, move to safety immediately.';
+  }
+
+  // What to do
+  if (q.includes('what should') || q.includes('what do') || q.includes('help') || q.includes('guide') || q.includes('advice') || q.includes('tip')) {
+    return 'Move to higher ground if water rises. Avoid walking or driving through floodwater. Keep emergency numbers handy — DMC: 117, Police: 119, Emergency: 112.';
+  }
+
+  // Agriculture / farm
+  if (q.includes('farm') || q.includes('crop') || q.includes('agriculture') || q.includes('livestock') || q.includes('field')) {
+    return 'Move livestock and seeds to higher ground immediately. Drain excess water from fields if possible. Document crop losses for insurance claims and contact your agricultural extension officer.';
+  }
+
+  // Default flood-related response
+  return 'I can help with flood safety, evacuation routes, shelters, emergency numbers, and weather risks in Sri Lanka. What would you like to know? Call 117 (DMC) for immediate assistance.';
+}
+
+/* ================================================================== */
 /*  Component                                                          */
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
 export function FloodAIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -101,6 +172,69 @@ export function FloodAIChatbot() {
     [messages],
   );
 
+  /* Try OpenRouter API with fallback models ------------------------ */
+  const callOpenRouter = async (userText: string): Promise<string | null> => {
+    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+    if (!apiKey) {
+      console.warn('VITE_OPENROUTER_API_KEY not set — using local responses.');
+      return null;
+    }
+
+    const apiMessages = buildApiMessages(userText);
+
+    for (const model of FALLBACK_MODELS) {
+      try {
+        const res = await fetch(OPENROUTER_URL, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': window.location.origin,
+            'X-Title': 'Flood Resilience System',
+          },
+          body: JSON.stringify({
+            model,
+            messages: apiMessages,
+            max_tokens: 1024,
+            temperature: 0.4,
+          }),
+        });
+
+        if (res.status === 401) {
+          // Auth failure — key is invalid, no point trying other models
+          const errBody = await res.text();
+          console.error(`OpenRouter 401 (invalid key): ${errBody}`);
+          return null;
+        }
+
+        if (!res.ok) {
+          const errBody = await res.text();
+          console.warn(`OpenRouter ${res.status} with model ${model}:`, errBody);
+          continue; // try the next model
+        }
+
+        const data = await res.json();
+        console.log('OpenRouter OK:', model, JSON.stringify(data).slice(0, 200));
+
+        let rawReply =
+          data.choices?.[0]?.message?.content ??
+          data.choices?.[0]?.text ??
+          '';
+
+        // Strip <think>…</think> blocks produced by thinking models
+        rawReply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+
+        if (rawReply) return rawReply;
+        // Empty response — try next model
+      } catch (networkErr) {
+        console.warn(`Network error with model ${model}:`, networkErr);
+        continue;
+      }
+    }
+
+    return null; // all models failed
+  };
+
   /* Send message --------------------------------------------------- */
   const sendMessage = useCallback(
     async (text: string) => {
@@ -119,56 +253,34 @@ export function FloodAIChatbot() {
       setIsLoading(true);
 
       try {
-        const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-        if (!apiKey) throw new Error('API key missing');
+        // 1️⃣ Try OpenRouter API
+        const aiReply = await callOpenRouter(trimmed);
 
-        const res = await fetch(OPENROUTER_URL, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': window.location.origin,
-            'X-Title': 'Flood Resilience System',
-          },
-          body: JSON.stringify({
-            model: MODEL,
-            messages: buildApiMessages(trimmed),
-            max_tokens: 1024,
-            temperature: 0.4,
-          }),
-        });
-
-        if (!res.ok) {
-          const errBody = await res.text();
-          console.error('OpenRouter error:', res.status, errBody);
-          throw new Error(`API ${res.status}: ${errBody}`);
-        }
-
-        const data = await res.json();
-        console.log('OpenRouter response:', JSON.stringify(data).slice(0, 300));
-
-        let rawReply =
-          data.choices?.[0]?.message?.content??
-          data.choices?.[0]?.text ??
-          '';
-        // Strip <think>…</think> blocks produced by thinking models
-        rawReply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-        const reply = rawReply || 'Sorry, I could not generate a response. Please try again.';
+        // 2️⃣ Use reply or fall back to local engine
+        const finalReply = aiReply || getLocalResponse(trimmed);
 
         const aiMsg: ChatMessage = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: reply,
+          content: finalReply,
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev.slice(-(MAX_HISTORY - 1)), aiMsg]);
       } catch (err) {
-        console.error('Chatbot API error:', err);
-        setError('AI assistant temporarily unavailable. Please try again.');
+        console.error('Chatbot error:', err);
+        // Even the fallback failed — still show a helpful message
+        const fallbackMsg: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: getLocalResponse(trimmed),
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev.slice(-(MAX_HISTORY - 1)), fallbackMsg]);
       } finally {
         setIsLoading(false);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [isLoading, buildApiMessages],
   );
 
@@ -183,9 +295,9 @@ export function FloodAIChatbot() {
   /* Format time ---------------------------------------------------- */
   const fmtTime = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  /* ---------------------------------------------------------------- */
+  /* ================================================================ */
   /*  Render                                                           */
-  /* ---------------------------------------------------------------- */
+  /* ================================================================ */
   return (
     <>
       {/* ---- Floating toggle button ---- */}
