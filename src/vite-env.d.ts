@@ -6,6 +6,7 @@ interface ImportMetaEnv {
   readonly VITE_DEFAULT_ZOOM: string;
   readonly VITE_WEATHER_API: string;
   readonly VITE_RAIN_API: string;
+  readonly VITE_OPENROUTER_API_KEY: string;
 }
 
 interface ImportMeta {

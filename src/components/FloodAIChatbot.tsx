@@ -1,256 +1,294 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, Mic, Volume2, MessageCircle, X, Loader } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Send, MessageCircle, X, Loader, AlertTriangle, MapPin, Home, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface Message {
+/* ------------------------------------------------------------------ */
+/*  Types                                                              */
+/* ------------------------------------------------------------------ */
+interface ChatMessage {
   id: string;
-  type: 'user' | 'assistant';
-  text: string;
+  role: 'user' | 'assistant';
+  content: string;
   timestamp: Date;
-  voiceReady?: boolean;
 }
 
-interface ChatbotProps {
-  userProfile?: {
-    location?: string;
-    riskLevel?: 'low' | 'medium' | 'high';
-    homeType?: string;
-    livelihood?: string;
-  };
-  language?: 'en' | 'si' | 'ta';
-  isOpen?: boolean;
-  onClose?: () => void;
+interface ApiMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
 }
 
-export function FloodAIChatbot({
-  userProfile = {},
-  language = 'en',
-  isOpen: initialOpen = false,
-  onClose,
-}: ChatbotProps) {
-  const [isOpen, setIsOpen] = useState(initialOpen);
-  const [messages, setMessages] = useState<Message[]>([
+/* ------------------------------------------------------------------ */
+/*  Constants                                                          */
+/* ------------------------------------------------------------------ */
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const MODEL = 'qwen/qwen3-vl-30b-a3b-thinking';
+const MAX_HISTORY = 10;
+
+const SYSTEM_PROMPT = `You are a flood emergency assistant for Sri Lanka.
+Give short, clear responses.
+Focus only on: flood safety, evacuation, shelters, weather risk, emergency help.
+Do not give long explanations. Maximum 3 sentences.
+If question unrelated to floods, politely say you only assist with flood emergencies.
+Key numbers — DMC: 1999, Police: 119, Ambulance: 1990.`;
+
+const QUICK_ACTIONS = [
+  { icon: AlertTriangle, label: 'Am I in danger?', prompt: 'Am I in danger right now? What should I do?' },
+  { icon: MapPin, label: 'Nearest shelter', prompt: 'Where is the nearest safe shelter near Mihintale, Sri Lanka?' },
+  { icon: Home, label: 'Protect my home', prompt: 'How do I protect my home from flooding?' },
+  { icon: ShieldCheck, label: 'Emergency numbers', prompt: 'What are the emergency hotline numbers in Sri Lanka for floods?' },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
+export function FloodAIChatbot() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
-      id: '1',
-      type: 'assistant',
-      text: language === 'en' 
-        ? '👋 Hi! I\'m your flood safety assistant. How can I help you today?'
-        : language === 'si'
-        ? '👋 ඔබ සුවසම්මතයි! මම ඔබගේ flood ඉතා උපකරණ සහාය। අද මට සොයා ගත හැකි දැයි?'
-        : '👋 வணக்கம்! நான் உங்கள் வெள்ளப் பாதுகாப்பு உதவியாளி. இன்று நான் உங்களுக்கு எப்படி உதவ முடியும்?',
+      id: 'welcome',
+      role: 'assistant',
+      content:
+        "👋 Hi! I'm your flood safety assistant for Sri Lanka. Ask me about flood safety, evacuation, shelters, or weather risks.",
       timestamp: new Date(),
     },
   ]);
-  const [inputValue, setInputValue] = useState('');
+  const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
+  /* Auto-scroll ---------------------------------------------------- */
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isLoading]);
 
-  const generateResponse = (userMessage: string): string => {
-    const lower = userMessage.toLowerCase();
+  /* Focus input when panel opens ----------------------------------- */
+  useEffect(() => {
+    if (isOpen) setTimeout(() => inputRef.current?.focus(), 200);
+  }, [isOpen]);
 
-    // Emergency questions
-    if (lower.includes('am i in danger') || lower.includes('is it safe')) {
-      const riskLevel = userProfile.riskLevel || 'unknown';
-      if (language === 'en') {
-        return `Based on your location (${userProfile.location || 'current area'}), your current risk level is ${riskLevel}. If you're in immediate danger, call 1999 (DMC) or 119 (Police) now. Would you like evacuation guidance?`;
-      }
-      if (language === 'si') {
-        return `ඔබගේ ස්ථානය (${userProfile.location || 'වර්තමාන ප්‍රදේශ'}) වලට අනුව, ඔබගේ වර්තමාන අවදානම මට්ටම ${riskLevel} ය. ඔබ ක්ષණික අවදානමට ඇතිනම්, දැන්වე 1999 (DMC) හෝ 119 (පොලිස්) ඇමතිනු ඇත. ඉවත් කිරීමේ මඟ දැක්වීමක් අවශ්‍ය දැයි?`;
-      }
-      return `உங்கள் இடத்தின் (${userProfile.location || 'தற்போதைய பகுதி'}) அடிப்படையில், உங்கள் தற்போதைய ஆபத்து நிலை ${riskLevel} ஆகும். நீங்கள் உடனடி ஆபத்தில் இருந்தால், இப்போது 1999 (DMC) அல்லது 119 (பொலிசு) அழைக்கவும்.`;
-    }
+  /* Build API payload (last N messages) ---------------------------- */
+  const buildApiMessages = useCallback(
+    (userText: string): ApiMessage[] => {
+      const history: ApiMessage[] = messages
+        .slice(-MAX_HISTORY)
+        .map((m) => ({ role: m.role, content: m.content }));
+      return [{ role: 'system', content: SYSTEM_PROMPT }, ...history, { role: 'user', content: userText }];
+    },
+    [messages],
+  );
 
-    // What to do now
-    if (
-      lower.includes('what should i do') ||
-      lower.includes('help me') ||
-      lower.includes('guide me')
-    ) {
-      if (language === 'en') {
-        return `Here's what you should do now:\n1. Charge your phone immediately\n2. Gather important documents in a waterproof bag\n3. Inform family members of your location\n4. Keep emergency numbers handy (DMC: 1999, Police: 119)\n5. Move valuable items to higher places\n\nDo you need help with a specific task?`;
-      }
-      if (language === 'si') {
-        return `ඔබ දැන් කළ යුතු දේ:\n1. ඔබගේ දුරකතන තුරන්තුවෙන් චාර්ජ කරන්න\n2. වැදගත් ឯකාthompulur් ජල පසු බැඳුම් පිසියෙ එකතු කරන්න\n3. පරිවාර සদස්‍ය ඔබගේ ස්ථානය දැනුම් දෙන්න\n4. জরुरी අංකවල (DMC: 1999, පොලිස්: 119) අතේ තබා ගන්න\n5. වටිනා දේ ඉහල ස්ථාගවට ගෙන යන්න`;
-      }
-      return `உங்கள் செய்ய வேண்டிய செயல்கள்:\n1. உங்கள் ஃபோனை உடனடியாக சார்ஜ் செய்யுங்கள்\n2. முக்கிய ஆவணங்களை ஒரு நீர்ப்রதிরோधी பையில் சேகரிக்கவும்\n3. குடும்ப உறுப்பினர்களுக்கு அறிவிக்கவும்\n4. அவசர எண்கள் (DMC: 1999, பொலிசு: 119) அருகில் வைத்திருக்கவும்\n5. மதிப்புள்ள பொருட்களை உயர் இடங்களிற்கு நகர்த்தவும்`;
-    }
+  /* Send message --------------------------------------------------- */
+  const sendMessage = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed || isLoading) return;
 
-    // Agriculture help
-    if (lower.includes('farm') || lower.includes('crop') || lower.includes('agriculture')) {
-      if (language === 'en') {
-        return `For agricultural protection:\n✓ Move seeds and livestock to higher ground immediately\n✓ Drain excess water from fields if possible\n✓ Protect wells and water sources\n✓ Document crop losses for insurance claims\n✓ Contact your agricultural extension officer\n\nWould you like specific crop protection tips?`;
-      }
-      if (language === 'si') {
-        return `ගොවිතැනුම් ගිණුමට අපි:\n✓ බීජ සහ පशු-දෙවීයන්ට ඉහල භූමිය වෙතට ක්ષණිකව ගෙන යන්න\n✓ ක්ෂේත්‍රවලින් අතිරික්ත ජලය ඉවත් කරන්න\n✓ ජුඩු සහ ජල සම්භවය ගිණුම් කරන්න\n✓ ෙසවනු ඇතිනු පිණිස ගොවිතැනුම් සම්බන්ධතා කර්මාන්තය අමතන්න`;
-      }
-      return `விவசாயப் பாதுகாப்புக்கான அரிசி:\n✓ விதைகளை மற்றும் கால்நடைகளை உயர் பூமிக்கு உடனடியாக நகர்த்துங்கள்\n✓ வயல்களிலிருந்து அதிகப்படியான நீரை வடிகட்டவும்\n✓ கிணறுகள் மற்றும் நீர் மூலங்களை பாதுகாக்கவும்\n✓ பயிர் இழப்புகளை காப்பீடு கூறுவதற்காக ஆவணப்படுத்தவும்`;
-    }
-
-    // Default response
-    if (language === 'en') {
-      return 'I can help you with: current safety status, evacuation routes, what to do now, agricultural tips, or family safety. What would you like to know?';
-    }
-    if (language === 'si') {
-      return 'මට සහාය කළ හැකි දේ: වර්තමාන ආරක්ෂිතභාවය, ඉවත් කිරීමේ මග, දැන් කළ යුතු දේ, ගොවිතැනුම් ඉඟි, හෝ පරිවාර ආරක්ෂිතභාවය. ඔබ දැනගැනීමට කැමති දැයි?';
-    }
-    return 'I can help with safety, evacuation, agriculture, or family guidance. What would you like to know?';
-  };
-
-  const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
-
-    // Add user message
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      type: 'user',
-      text: inputValue,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInputValue('');
-    setIsLoading(true);
-
-    // Simulate AI response delay
-    setTimeout(() => {
-      const responseText = generateResponse(inputValue);
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        text: responseText,
+      setError(null);
+      const userMsg: ChatMessage = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: trimmed,
         timestamp: new Date(),
-        voiceReady: true,
       };
-      setMessages((prev) => [...prev, assistantMessage]);
-      setIsLoading(false);
-    }, 800);
-  };
+      setMessages((prev) => [...prev.slice(-(MAX_HISTORY - 1)), userMsg]);
+      setInput('');
+      setIsLoading(true);
 
-  const handleVoiceMessage = () => {
-    // Placeholder for voice input
-    console.log('Voice input not yet implemented');
-  };
+      try {
+        const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+        if (!apiKey) throw new Error('API key missing');
 
-  const handleTextToSpeech = (messageId: string) => {
-    const message = messages.find((m) => m.id === messageId);
-    if (message && 'speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(message.text);
-      utterance.lang = language === 'en' ? 'en-US' : language === 'si' ? 'si-LK' : 'ta-IN';
-      window.speechSynthesis.speak(utterance);
+        const res = await fetch(OPENROUTER_URL, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': window.location.origin,
+            'X-Title': 'Flood Resilience System',
+          },
+          body: JSON.stringify({
+            model: MODEL,
+            messages: buildApiMessages(trimmed),
+            max_tokens: 1024,
+            temperature: 0.4,
+          }),
+        });
+
+        if (!res.ok) {
+          const errBody = await res.text();
+          console.error('OpenRouter error:', res.status, errBody);
+          throw new Error(`API ${res.status}: ${errBody}`);
+        }
+
+        const data = await res.json();
+        console.log('OpenRouter response:', JSON.stringify(data).slice(0, 300));
+
+        let rawReply =
+          data.choices?.[0]?.message?.content??
+          data.choices?.[0]?.text ??
+          '';
+        // Strip <think>…</think> blocks produced by thinking models
+        rawReply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+        const reply = rawReply || 'Sorry, I could not generate a response. Please try again.';
+
+        const aiMsg: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: reply,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev.slice(-(MAX_HISTORY - 1)), aiMsg]);
+      } catch (err) {
+        console.error('Chatbot API error:', err);
+        setError('AI assistant temporarily unavailable. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [isLoading, buildApiMessages],
+  );
+
+  /* Key handler ---------------------------------------------------- */
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(input);
     }
   };
 
+  /* Format time ---------------------------------------------------- */
+  const fmtTime = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  /* ---------------------------------------------------------------- */
+  /*  Render                                                           */
+  /* ---------------------------------------------------------------- */
   return (
     <>
-      {/* Chat Toggle Button */}
-      <motion.button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 w-16 h-16 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center z-40 transition-all"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <MessageCircle size={24} />
-      </motion.button>
+      {/* ---- Floating toggle button ---- */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="w-12 h-12 md:w-[52px] md:h-[52px] rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all flex items-center justify-center"
+          aria-label="Open Flood Safety Chat"
+        >
+          <MessageCircle size={24} strokeWidth={2} />
+        </button>
+      )}
 
-      {/* Chatbox */}
+      {/* ---- Chat panel ---- */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-24 right-6 w-96 max-h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden"
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className={[
+              'fixed z-[9999] flex flex-col bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden',
+              'inset-0',
+              'md:inset-auto md:bottom-24 md:right-6 md:w-96 md:max-w-[calc(100vw-3rem)]',
+            ].join(' ')}
+            style={{ maxHeight: 'calc(100vh - 2rem)' }}
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 flex justify-between items-center">
-              <div>
-                <h3 className="font-bold text-lg">Flood Safety Assistant</h3>
-                <p className="text-blue-100 text-xs">Always here to help</p>
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-2">
+                <MessageCircle size={18} className="text-white" />
+                <div>
+                  <h3 className="text-white font-bold text-sm leading-tight">Flood Safety Assistant</h3>
+                  <p className="text-blue-200 text-[10px]">AI-powered &bull; Sri Lanka</p>
+                </div>
               </div>
               <button
-                onClick={() => {
-                  setIsOpen(false);
-                  onClose?.();
-                }}
-                className="hover:bg-blue-500 p-1 rounded transition-colors"
+                onClick={() => setIsOpen(false)}
+                className="text-white hover:bg-white/20 p-1.5 rounded-lg transition-colors"
+                aria-label="Close chat"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            {/* Messages */}
+            {/* Messages area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
-              {messages.map((message) => (
-                <motion.div
-                  key={message.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
+              {messages.map((msg) => (
+                <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div
-                    className={`max-w-xs p-3 rounded-lg text-sm ${
-                      message.type === 'user'
-                        ? 'bg-blue-600 text-white rounded-br-none'
-                        : 'bg-gray-200 text-gray-900 rounded-bl-none'
+                    className={`max-w-[80%] px-3 py-2 text-sm leading-relaxed ${
+                      msg.role === 'user'
+                        ? 'bg-blue-600 text-white rounded-xl rounded-br-sm'
+                        : 'bg-gray-200 text-gray-900 rounded-xl rounded-bl-sm'
                     }`}
                   >
-                    <p className="whitespace-pre-wrap">{message.text}</p>
-                    {message.type === 'assistant' && message.voiceReady && (
-                      <button
-                        onClick={() => handleTextToSpeech(message.id)}
-                        className="mt-2 flex items-center gap-1 text-xs hover:opacity-80 transition-opacity"
-                      >
-                        <Volume2 size={14} /> Hear it
-                      </button>
-                    )}
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                    <span className="block text-[10px] opacity-50 mt-1 text-right">{fmtTime(msg.timestamp)}</span>
                   </div>
-                </motion.div>
+                </div>
               ))}
+
+              {/* Typing indicator */}
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-gray-200 p-3 rounded-lg rounded-bl-none">
-                    <Loader size={18} className="animate-spin text-gray-600" />
+                  <div className="bg-gray-200 text-gray-600 px-4 py-2 rounded-xl rounded-bl-sm flex items-center gap-2 text-sm">
+                    <Loader size={14} className="animate-spin" />
+                    AI is thinking&hellip;
                   </div>
                 </div>
               )}
+
+              {/* Error */}
+              {error && (
+                <div className="flex justify-start">
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-xl text-xs">
+                    {error}
+                  </div>
+                </div>
+              )}
+
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Quick actions (only when few messages) */}
+            {messages.length <= 2 && !isLoading && (
+              <div className="px-4 py-2 bg-white border-t border-gray-100 shrink-0">
+                <p className="text-[10px] font-semibold uppercase text-gray-400 mb-2">Quick questions</p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {QUICK_ACTIONS.map((qa) => (
+                    <button
+                      key={qa.label}
+                      onClick={() => sendMessage(qa.prompt)}
+                      className="flex items-center gap-1.5 px-2.5 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-blue-50 hover:text-blue-700 border border-gray-200 rounded-lg transition-colors text-left"
+                    >
+                      <qa.icon size={14} className="shrink-0" />
+                      {qa.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Input */}
-            <div className="p-4 bg-white border-t border-gray-200 space-y-2">
+            <div className="px-4 py-3 bg-white border-t border-gray-200 shrink-0">
               <div className="flex gap-2">
                 <input
+                  ref={inputRef}
                   type="text"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="Ask me anything..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={isLoading}
+                  placeholder={isLoading ? 'Waiting for response...' : 'Ask about flood safety...'}
+                  className="flex-1 min-h-[48px] px-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
                 <button
-                  onClick={handleSendMessage}
-                  disabled={!inputValue.trim() || isLoading}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-2 rounded-lg transition-colors"
+                  onClick={() => sendMessage(input)}
+                  disabled={!input.trim() || isLoading}
+                  className="min-h-[48px] px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white rounded-xl transition-colors flex items-center justify-center"
+                  aria-label="Send message"
                 >
-                  <Send size={18} />
+                  {isLoading ? <Loader size={18} className="animate-spin" /> : <Send size={18} />}
                 </button>
-              </div>
-              <button
-                onClick={handleVoiceMessage}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm text-gray-700 transition-colors"
-              >
-                <Mic size={16} /> Speak
-              </button>
-              <div className="text-xs text-gray-500 text-center">
-                💡 Try: "Am I in danger?", "What should I do now?", "Help my farm"
               </div>
             </div>
           </motion.div>
