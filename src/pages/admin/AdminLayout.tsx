@@ -1,9 +1,15 @@
 import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Map, MessageSquare, Building2, Radio, Database, BarChart3, ShieldAlert, Sprout, RefreshCw, Activity, FileText } from 'lucide-react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Map, MessageSquare, Building2, Radio, Database, BarChart3, ShieldAlert, Sprout, RefreshCw, Activity, FileText, LogOut } from 'lucide-react';
 import { AIAssistant } from '../../components/admin/AIAssistant';
 export function AdminLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('admin_authenticated');
+    navigate('/admin/login', { replace: true });
+  };
   const isActive = (path: string) => location.pathname === path;
   const navItems = [{
     path: '/admin',
@@ -79,6 +85,14 @@ export function AdminLayout() {
           <div className="w-10 h-10 bg-gray-700 border border-gray-600 flex items-center justify-center rounded-lg">
             <span className="font-bold text-xs text-white">CP</span>
           </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-400 hover:text-red-400 hover:bg-gray-800 rounded-lg transition-colors"
+            title="Logout"
+          >
+            <LogOut size={16} />
+            <span className="hidden xl:inline">Logout</span>
+          </button>
         </div>
       </header>
 

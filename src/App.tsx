@@ -22,6 +22,8 @@ import { RecoveryTracker } from './pages/RecoveryTracker';
 import { LearnHub } from './pages/LearnHub';
 import { SafetyProfile } from './pages/SafetyProfile';
 // Admin Pages
+import { AdminLogin } from './pages/admin/AdminLogin';
+import { AdminRouteGuard } from './components/admin/AdminRouteGuard';
 import { AdminLayout } from './pages/admin/AdminLayout';
 import { SituationRoom } from './pages/admin/SituationRoom';
 import { ModelControl } from './pages/admin/ModelControl';
@@ -63,9 +65,13 @@ function AppContent() {
       {/* Global banners */}
       <OfflineBanner />
       <Routes>
-        {/* Admin Routes - No User Nav */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<SituationRoom />} />
+        {/* Admin Login - public */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+
+        {/* Admin Routes - Protected */}
+        <Route path="/admin" element={<AdminRouteGuard />}>
+          <Route element={<AdminLayout />}>
+            <Route index element={<SituationRoom />} />
           <Route path="model-control" element={<ModelControl />} />
           <Route path="reports" element={<ReportModeration />} />
           <Route path="districts" element={<DistrictControl />} />
@@ -77,6 +83,7 @@ function AppContent() {
           <Route path="data" element={<DataUpload />} />
           <Route path="audit" element={<AuditLogs />} />
           <Route path="analytics" element={<Analytics />} />
+          </Route>
         </Route>
 
         {/* User Routes - With User Nav */}
