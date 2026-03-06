@@ -1,24 +1,65 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Camera, MapPin, Send, AlertTriangle, Plus, X } from 'lucide-react';
 import { UnifiedCard } from '../components/ui/UnifiedCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
 import { EmptyState } from '../components/ui/EmptyState';
+import { useReportStore, FloodReport } from '../stores/reportStore';
+
+const SEVERITY_MAP: Record<string, FloodReport['severity_level']> = {
+  Low: 'LOW',
+  Medium: 'MEDIUM',
+  Critical: 'CRITICAL',
+};
+
+// Sample locations for submitted reports
+const LOCATIONS = [
+  { name: 'Kelaniya, Gampaha', lat: 6.9533, lng: 79.9220 },
+  { name: 'Kaduwela, Colombo', lat: 6.9310, lng: 79.9830 },
+  { name: 'Colombo 07', lat: 6.9271, lng: 79.8612 },
+  { name: 'Biyagama, Gampaha', lat: 6.9692, lng: 79.9820 },
+  { name: 'Hanwella, Colombo', lat: 6.9010, lng: 80.0852 },
+];
 
 export function CommunityReports() {
   const [reportType, setReportType] = useState('');
+  const [description, setDescription] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [reports, setReports] = useState<number[]>([]);
+  const addReport = useReportStore((s) => s.addReport);
+  const allReports = useReportStore((s) => s.reports);
+
+  // Show verified + pending reports to the public
+  const visibleReports = allReports.filter((r) => r.status !== 'rejected').slice(0, 20);
 
   useEffect(() => {
-    // Simulate data loading
     const timer = setTimeout(() => {
-      setReports([1, 2, 3, 4]);
       setIsLoading(false);
     }, 800);
     return () => clearTimeout(timer);
   }, []);
+
+  const handleSubmitReport = useCallback(() => {
+    if (!reportType) return;
+    const loc = LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)];
+    addReport({
+      severity_level: SEVERITY_MAP[reportType] || 'MEDIUM',
+      description: description.trim() || 'Water level rising rapidly. Road impassable.',
+      location_name: loc.name,
+      latitude: loc.lat,
+      longitude: loc.lng,
+      media_url: null,
+    });
+    setReportType('');
+    setDescription('');
+  }, [reportType, description, addReport]);
+
+  const formatTimeAgo = (ts: number) => {
+    const mins = Math.floor((Date.now() - ts) / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    return `${Math.floor(mins / 60)}h ago`;
+  };
 
   return (
     <div className="min-h-screen md:pt-lg px-4 sm:px-6 md:px-8 pb-xl bg-bg-primary md:mr-[384px] lg:mr-[400px]">
@@ -50,7 +91,7 @@ export function CommunityReports() {
         {isLoading && <LoadingSkeleton count={4} variant="card" height="h-48" />}
 
         {/* Empty state */}
-        {!isLoading && reports.length === 0 && (
+        {!isLoading && visibleReports.length === 0 && (
           <EmptyState
             emoji="👍"
             title="No flooding reported in your area yet"
@@ -61,38 +102,54 @@ export function CommunityReports() {
         )}
 
         {/* Reports grid */}
-        {!isLoading && reports.length > 0 && (
+        {!isLoading && visibleReports.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
-          {reports.map(i => (
-            <UnifiedCard key={i} noPadding className="overflow-hidden">
+          {visibleReports.map(r => (
+            <UnifiedCard key={r.report_id} noPadding className="overflow-hidden">
               {/* Image */}
               <div className="w-full h-48 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center border-b border-border-light">
-                <Camera size={32} className="text-gray-400" />
+                {r.media_url ? (
+                  <img src={r.media_url} alt="Report media" className="w-full h-full object-cover" />
+                ) : (
+                  <Camera size={32} className="text-gray-400" />
+                )}
               </div>
 
               {/* Content */}
               <div className="p-lg">
                 <div className="flex items-start justify-between mb-md">
                   <div className="flex items-center gap-md">
-                    <span className="bg-critical/10 text-critical text-xs font-bold px-md py-xs rounded-card">
-                      Verified
+                    <span className={`text-xs font-bold px-md py-xs rounded-card ${
+                      r.status === 'verified'
+                        ? 'bg-critical/10 text-critical'
+                        : 'bg-orange-500/10 text-orange-500'
+                    }`}>
+                      {r.status === 'verified' ? 'Verified' : 'Pending'}
                     </span>
                     <span className="text-xs font-semibold text-text-secondary">
-                      2 mins ago
+                      {formatTimeAgo(r.timestamp)}
                     </span>
                   </div>
                   <div className="flex items-center gap-xs">
-                    <div className="w-3 h-3 bg-critical rounded-full"></div>
-                    <span className="text-xs font-bold uppercase text-critical">Critical</span>
+                    <div className={`w-3 h-3 rounded-full ${
+                      r.severity_level === 'CRITICAL' ? 'bg-critical' :
+                      r.severity_level === 'HIGH' ? 'bg-orange-500' :
+                      r.severity_level === 'MEDIUM' ? 'bg-yellow-500' : 'bg-green-500'
+                    }`}></div>
+                    <span className={`text-xs font-bold uppercase ${
+                      r.severity_level === 'CRITICAL' ? 'text-critical' :
+                      r.severity_level === 'HIGH' ? 'text-orange-500' :
+                      r.severity_level === 'MEDIUM' ? 'text-yellow-500' : 'text-green-500'
+                    }`}>{r.severity_level}</span>
                   </div>
                 </div>
 
                 <p className="font-semibold text-sm leading-snug mb-md text-text-primary">
-                  Water level rising rapidly near the bridge. Road impassable.
+                  {r.description}
                 </p>
 
                 <div className="flex items-center gap-md text-xs font-semibold text-text-secondary mb-lg">
-                  <MapPin size={16} /> Colombo 07
+                  <MapPin size={16} /> {r.location_name}
                 </div>
 
                 <div className="pt-lg border-t border-border-light flex justify-around">
@@ -196,8 +253,26 @@ export function CommunityReports() {
                   </div>
                 </div>
 
+                {/* Description */}
+                <div>
+                  <label className="block font-bold uppercase text-xs mb-md tracking-tight text-primary-text">
+                    4. Description
+                  </label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Describe the flood situation..."
+                    className="w-full p-md border border-gray-200 bg-primary-bg rounded-soft text-sm text-primary-text placeholder-gray-400 resize-none"
+                    rows={3}
+                  />
+                </div>
+
                 {/* Submit Button */}
-                <button className="w-full bg-critical-red text-white py-md font-bold uppercase text-sm rounded-soft hover:opacity-90 shadow-md transition-opacity flex items-center justify-center gap-md">
+                <button
+                  onClick={() => { handleSubmitReport(); setShowForm(false); }}
+                  disabled={!reportType}
+                  className="w-full bg-critical-red text-white py-md font-bold uppercase text-sm rounded-soft hover:opacity-90 shadow-md transition-opacity flex items-center justify-center gap-md disabled:opacity-50"
+                >
                   <Send strokeWidth={2.5} size={18} /> Report Flooding
                 </button>
               </div>
@@ -264,8 +339,26 @@ export function CommunityReports() {
             </div>
           </div>
 
+          {/* Description */}
+          <div>
+            <label className="block font-bold uppercase text-xs mb-md tracking-tight text-primary-text">
+              4. Description
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe the flood situation..."
+              className="w-full p-md border border-gray-200 bg-primary-bg rounded-soft text-sm text-primary-text placeholder-gray-400 resize-none"
+              rows={3}
+            />
+          </div>
+
           {/* Submit Button */}
-          <button className="w-full bg-critical-red text-white py-md font-bold uppercase text-sm rounded-soft hover:opacity-90 shadow-md transition-opacity flex items-center justify-center gap-md">
+          <button
+            onClick={handleSubmitReport}
+            disabled={!reportType}
+            className="w-full bg-critical-red text-white py-md font-bold uppercase text-sm rounded-soft hover:opacity-90 shadow-md transition-opacity flex items-center justify-center gap-md disabled:opacity-50"
+          >
             <Send strokeWidth={2.5} size={18} /> Report Flooding
           </button>
         </div>
