@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AlertTriangle, CheckCircle, Radio, Wind, Droplets, MapPin, Navigation as NavIcon } from 'lucide-react';
 import { UnifiedCard } from '../components/ui/UnifiedCard';
-import { AlertBanner } from '../components/ui/AlertBanner';
 import { RiskMap } from '../components/RiskMap';
 import { motion } from 'framer-motion';
 import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
@@ -42,7 +41,6 @@ export function EmergencyDashboard() {
 
   return (
     <div className="min-h-screen bg-bg-primary pb-20 md:pb-section flex flex-col gap-section">
-      <AlertBanner message="FLOOD MONITORING ACTIVE — MIHINTALE DISTRICT" type="danger" />
 
       {isLoading ? (
         <div className="px-4 sm:px-6 md:px-8 py-8">
