@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
-  Monitor, ToggleLeft, ToggleRight, Radio, Building2, Sprout, RefreshCw, BookOpen, Settings, AlertTriangle, Eye, EyeOff,
-  Save, Trash2, Plus, ChevronDown, ChevronUp
+  Monitor, ToggleLeft, ToggleRight, Radio, Building2, Sprout, RefreshCw, BookOpen, Settings, Eye, EyeOff,
+  Trash2, Plus
 } from 'lucide-react';
 import { useAdminControlStore } from '../../stores/adminControlStore';
 import type { PageVisibilityConfig } from '../../types/admin';
@@ -146,7 +146,7 @@ function GlobalSettingsPanel() {
         />
         <select
           value={frontendSettings.emergencyBannerRiskLevel}
-          onChange={(e) => updateFrontendSettings({ emergencyBannerRiskLevel: e.target.value as any })}
+          onChange={(e) => updateFrontendSettings({ emergencyBannerRiskLevel: e.target.value as 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW' })}
           className="bg-gray-900 border border-gray-700 text-white p-2 text-sm rounded-lg focus:border-blue-400 outline-none"
         >
           <option value="CRITICAL">Critical</option>
@@ -204,7 +204,7 @@ function BroadcastPanel() {
       <div className="flex gap-2">
         <select
           value={newType}
-          onChange={(e) => setNewType(e.target.value as any)}
+          onChange={(e) => setNewType(e.target.value as 'critical' | 'info' | 'warning')}
           className="bg-gray-900 border border-gray-700 text-white p-2 text-xs rounded-lg"
         >
           <option value="critical">Critical</option>
@@ -266,7 +266,7 @@ function ResourcesPanel() {
             <select
               value={res.status}
               onChange={(e) => {
-                const status = e.target.value as any;
+                const status = e.target.value as 'OPEN' | 'FULL' | 'BUSY' | 'AVAILABLE' | 'CLOSED';
                 updateResource(res.id, { status, statusColor: colorMap[status] });
               }}
               className="bg-gray-800 border border-gray-700 text-white p-1.5 text-xs rounded-lg"
@@ -372,7 +372,7 @@ function RecoveryPanel() {
             <span className="text-sm text-white font-semibold flex-1">{need.name}</span>
             <select
               value={need.urgency}
-              onChange={(e) => updateRecoveryNeed(need.id, { urgency: e.target.value as any })}
+              onChange={(e) => updateRecoveryNeed(need.id, { urgency: e.target.value as 'CRITICAL' | 'HIGH' | 'LOW' })}
               className="bg-gray-800 border border-gray-700 text-white p-1.5 text-xs rounded-lg"
             >
               <option value="CRITICAL">Critical</option>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AlertTriangle, X, Shield, MapPin, Phone } from 'lucide-react';
 
 interface SafeModeBannerProps {

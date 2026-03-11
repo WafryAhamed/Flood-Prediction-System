@@ -1,10 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, Truck, Hammer, HeartHandshake } from 'lucide-react';
+import { CheckCircle, Truck, Hammer, HeartHandshake, type LucideIcon } from 'lucide-react';
 import { UnifiedCard } from '../components/ui/UnifiedCard';
 import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
+import { useAdminControlStore } from '../stores/adminControlStore';
+
+const UPDATE_ICON_MAP: Record<string, LucideIcon> = { CheckCircle, Truck, Hammer, HeartHandshake };
+const URGENCY_STYLE: Record<string, { bg: string; label: string }> = {
+  CRITICAL: { bg: 'bg-critical', label: 'Critical' },
+  HIGH: { bg: 'bg-warning', label: 'High' },
+  LOW: { bg: 'bg-safe', label: 'Met' },
+};
 
 export function RecoveryTracker() {
   const [isLoading, setIsLoading] = useState(true);
+  const recoveryProgress = useAdminControlStore((s) => s.recoveryProgress);
+  const recoveryNeeds = useAdminControlStore((s) => s.recoveryNeeds);
+  const recoveryUpdates = useAdminControlStore((s) => s.recoveryUpdates);
+  const recoveryResources = useAdminControlStore((s) => s.recoveryResources);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 700);
@@ -37,61 +49,20 @@ export function RecoveryTracker() {
             {/* Progress Bars */}
             <UnifiedCard title="Restoration Progress">
               <div className="space-y-lg">
-                {/* Road Access */}
-                <div>
-                  <div className="flex justify-between mb-md font-bold uppercase text-sm text-text-primary">
-                    <span>Road Access</span>
-                    <span className="text-safe">85%</span>
+                {recoveryProgress.map((item) => (
+                  <div key={item.id}>
+                    <div className="flex justify-between mb-md font-bold uppercase text-sm text-text-primary">
+                      <span>{item.label}</span>
+                      <span>{item.percent}%</span>
+                    </div>
+                    <div className="h-3 w-full bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${item.color} transition-all`}
+                        style={{ width: `${item.percent}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="h-3 w-full bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-safe transition-all"
-                      style={{ width: '85%' }}
-                    ></div>
-                  </div>
-                </div>
-
-                {/* Power Supply */}
-                <div>
-                  <div className="flex justify-between mb-md font-bold uppercase text-sm text-text-primary">
-                    <span>Power Supply</span>
-                    <span className="text-caution">60%</span>
-                  </div>
-                  <div className="h-3 w-full bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-caution transition-all"
-                      style={{ width: '60%' }}
-                    ></div>
-                  </div>
-                </div>
-
-                {/* Water Safety */}
-                <div>
-                  <div className="flex justify-between mb-md font-bold uppercase text-sm text-text-primary">
-                    <span>Water Safety</span>
-                    <span className="text-critical">40%</span>
-                  </div>
-                  <div className="h-3 w-full bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-critical transition-all"
-                      style={{ width: '40%' }}
-                    ></div>
-                  </div>
-                </div>
-
-                {/* Shelter Capacity */}
-                <div>
-                  <div className="flex justify-between mb-md font-bold uppercase text-sm text-text-primary">
-                    <span>Shelter Capacity</span>
-                    <span className="text-info">92%</span>
-                  </div>
-                  <div className="h-3 w-full bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-info transition-all"
-                      style={{ width: '92%' }}
-                    ></div>
-                  </div>
-                </div>
+                ))}
               </div>
             </UnifiedCard>
 
@@ -108,24 +79,17 @@ export function RecoveryTracker() {
             {/* Critical Needs */}
             <UnifiedCard title="Critical Needs" accentColor="critical" subtitle="Urgent items needed">
               <ul className="space-y-md">
-                <li className="flex items-center justify-between pb-md border-b border-critical/30">
-                  <span className="font-semibold text-sm text-text-primary">Drinking Water</span>
-                  <span className="text-xs font-bold bg-critical text-white px-md py-xs rounded-card">
-                    Critical
-                  </span>
-                </li>
-                <li className="flex items-center justify-between pb-md border-b border-critical/30">
-                  <span className="font-semibold text-sm text-text-primary">Dry Rations</span>
-                  <span className="text-xs font-bold bg-warning text-white px-md py-xs rounded-card">
-                    High
-                  </span>
-                </li>
-                <li className="flex items-center justify-between">
-                  <span className="font-semibold text-sm text-text-primary">Clothing</span>
-                  <span className="text-xs font-bold bg-safe text-white px-md py-xs rounded-card">
-                    Met
-                  </span>
-                </li>
+                {recoveryNeeds.map((need, idx) => {
+                  const style = URGENCY_STYLE[need.urgency] || URGENCY_STYLE.LOW;
+                  return (
+                    <li key={need.id} className={`flex items-center justify-between ${idx < recoveryNeeds.length - 1 ? 'pb-md border-b border-critical/30' : ''}`}>
+                      <span className="font-semibold text-sm text-text-primary">{need.name}</span>
+                      <span className={`text-xs font-bold ${style.bg} text-white px-md py-xs rounded-card`}>
+                        {style.label}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
               <button className="w-full mt-lg bg-critical text-white py-md font-bold uppercase text-sm hover:opacity-90 transition-opacity rounded-card">
                 Donate Now
@@ -145,18 +109,12 @@ export function RecoveryTracker() {
             {/* Recovery Resources */}
             <UnifiedCard title="Recovery Resources" accentColor="info">
               <ul className="space-y-md text-sm text-text-secondary">
-                <li>
-                  <p className="font-bold text-text-primary">Crisis Hotline</p>
-                  <p className="text-xs text-text-secondary">+94-11-2-345-678</p>
-                </li>
-                <li>
-                  <p className="font-bold text-text-primary">Medical Support</p>
-                  <p className="text-xs text-text-secondary">Red Cross Centers</p>
-                </li>
-                <li>
-                  <p className="font-bold text-text-primary">Counseling Services</p>
-                  <p className="text-xs text-text-secondary">Disaster Relief Desk</p>
-                </li>
+                {recoveryResources.map((res) => (
+                  <li key={res.id}>
+                    <p className="font-bold text-text-primary">{res.name}</p>
+                    <p className="text-xs text-text-secondary">{res.detail}</p>
+                  </li>
+                ))}
               </ul>
             </UnifiedCard>
           </div>
@@ -166,27 +124,18 @@ export function RecoveryTracker() {
         <div>
           <h3 className="text-lg font-bold uppercase mb-lg text-text-primary">Recent Updates</h3>
           <div className="bg-bg-card border border-border-light p-lg rounded-card shadow-md space-y-md">
-            <div className="flex items-start gap-lg pb-md border-b border-border-light">
-              <CheckCircle size={20} className="text-safe shrink-0 mt-0.5" strokeWidth={2} />
-              <div>
-                <p className="font-bold text-sm text-text-primary">Routes restored to Sector 4</p>
-                <p className="text-xs text-text-secondary">Today at 14:30</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-lg pb-md border-b border-border-light">
-              <Truck size={20} className="text-info shrink-0 mt-0.5" strokeWidth={2} />
-              <div>
-                <p className="font-bold text-sm text-text-primary">Relief supplies distributed to 500 families</p>
-                <p className="text-xs text-text-secondary">Yesterday at 11:00</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-lg">
-              <Hammer size={20} className="text-warning shrink-0 mt-0.5" strokeWidth={2} />
-              <div>
-                <p className="font-bold text-sm text-text-primary">Reconstruction work begins at damaged homes</p>
-                <p className="text-xs text-text-secondary">2 days ago</p>
-              </div>
-            </div>
+            {recoveryUpdates.map((update, idx) => {
+              const Icon = UPDATE_ICON_MAP[update.iconName] || CheckCircle;
+              return (
+                <div key={update.id} className={`flex items-start gap-lg ${idx < recoveryUpdates.length - 1 ? 'pb-md border-b border-border-light' : ''}`}>
+                  <Icon size={20} className="text-safe shrink-0 mt-0.5" strokeWidth={2} />
+                  <div>
+                    <p className="font-bold text-sm text-text-primary">{update.title}</p>
+                    <p className="text-xs text-text-secondary">{update.time}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
         </>
