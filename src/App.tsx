@@ -37,6 +37,8 @@ import { AlertBroadcast } from './pages/admin/AlertBroadcast';
 import { DataUpload } from './pages/admin/DataUpload';
 import { AuditLogs } from './pages/admin/AuditLogs';
 import { Analytics } from './pages/admin/Analytics';
+import { FrontendControlCenter } from './pages/admin/FrontendControlCenter';
+import { useAdminControlStore } from './stores/adminControlStore';
 
 /** Wrapper to apply page transitions */
 function PageTransition({ children }: { children: React.ReactNode }) {
@@ -83,13 +85,14 @@ function AppContent() {
           <Route path="data" element={<DataUpload />} />
           <Route path="audit" element={<AuditLogs />} />
           <Route path="analytics" element={<Analytics />} />
+          <Route path="frontend" element={<FrontendControlCenter />} />
           </Route>
         </Route>
 
         {/* User Routes - With User Nav */}
         <Route path="*" element={<>
               <Navigation />
-              <SafeModeBanner riskLevel="CRITICAL" />
+              <AdminBannerBridge />
               {/* Floating Action Buttons: Chatbot + Emergency + Help */}
               <div className="fixed right-5 bottom-[90px] md:right-6 md:bottom-6 flex flex-col items-center gap-4 z-50">
                 <CitizenChatbot />
@@ -98,23 +101,39 @@ function AppContent() {
               <QuickHelpButton />
               <div className="md:pl-20 pb-20 md:pb-0 transition-all duration-200">
                 <PageTransition>
-                  <Routes>
-                    <Route path="/" element={<EmergencyDashboard />} />
-                    <Route path="/map" element={<RiskMapPage />} />
-                    <Route path="/report" element={<CommunityReports />} />
-                    <Route path="/evacuate" element={<EvacuationPlanner />} />
-                    <Route path="/history" element={<HistoricalTimeline />} />
-                    <Route path="/what-if" element={<WhatIfLab />} />
-                    <Route path="/agriculture" element={<AgricultureAdvisor />} />
-                    <Route path="/recovery" element={<RecoveryTracker />} />
-                    <Route path="/learn" element={<LearnHub />} />
-                    <Route path="/profile" element={<SafetyProfile />} />
-                  </Routes>
+                  <VisibilityRoutes />
                 </PageTransition>
               </div>
             </>} />
       </Routes>
     </div>
+  );
+}
+
+/** Bridge: reads admin store banner settings and feeds SafeModeBanner */
+function AdminBannerBridge() {
+  const { frontendSettings } = useAdminControlStore();
+  if (!frontendSettings.emergencyBannerActive) return null;
+  return <SafeModeBanner riskLevel={frontendSettings.emergencyBannerRiskLevel as any} message={frontendSettings.emergencyBannerMessage} />;
+}
+
+/** Routes gated by admin page-visibility toggles */
+function VisibilityRoutes() {
+  const pv = useAdminControlStore((s) => s.frontendSettings.pageVisibility);
+  return (
+    <Routes>
+      {pv.dashboard && <Route path="/" element={<EmergencyDashboard />} />}
+      {pv.riskMap && <Route path="/map" element={<RiskMapPage />} />}
+      {pv.communityReports && <Route path="/report" element={<CommunityReports />} />}
+      {pv.evacuation && <Route path="/evacuate" element={<EvacuationPlanner />} />}
+      {pv.history && <Route path="/history" element={<HistoricalTimeline />} />}
+      {pv.whatIf && <Route path="/what-if" element={<WhatIfLab />} />}
+      {pv.agriculture && <Route path="/agriculture" element={<AgricultureAdvisor />} />}
+      {pv.recovery && <Route path="/recovery" element={<RecoveryTracker />} />}
+      {pv.learnHub && <Route path="/learn" element={<LearnHub />} />}
+      {pv.safetyProfile && <Route path="/profile" element={<SafetyProfile />} />}
+      <Route path="/" element={<EmergencyDashboard />} />
+    </Routes>
   );
 }
 

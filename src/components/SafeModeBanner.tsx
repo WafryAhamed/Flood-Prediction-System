@@ -3,9 +3,10 @@ import { AlertTriangle, X, Shield, MapPin, Phone } from 'lucide-react';
 
 interface SafeModeBannerProps {
   riskLevel?: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+  message?: string;
 }
 
-export function SafeModeBanner({ riskLevel = 'CRITICAL' }: SafeModeBannerProps) {
+export function SafeModeBanner({ riskLevel = 'CRITICAL', message }: SafeModeBannerProps) {
   const [expanded, setExpanded] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
@@ -22,7 +23,7 @@ export function SafeModeBanner({ riskLevel = 'CRITICAL' }: SafeModeBannerProps) 
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <AlertTriangle size={20} className="shrink-0 animate-pulse" />
           <span className="font-bold text-sm truncate">
-            ⚠ Flood warning active in your area
+            {message || '⚠ Flood warning active in your area'}
           </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">

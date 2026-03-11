@@ -5,11 +5,14 @@ import { RiskMap } from '../components/RiskMap';
 import { motion } from 'framer-motion';
 import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
 import { useWeatherData } from '../hooks/useWeatherData';
+import { useAdminControlStore } from '../stores/adminControlStore';
 
 export function EmergencyDashboard() {
   const [time, setTime] = useState(new Date());
   const [isLoading, setIsLoading] = useState(true);
   const { weather } = useWeatherData();
+  const broadcastFeed = useAdminControlStore((s) => s.broadcastFeed);
+  const dashboardResources = useAdminControlStore((s) => s.dashboardResources);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 600);
@@ -218,15 +221,11 @@ export function EmergencyDashboard() {
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-md">
           <UnifiedCard title="Broadcast Feed" subtitle="Latest emergency updates" accentColor="critical">
             <div className="space-y-md max-h-96 overflow-y-auto">
-              {[
-                { time: '13:55', icon: Radio, text: 'Sector 7 evacuation order issued. Proceed to high ground immediately.' },
-                { time: '13:42', icon: Droplets, text: 'Water levels exceeding critical threshold at North Bridge.' },
-                { time: '13:30', icon: AlertTriangle, text: 'Emergency services deployed to downtown area.' }
-              ].map((item, idx) => (
-                <div key={idx} className="p-md bg-gray-50 rounded-lg border border-border-light hover:bg-gray-100 transition-colors">
+              {broadcastFeed.filter(b => b.active).map((item) => (
+                <div key={item.id} className="p-md bg-gray-50 rounded-lg border border-border-light hover:bg-gray-100 transition-colors">
                   <div className="flex justify-between items-start mb-xs">
                     <span className="font-bold text-xs text-text-secondary font-mono">{item.time}</span>
-                    <item.icon size={14} className="text-red-600" />
+                    <Radio size={14} className="text-red-600" />
                   </div>
                   <p className="text-sm text-text-primary leading-snug">
                     {item.text}
@@ -238,14 +237,9 @@ export function EmergencyDashboard() {
 
           <UnifiedCard title="Resources" subtitle="Availability status" accentColor="safe">
             <div className="space-y-md">
-              {[
-                { name: 'Shelter A', status: 'OPEN', statusColor: 'bg-green-600' },
-                { name: 'Shelter B', status: 'FULL', statusColor: 'bg-red-600' },
-                { name: 'Medical Post', status: 'BUSY', statusColor: 'bg-yellow-500' },
-                { name: 'Water Supply', status: 'AVAILABLE', statusColor: 'bg-green-600' }
-              ].map((resource, idx) => (
+              {dashboardResources.filter(r => r.visible).map((resource) => (
                 <div
-                  key={idx}
+                  key={resource.id}
                   className="flex items-center justify-between p-md bg-gray-50 rounded-lg border border-border-light hover:bg-gray-100 transition-colors cursor-pointer"
                 >
                   <span className="font-semibold text-sm text-text-primary uppercase">{resource.name}</span>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Map, MessageSquare, Building2, Radio, Database, BarChart3, ShieldAlert, Sprout, RefreshCw, Activity, FileText, LogOut } from 'lucide-react';
+import { LayoutDashboard, Map, MessageSquare, Building2, Radio, Database, BarChart3, ShieldAlert, Sprout, RefreshCw, Activity, FileText, LogOut, Monitor } from 'lucide-react';
 import { AIAssistant } from '../../components/admin/AIAssistant';
 export function AdminLayout() {
   const location = useLocation();
@@ -59,6 +59,10 @@ export function AdminLayout() {
     path: '/admin/analytics',
     label: 'Research',
     icon: BarChart3
+  }, {
+    path: '/admin/frontend',
+    label: 'Frontend Ctrl',
+    icon: Monitor
   }];
   return <div className="min-h-screen bg-bg-dark text-gray-200 font-sans admin-theme flex flex-col">
       {/* Top Bar */}
