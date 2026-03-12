@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Polygon, Marker, Popup, Circle, useMap } from 
 import { Icon, LatLngBoundsExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useWeatherData, SRI_LANKA_CENTER, SRI_LANKA_BOUNDS, DEFAULT_ZOOM } from '../hooks/useWeatherData';
+import { useReportStore } from '../stores/reportStore';
 
 // Marker icons
 const redIcon = new Icon({
@@ -25,6 +26,20 @@ const orangeIcon = new Icon({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
   iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
 });
+const violetIcon = new Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
+});
+
+function getReportSeverityIcon(severity: string) {
+  switch (severity) {
+    case 'CRITICAL': return redIcon;
+    case 'HIGH': return orangeIcon;
+    case 'MEDIUM': return blueIcon;
+    default: return greenIcon;
+  }
+}
 
 // --- Sri Lanka Flood Risk Zones (real geographic polygons) ---
 
@@ -100,6 +115,9 @@ function UserLocationMarker() {
 
 export function RiskMap() {
   const { weather, radarTileUrl, error } = useWeatherData();
+  const verifiedReports = useReportStore((s) =>
+    s.reports.filter((r) => r.status === 'verified' || r.status === 'action_in_progress')
+  );
 
   return (
     <div className="h-full w-full min-h-[400px] border-4 border-black relative z-0">
@@ -168,6 +186,26 @@ export function RiskMap() {
 
         {/* User's real location */}
         <UserLocationMarker />
+
+        {/* Verified Community Reports */}
+        {verifiedReports.map((r) => (
+          <Marker
+            key={r.report_id}
+            position={[r.latitude, r.longitude]}
+            icon={getReportSeverityIcon(r.severity_level)}
+          >
+            <Popup>
+              <div className="font-black uppercase text-sm text-red-600">
+                Community Report — {r.severity_level}
+              </div>
+              <div className="text-xs mt-1">{r.description}</div>
+              <div className="text-xs mt-1 font-semibold">{r.location_name}</div>
+              {r.emergency_response_status && (
+                <div className="text-xs mt-1 font-bold text-purple-600">{r.emergency_response_status}</div>
+              )}
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
 
       {/* Weather Info Badge */}
@@ -225,6 +263,10 @@ export function RiskMap() {
         <div className="flex items-center gap-1.5 md:gap-2">
           <div className="w-3 h-3 bg-orange-500 rounded-full border border-black"></div>
           <span className="font-bold text-[10px] md:text-xs">Flood Reports</span>
+        </div>
+        <div className="flex items-center gap-1.5 md:gap-2">
+          <div className="w-3 h-3 bg-red-500 rounded-full border border-black"></div>
+          <span className="font-bold text-[10px] md:text-xs">Verified Reports</span>
         </div>
       </div>
     </div>

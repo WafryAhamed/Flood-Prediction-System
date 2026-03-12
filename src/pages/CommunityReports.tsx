@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Camera, MapPin, Send, AlertTriangle, Plus, X } from 'lucide-react';
+import { Camera, MapPin, Send, AlertTriangle, Plus, X, CheckCircle, Clock, Truck, ShieldCheck } from 'lucide-react';
 import { UnifiedCard } from '../components/ui/UnifiedCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
@@ -21,15 +21,40 @@ const LOCATIONS = [
   { name: 'Hanwella, Colombo', lat: 6.9010, lng: 80.0852 },
 ];
 
+const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
+  pending: { label: 'Pending verification', bg: 'bg-orange-500/10', text: 'text-orange-500' },
+  verified: { label: 'Verified', bg: 'bg-blue-500/10', text: 'text-blue-600' },
+  action_in_progress: { label: 'Help dispatched', bg: 'bg-purple-500/10', text: 'text-purple-600' },
+  resolved: { label: 'Resolved', bg: 'bg-green-500/10', text: 'text-green-600' },
+  rejected: { label: 'Rejected', bg: 'bg-red-500/10', text: 'text-red-500' },
+};
+
+function ReportStatusBadge({ status }: { status: string }) {
+  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+  return (
+    <span className={`text-xs font-bold px-md py-xs rounded-card ${cfg.bg} ${cfg.text}`}>
+      {cfg.label}
+    </span>
+  );
+}
+
 export function CommunityReports() {
   const [reportType, setReportType] = useState('');
   const [description, setDescription] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [submitToast, setSubmitToast] = useState(false);
   const addReport = useReportStore((s) => s.addReport);
   const allReports = useReportStore((s) => s.reports);
+  const [, setTick] = useState(0);
 
-  // Show verified + pending reports to the public
+  // Polling: refresh every 10 seconds to pick up status changes
+  useEffect(() => {
+    const interval = setInterval(() => setTick((t) => t + 1), 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Public sees everything except rejected
   const visibleReports = allReports.filter((r) => r.status !== 'rejected').slice(0, 20);
 
   useEffect(() => {
@@ -52,6 +77,8 @@ export function CommunityReports() {
     });
     setReportType('');
     setDescription('');
+    setSubmitToast(true);
+    setTimeout(() => setSubmitToast(false), 5000);
   }, [reportType, description, addReport]);
 
   const formatTimeAgo = (ts: number) => {
@@ -82,6 +109,26 @@ export function CommunityReports() {
           </button>
         </div>
       </section>
+
+      {/* Submit Confirmation Toast */}
+      <AnimatePresence>
+        {submitToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="max-w-4xl mx-auto mb-lg"
+          >
+            <div className="bg-orange-50 border border-orange-200 rounded-card p-md flex items-center gap-md">
+              <Clock size={20} className="text-orange-500 shrink-0" />
+              <div>
+                <p className="font-bold text-sm text-orange-700">Report Submitted</p>
+                <p className="text-xs text-orange-600">Your report is under verification by authorities. You will see updates here.</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Recent Reports Grid */}
       <div className="max-w-4xl mx-auto">
@@ -118,14 +165,8 @@ export function CommunityReports() {
               {/* Content */}
               <div className="p-lg">
                 <div className="flex items-start justify-between mb-md">
-                  <div className="flex items-center gap-md">
-                    <span className={`text-xs font-bold px-md py-xs rounded-card ${
-                      r.status === 'verified'
-                        ? 'bg-critical/10 text-critical'
-                        : 'bg-orange-500/10 text-orange-500'
-                    }`}>
-                      {r.status === 'verified' ? 'Verified' : 'Pending'}
-                    </span>
+                  <div className="flex items-center gap-md flex-wrap">
+                    <ReportStatusBadge status={r.status} />
                     <span className="text-xs font-semibold text-text-secondary">
                       {formatTimeAgo(r.timestamp)}
                     </span>
@@ -152,19 +193,35 @@ export function CommunityReports() {
                   <MapPin size={16} /> {r.location_name}
                 </div>
 
-                <div className="pt-lg border-t border-border-light flex justify-around">
-                  <button className="flex flex-col items-center gap-xs text-text-secondary hover:text-critical transition-colors">
-                    <AlertTriangle size={18} />
-                    <span className="text-xs font-bold">Verify</span>
-                  </button>
-                  <button className="flex flex-col items-center gap-xs text-text-secondary hover:text-info transition-colors">
-                    <MapPin size={18} />
-                    <span className="text-xs font-bold">Map</span>
-                  </button>
-                  <button className="flex flex-col items-center gap-xs text-text-secondary hover:text-safe transition-colors">
-                    <Send size={18} />
-                    <span className="text-xs font-bold">Share</span>
-                  </button>
+                <div className="pt-lg border-t border-border-light">
+                  {/* Emergency response status message */}
+                  {r.emergency_response_status && r.status !== 'pending' && (
+                    <div className={`flex items-center gap-md text-xs font-bold mb-md px-md py-sm rounded-card ${
+                      r.status === 'action_in_progress' ? 'bg-purple-50 text-purple-700' :
+                      r.status === 'resolved' ? 'bg-green-50 text-green-700' :
+                      r.status === 'verified' ? 'bg-blue-50 text-blue-700' :
+                      'bg-gray-50 text-gray-600'
+                    }`}>
+                      {r.status === 'action_in_progress' && <Truck size={14} />}
+                      {r.status === 'resolved' && <CheckCircle size={14} />}
+                      {r.status === 'verified' && <ShieldCheck size={14} />}
+                      {r.emergency_response_status}
+                    </div>
+                  )}
+                  <div className="flex justify-around">
+                    <button className="flex flex-col items-center gap-xs text-text-secondary hover:text-critical transition-colors">
+                      <AlertTriangle size={18} />
+                      <span className="text-xs font-bold">Verify</span>
+                    </button>
+                    <button className="flex flex-col items-center gap-xs text-text-secondary hover:text-info transition-colors">
+                      <MapPin size={18} />
+                      <span className="text-xs font-bold">Map</span>
+                    </button>
+                    <button className="flex flex-col items-center gap-xs text-text-secondary hover:text-safe transition-colors">
+                      <Send size={18} />
+                      <span className="text-xs font-bold">Share</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </UnifiedCard>

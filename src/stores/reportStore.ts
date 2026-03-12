@@ -1,5 +1,13 @@
 import { create } from 'zustand';
 
+export interface AdminVerification {
+  verified_by: string;
+  verified_time: number;
+  response_team_status: 'none' | 'dispatched' | 'on_site' | 'completed';
+}
+
+export type ReportStatus = 'pending' | 'verified' | 'rejected' | 'action_in_progress' | 'resolved';
+
 export interface FloodReport {
   report_id: string;
   user_id: string;
@@ -11,7 +19,9 @@ export interface FloodReport {
   longitude: number;
   timestamp: number;
   media_url: string | null;
-  status: 'pending' | 'verified' | 'rejected';
+  status: ReportStatus;
+  admin_verification: AdminVerification | null;
+  emergency_response_status: string;
 }
 
 const SEVERITY_ORDER: Record<string, number> = {
@@ -31,10 +41,14 @@ function sortReports(reports: FloodReport[]): FloodReport[] {
 
 interface ReportStore {
   reports: FloodReport[];
-  addReport: (report: Omit<FloodReport, 'report_id' | 'status' | 'timestamp' | 'user_id' | 'trust_score'>) => void;
+  addReport: (report: Omit<FloodReport, 'report_id' | 'status' | 'timestamp' | 'user_id' | 'trust_score' | 'admin_verification' | 'emergency_response_status'>) => void;
   verifyReport: (reportId: string) => void;
   rejectReport: (reportId: string) => void;
+  dispatchHelp: (reportId: string) => void;
+  resolveReport: (reportId: string) => void;
   getPendingReports: () => FloodReport[];
+  getVerifiedReports: () => FloodReport[];
+  getPublicReports: () => FloodReport[];
 }
 
 let nextId = 100;
@@ -65,6 +79,8 @@ const SEED_REPORTS: FloodReport[] = [
     timestamp: Date.now() - 2 * 60 * 1000,
     media_url: null,
     status: 'pending',
+    admin_verification: null,
+    emergency_response_status: '',
   },
   {
     report_id: 'RPT-SEED-002',
@@ -78,6 +94,8 @@ const SEED_REPORTS: FloodReport[] = [
     timestamp: Date.now() - 5 * 60 * 1000,
     media_url: null,
     status: 'pending',
+    admin_verification: null,
+    emergency_response_status: '',
   },
   {
     report_id: 'RPT-SEED-003',
@@ -91,6 +109,8 @@ const SEED_REPORTS: FloodReport[] = [
     timestamp: Date.now() - 8 * 60 * 1000,
     media_url: null,
     status: 'pending',
+    admin_verification: null,
+    emergency_response_status: '',
   },
   {
     report_id: 'RPT-SEED-004',
@@ -104,6 +124,8 @@ const SEED_REPORTS: FloodReport[] = [
     timestamp: Date.now() - 3 * 60 * 1000,
     media_url: null,
     status: 'pending',
+    admin_verification: null,
+    emergency_response_status: '',
   },
   {
     report_id: 'RPT-SEED-005',
@@ -117,6 +139,8 @@ const SEED_REPORTS: FloodReport[] = [
     timestamp: Date.now() - 12 * 60 * 1000,
     media_url: null,
     status: 'pending',
+    admin_verification: null,
+    emergency_response_status: '',
   },
   {
     report_id: 'RPT-SEED-006',
@@ -130,6 +154,8 @@ const SEED_REPORTS: FloodReport[] = [
     timestamp: Date.now() - 15 * 60 * 1000,
     media_url: null,
     status: 'pending',
+    admin_verification: null,
+    emergency_response_status: '',
   },
   {
     report_id: 'RPT-SEED-007',
@@ -143,6 +169,8 @@ const SEED_REPORTS: FloodReport[] = [
     timestamp: Date.now() - 22 * 60 * 1000,
     media_url: null,
     status: 'pending',
+    admin_verification: null,
+    emergency_response_status: '',
   },
   {
     report_id: 'RPT-SEED-008',
@@ -156,6 +184,38 @@ const SEED_REPORTS: FloodReport[] = [
     timestamp: Date.now() - 1 * 60 * 1000,
     media_url: null,
     status: 'pending',
+    admin_verification: null,
+    emergency_response_status: '',
+  },
+  {
+    report_id: 'RPT-SEED-009',
+    user_id: '#1147',
+    trust_score: 93,
+    severity_level: 'HIGH',
+    description: 'Heavy flooding on Avissawella Road. Multiple vehicles stranded, water still rising.',
+    location_name: 'Avissawella, Colombo',
+    latitude: 6.9530,
+    longitude: 80.2210,
+    timestamp: Date.now() - 45 * 60 * 1000,
+    media_url: null,
+    status: 'verified',
+    admin_verification: { verified_by: 'CMD. PERERA', verified_time: Date.now() - 40 * 60 * 1000, response_team_status: 'dispatched' },
+    emergency_response_status: 'Emergency team dispatched to this location.',
+  },
+  {
+    report_id: 'RPT-SEED-010',
+    user_id: '#6820',
+    trust_score: 88,
+    severity_level: 'CRITICAL',
+    description: 'Kelani River overflow near Malwana. Residents evacuating to temple.',
+    location_name: 'Malwana, Gampaha',
+    latitude: 6.9780,
+    longitude: 80.0330,
+    timestamp: Date.now() - 60 * 60 * 1000,
+    media_url: null,
+    status: 'action_in_progress',
+    admin_verification: { verified_by: 'CMD. PERERA', verified_time: Date.now() - 55 * 60 * 1000, response_team_status: 'on_site' },
+    emergency_response_status: 'Emergency team on site. Rescue operations underway.',
   },
 ];
 
@@ -170,6 +230,8 @@ export const useReportStore = create<ReportStore>((set, get) => ({
       trust_score: generateTrustScore(),
       timestamp: Date.now(),
       status: 'pending',
+      admin_verification: null,
+      emergency_response_status: '',
     };
     set((state) => ({
       reports: [report, ...state.reports].slice(0, 50),
@@ -179,7 +241,18 @@ export const useReportStore = create<ReportStore>((set, get) => ({
   verifyReport: (reportId) => {
     set((state) => ({
       reports: state.reports.map((r) =>
-        r.report_id === reportId ? { ...r, status: 'verified' as const } : r
+        r.report_id === reportId
+          ? {
+              ...r,
+              status: 'verified' as const,
+              admin_verification: {
+                verified_by: 'CMD. PERERA',
+                verified_time: Date.now(),
+                response_team_status: 'none' as const,
+              },
+              emergency_response_status: 'Report verified by authorities.',
+            }
+          : r
       ),
     }));
   },
@@ -187,12 +260,71 @@ export const useReportStore = create<ReportStore>((set, get) => ({
   rejectReport: (reportId) => {
     set((state) => ({
       reports: state.reports.map((r) =>
-        r.report_id === reportId ? { ...r, status: 'rejected' as const } : r
+        r.report_id === reportId
+          ? {
+              ...r,
+              status: 'rejected' as const,
+              admin_verification: {
+                verified_by: 'CMD. PERERA',
+                verified_time: Date.now(),
+                response_team_status: 'none' as const,
+              },
+              emergency_response_status: 'Report rejected — not verified.',
+            }
+          : r
+      ),
+    }));
+  },
+
+  dispatchHelp: (reportId) => {
+    set((state) => ({
+      reports: state.reports.map((r) =>
+        r.report_id === reportId
+          ? {
+              ...r,
+              status: 'action_in_progress' as const,
+              admin_verification: {
+                ...(r.admin_verification || { verified_by: 'CMD. PERERA', verified_time: Date.now() }),
+                verified_by: r.admin_verification?.verified_by || 'CMD. PERERA',
+                verified_time: r.admin_verification?.verified_time || Date.now(),
+                response_team_status: 'dispatched' as const,
+              },
+              emergency_response_status: 'Emergency team dispatched to this location.',
+            }
+          : r
+      ),
+    }));
+  },
+
+  resolveReport: (reportId) => {
+    set((state) => ({
+      reports: state.reports.map((r) =>
+        r.report_id === reportId
+          ? {
+              ...r,
+              status: 'resolved' as const,
+              admin_verification: {
+                ...(r.admin_verification || { verified_by: 'CMD. PERERA', verified_time: Date.now() }),
+                verified_by: r.admin_verification?.verified_by || 'CMD. PERERA',
+                verified_time: r.admin_verification?.verified_time || Date.now(),
+                response_team_status: 'completed' as const,
+              },
+              emergency_response_status: 'Situation resolved.',
+            }
+          : r
       ),
     }));
   },
 
   getPendingReports: () => {
     return sortReports(get().reports.filter((r) => r.status === 'pending'));
+  },
+
+  getVerifiedReports: () => {
+    return sortReports(get().reports.filter((r) => r.status === 'verified' || r.status === 'action_in_progress'));
+  },
+
+  getPublicReports: () => {
+    return sortReports(get().reports.filter((r) => r.status !== 'rejected'));
   },
 }));

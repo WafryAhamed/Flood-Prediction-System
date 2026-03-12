@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Check, X, MapPin, MessageSquare, AlertTriangle, Filter, Activity } from 'lucide-react';
+import { Check, X, MapPin, MessageSquare, AlertTriangle, Filter, Activity, Truck, CheckCircle, Clock, Shield } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import { useReportStore, FloodReport } from '../../stores/reportStore';
+import { useReportStore, FloodReport, ReportStatus } from '../../stores/reportStore';
 
 // Fix default Leaflet marker icon
 const defaultIcon = L.icon({
@@ -42,6 +42,15 @@ function computeAI(report: FloodReport, allPending: FloodReport[]) {
 }
 
 type SeverityFilter = 'ALL' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+type StatusTab = 'all' | 'pending' | 'verified' | 'action_in_progress' | 'resolved' | 'rejected';
+
+const STATUS_BADGE: Record<string, { label: string; color: string }> = {
+  pending: { label: 'PENDING', color: 'bg-orange-500 text-white' },
+  verified: { label: 'VERIFIED', color: 'bg-blue-600 text-white' },
+  action_in_progress: { label: 'DISPATCHED', color: 'bg-purple-600 text-white' },
+  resolved: { label: 'RESOLVED', color: 'bg-green-600 text-white' },
+  rejected: { label: 'REJECTED', color: 'bg-red-600 text-white' },
+};
 
 const MemoizedQueueItem = React.memo(function QueueItem({
   report,
@@ -71,13 +80,22 @@ const MemoizedQueueItem = React.memo(function QueueItem({
       } cursor-pointer transition-colors`}
     >
       <div className="flex justify-between items-start mb-2">
-        <span
-          className={`text-xs font-bold uppercase px-2 py-0.5 rounded ${
-            severityColors[report.severity_level] || 'bg-gray-700 text-gray-300'
-          }`}
-        >
-          {report.severity_level}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span
+            className={`text-xs font-bold uppercase px-2 py-0.5 rounded ${
+              severityColors[report.severity_level] || 'bg-gray-700 text-gray-300'
+            }`}
+          >
+            {report.severity_level}
+          </span>
+          <span
+            className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
+              STATUS_BADGE[report.status]?.color || 'bg-gray-700 text-gray-300'
+            }`}
+          >
+            {STATUS_BADGE[report.status]?.label || report.status}
+          </span>
+        </div>
         <span className="text-xs font-semibold text-gray-400">
           {formatTimeAgo(report.timestamp)}
         </span>
@@ -93,30 +111,49 @@ const MemoizedQueueItem = React.memo(function QueueItem({
 });
 
 export function ReportModeration() {
+  const allReports = useReportStore((s) => s.reports);
   const pendingReports = useReportStore((s) => s.getPendingReports());
   const verifyReport = useReportStore((s) => s.verifyReport);
   const rejectReport = useReportStore((s) => s.rejectReport);
+  const dispatchHelp = useReportStore((s) => s.dispatchHelp);
+  const resolveReport = useReportStore((s) => s.resolveReport);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [severityFilter, setSeverityFilter] = useState<SeverityFilter>('ALL');
+  const [statusTab, setStatusTab] = useState<StatusTab>('pending');
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [, setTick] = useState(0);
 
-  // Polling: force re-render every 5 seconds to pick up new reports & refresh time-ago
+  // Polling: force re-render every 5 seconds
   useEffect(() => {
     const interval = setInterval(() => setTick((t) => t + 1), 5000);
     return () => clearInterval(interval);
   }, []);
 
+  const tabReports = useMemo(() => {
+    const sorted = [...allReports].sort((a, b) => b.timestamp - a.timestamp);
+    if (statusTab === 'all') return sorted;
+    return sorted.filter((r) => r.status === statusTab);
+  }, [allReports, statusTab]);
+
   const filteredReports = useMemo(() => {
-    if (severityFilter === 'ALL') return pendingReports;
-    return pendingReports.filter((r) => r.severity_level === severityFilter);
-  }, [pendingReports, severityFilter]);
+    if (severityFilter === 'ALL') return tabReports;
+    return tabReports.filter((r) => r.severity_level === severityFilter);
+  }, [tabReports, severityFilter]);
 
   const criticalCount = useMemo(
     () => pendingReports.filter((r) => r.severity_level === 'CRITICAL').length,
     [pendingReports]
   );
+
+  const tabCounts = useMemo(() => ({
+    all: allReports.length,
+    pending: allReports.filter((r) => r.status === 'pending').length,
+    verified: allReports.filter((r) => r.status === 'verified').length,
+    action_in_progress: allReports.filter((r) => r.status === 'action_in_progress').length,
+    resolved: allReports.filter((r) => r.status === 'resolved').length,
+    rejected: allReports.filter((r) => r.status === 'rejected').length,
+  }), [allReports]);
 
   const selectedReport = useMemo(
     () => filteredReports.find((r) => r.report_id === selectedId) ?? filteredReports[0] ?? null,
@@ -137,26 +174,32 @@ export function ReportModeration() {
 
   const handleVerify = useCallback(() => {
     if (!selectedReport) return;
-    const id = selectedReport.report_id;
-    verifyReport(id);
-    setSelectedId(null);
+    verifyReport(selectedReport.report_id);
   }, [selectedReport, verifyReport]);
 
   const handleReject = useCallback(() => {
     if (!selectedReport) return;
-    const id = selectedReport.report_id;
-    rejectReport(id);
-    setSelectedId(null);
+    rejectReport(selectedReport.report_id);
   }, [selectedReport, rejectReport]);
 
+  const handleDispatch = useCallback(() => {
+    if (!selectedReport) return;
+    dispatchHelp(selectedReport.report_id);
+  }, [selectedReport, dispatchHelp]);
+
+  const handleResolve = useCallback(() => {
+    if (!selectedReport) return;
+    resolveReport(selectedReport.report_id);
+  }, [selectedReport, resolveReport]);
+
   return <div className="space-y-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-4">
         <div>
           <h2 className="text-4xl font-bold uppercase tracking-tight text-white mb-2">
             Community Intelligence Hub
           </h2>
           <p className="text-sm font-semibold text-gray-400">
-            INCOMING STREAM • {pendingReports.length} NEW REPORTS
+            INCOMING STREAM • {tabCounts.pending} PENDING • {allReports.length} TOTAL
           </p>
         </div>
         <div className="flex gap-2 relative">
@@ -184,6 +227,33 @@ export function ReportModeration() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Status Tabs */}
+      <div className="flex gap-2 flex-wrap">
+        {([
+          { key: 'pending' as StatusTab, label: 'Pending', count: tabCounts.pending, color: 'orange' },
+          { key: 'verified' as StatusTab, label: 'Verified', count: tabCounts.verified, color: 'blue' },
+          { key: 'action_in_progress' as StatusTab, label: 'Dispatched', count: tabCounts.action_in_progress, color: 'purple' },
+          { key: 'resolved' as StatusTab, label: 'Resolved', count: tabCounts.resolved, color: 'green' },
+          { key: 'rejected' as StatusTab, label: 'Rejected', count: tabCounts.rejected, color: 'red' },
+          { key: 'all' as StatusTab, label: 'All', count: tabCounts.all, color: 'gray' },
+        ]).map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setStatusTab(tab.key)}
+            className={`px-4 py-2 text-xs font-bold uppercase rounded-lg transition-colors flex items-center gap-2 ${
+              statusTab === tab.key
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            }`}
+          >
+            {tab.label}
+            <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+              statusTab === tab.key ? 'bg-white/20' : 'bg-gray-700'
+            }`}>{tab.count}</span>
+          </button>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[700px]">
@@ -238,18 +308,45 @@ export function ReportModeration() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    onClick={handleVerify}
-                    className="px-4 py-2 bg-green-600 text-white font-bold uppercase text-xs hover:bg-green-700 flex items-center gap-2 rounded-lg transition-colors"
-                  >
-                    <Check size={16} /> Verify
-                  </button>
-                  <button
-                    onClick={handleReject}
-                    className="px-4 py-2 bg-red-600 text-white font-bold uppercase text-xs hover:bg-red-700 flex items-center gap-2 rounded-lg transition-colors"
-                  >
-                    <X size={16} /> Reject
-                  </button>
+                  {(selectedReport.status === 'pending') && (
+                    <>
+                      <button
+                        onClick={handleVerify}
+                        className="px-4 py-2 bg-green-600 text-white font-bold uppercase text-xs hover:bg-green-700 flex items-center gap-2 rounded-lg transition-colors"
+                      >
+                        <Check size={16} /> Verify
+                      </button>
+                      <button
+                        onClick={handleReject}
+                        className="px-4 py-2 bg-red-600 text-white font-bold uppercase text-xs hover:bg-red-700 flex items-center gap-2 rounded-lg transition-colors"
+                      >
+                        <X size={16} /> Reject
+                      </button>
+                    </>
+                  )}
+                  {(selectedReport.status === 'verified') && (
+                    <button
+                      onClick={handleDispatch}
+                      className="px-4 py-2 bg-purple-600 text-white font-bold uppercase text-xs hover:bg-purple-700 flex items-center gap-2 rounded-lg transition-colors"
+                    >
+                      <Truck size={16} /> Dispatch Help
+                    </button>
+                  )}
+                  {(selectedReport.status === 'verified' || selectedReport.status === 'action_in_progress') && (
+                    <button
+                      onClick={handleResolve}
+                      className="px-4 py-2 bg-green-600 text-white font-bold uppercase text-xs hover:bg-green-700 flex items-center gap-2 rounded-lg transition-colors"
+                    >
+                      <CheckCircle size={16} /> Resolve
+                    </button>
+                  )}
+                  {(selectedReport.status === 'resolved' || selectedReport.status === 'rejected') && (
+                    <span className={`px-4 py-2 font-bold uppercase text-xs rounded-lg ${
+                      STATUS_BADGE[selectedReport.status]?.color || 'bg-gray-700 text-gray-300'
+                    }`}>
+                      {STATUS_BADGE[selectedReport.status]?.label}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -318,6 +415,54 @@ export function ReportModeration() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Admin Verification Log */}
+                  {selectedReport.admin_verification && (
+                    <div className="bg-gray-900 p-4 border border-gray-700 rounded-lg">
+                      <h4 className="text-xs font-bold uppercase text-gray-400 mb-3 flex items-center gap-2">
+                        <Shield size={16} /> Verification Log
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4 text-xs">
+                        <div>
+                          <span className="text-gray-400 block mb-1">Verified By</span>
+                          <span className="text-white font-semibold">{selectedReport.admin_verification.verified_by}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-400 block mb-1">Verified At</span>
+                          <span className="text-white font-semibold">{new Date(selectedReport.admin_verification.verified_time).toLocaleString()}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-400 block mb-1">Response Team</span>
+                          <span className="text-white font-semibold uppercase">{selectedReport.admin_verification.response_team_status}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-400 block mb-1">Current Status</span>
+                          <span className={`font-bold uppercase px-2 py-0.5 rounded ${STATUS_BADGE[selectedReport.status]?.color || 'bg-gray-700 text-gray-300'}`}>
+                            {STATUS_BADGE[selectedReport.status]?.label}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Emergency Response Status */}
+                  {selectedReport.emergency_response_status && (
+                    <div className={`border rounded-lg p-4 ${
+                      selectedReport.status === 'action_in_progress' ? 'bg-purple-600/10 border-purple-600/30' :
+                      selectedReport.status === 'resolved' ? 'bg-green-600/10 border-green-600/30' :
+                      'bg-gray-900 border-gray-700'
+                    }`}>
+                      <h4 className={`text-xs font-bold uppercase mb-2 flex items-center gap-2 ${
+                        selectedReport.status === 'action_in_progress' ? 'text-purple-400' :
+                        selectedReport.status === 'resolved' ? 'text-green-400' :
+                        'text-gray-400'
+                      }`}>
+                        {selectedReport.status === 'action_in_progress' ? <Truck size={16} /> : <Clock size={16} />}
+                        Emergency Response
+                      </h4>
+                      <p className="text-sm text-gray-200">{selectedReport.emergency_response_status}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </>
