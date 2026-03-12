@@ -98,7 +98,6 @@ function AppContent() {
         {/* User Routes - With User Nav */}
         <Route path="*" element={<>
               <Navigation />
-              <AdminBannerBridge />
               {/* Floating Action Buttons: Chatbot + Emergency + Help */}
               <div className="fixed right-5 bottom-[90px] md:right-6 md:bottom-6 flex flex-col items-center gap-4 z-50">
                 <CitizenChatbot />
