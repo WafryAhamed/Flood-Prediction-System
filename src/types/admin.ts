@@ -59,7 +59,7 @@ export interface AgricultureRiskZone {
   riskLevel: RiskLevel;
   district: string;
   details: string;
-  accentColor: string;
+  accentColor: 'critical' | 'high' | 'warning' | 'caution' | 'safe' | 'info' | 'neutral';
 }
 
 // ═══ Recovery Updates ═══
@@ -143,4 +143,94 @@ export interface FrontendSettings {
   siteFloodMode: 'normal' | 'watch' | 'emergency' | 'recovery';
   pageVisibility: PageVisibilityConfig;
   maintenanceMode: boolean;
+}
+
+// ═══ Emergency Contacts ═══
+export interface EmergencyContact {
+  id: string;
+  label: string;
+  number: string;
+  type: 'police' | 'ambulance' | 'fire' | 'disaster' | 'custom';
+  active: boolean;
+}
+
+// ═══ Map Management ═══
+export interface AdminMapZone {
+  id: string;
+  name: string;
+  zoneType: 'critical' | 'high-risk' | 'safe' | 'evacuation';
+  description: string;
+  visible: boolean;
+}
+
+export interface AdminMapMarker {
+  id: string;
+  label: string;
+  markerType: 'shelter' | 'hospital' | 'report';
+  position: [number, number];
+  detail: string;
+  visible: boolean;
+}
+
+// ═══ Chatbot Knowledge ═══
+export interface ChatbotKnowledgeEntry {
+  id: string;
+  category: string;
+  keywords: string[];
+  response: string;
+  active: boolean;
+}
+
+// ═══ System Users ═══
+export interface SystemUser {
+  id: string;
+  userId: string;
+  name: string;
+  district: string;
+  trustScore: number;
+  reportCount: number;
+  status: 'active' | 'suspended' | 'deleted';
+  joinedAt: number;
+  lastActive: number;
+}
+
+// ═══ System Settings ═══
+export interface SystemSettings {
+  defaultMapCenter: [number, number];
+  defaultMapZoom: number;
+  riskThresholds: { critical: number; high: number; moderate: number };
+  alertMessages: { critical: string; high: string; moderate: string; safe: string };
+}
+
+// ═══ Flood History ═══
+export interface FloodHistoryEntry {
+  id: string;
+  year: number;
+  floods: number;
+  rainfall: number;
+  description: string;
+}
+
+// ═══ Evacuation Routes ═══
+export interface EvacuationRoute {
+  id: string;
+  name: string;
+  from: string;
+  to: string;
+  distance: string;
+  status: 'active' | 'blocked' | 'caution';
+}
+
+// ═══ Simulation Defaults ═══
+export interface SimulationDefaults {
+  rainfall: number;
+  drainage: number;
+  urbanization: number;
+}
+
+// ═══ Dashboard Overrides ═══
+export interface DashboardOverrides {
+  windSpeed: number | null;
+  rainfall: number | null;
+  riskStatus: string | null;
 }

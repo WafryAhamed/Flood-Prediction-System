@@ -1,4 +1,3 @@
-import React from 'react';
 import { BookOpen, Shield, Zap, Droplets, ArrowRight, type LucideIcon } from 'lucide-react';
 import { UnifiedCard } from '../components/ui/UnifiedCard';
 import { useAdminControlStore } from '../stores/adminControlStore';

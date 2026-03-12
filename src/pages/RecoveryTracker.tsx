@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { CheckCircle, Truck, Hammer, HeartHandshake, type LucideIcon } from 'lucide-react';
 import { UnifiedCard } from '../components/ui/UnifiedCard';
 import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
