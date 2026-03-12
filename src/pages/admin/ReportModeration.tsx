@@ -42,12 +42,13 @@ function computeAI(report: FloodReport, allPending: FloodReport[]) {
 }
 
 type SeverityFilter = 'ALL' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
-type StatusTab = 'all' | 'pending' | 'verified' | 'action_in_progress' | 'resolved' | 'rejected';
+type StatusTab = 'all' | 'pending' | 'verified' | 'response_dispatched' | 'resolved' | 'rejected';
 
 const STATUS_BADGE: Record<string, { label: string; color: string }> = {
   pending: { label: 'PENDING', color: 'bg-orange-500 text-white' },
   verified: { label: 'VERIFIED', color: 'bg-blue-600 text-white' },
   action_in_progress: { label: 'DISPATCHED', color: 'bg-purple-600 text-white' },
+  response_dispatched: { label: 'DISPATCHED', color: 'bg-purple-600 text-white' },
   resolved: { label: 'RESOLVED', color: 'bg-green-600 text-white' },
   rejected: { label: 'REJECTED', color: 'bg-red-600 text-white' },
 };
@@ -124,9 +125,9 @@ export function ReportModeration() {
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [, setTick] = useState(0);
 
-  // Polling: force re-render every 5 seconds
+  // Polling: force re-render every 10 seconds
   useEffect(() => {
-    const interval = setInterval(() => setTick((t) => t + 1), 5000);
+    const interval = setInterval(() => setTick((t) => t + 1), 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -150,7 +151,7 @@ export function ReportModeration() {
     all: allReports.length,
     pending: allReports.filter((r) => r.status === 'pending').length,
     verified: allReports.filter((r) => r.status === 'verified').length,
-    action_in_progress: allReports.filter((r) => r.status === 'action_in_progress').length,
+    action_in_progress: allReports.filter((r) => r.status === 'response_dispatched').length,
     resolved: allReports.filter((r) => r.status === 'resolved').length,
     rejected: allReports.filter((r) => r.status === 'rejected').length,
   }), [allReports]);
@@ -234,7 +235,7 @@ export function ReportModeration() {
         {([
           { key: 'pending' as StatusTab, label: 'Pending', count: tabCounts.pending, color: 'orange' },
           { key: 'verified' as StatusTab, label: 'Verified', count: tabCounts.verified, color: 'blue' },
-          { key: 'action_in_progress' as StatusTab, label: 'Dispatched', count: tabCounts.action_in_progress, color: 'purple' },
+          { key: 'response_dispatched' as StatusTab, label: 'Dispatched', count: tabCounts.action_in_progress, color: 'purple' },
           { key: 'resolved' as StatusTab, label: 'Resolved', count: tabCounts.resolved, color: 'green' },
           { key: 'rejected' as StatusTab, label: 'Rejected', count: tabCounts.rejected, color: 'red' },
           { key: 'all' as StatusTab, label: 'All', count: tabCounts.all, color: 'gray' },
@@ -332,7 +333,7 @@ export function ReportModeration() {
                       <Truck size={16} /> Dispatch Help
                     </button>
                   )}
-                  {(selectedReport.status === 'verified' || selectedReport.status === 'action_in_progress') && (
+                  {(selectedReport.status === 'verified' || selectedReport.status === 'response_dispatched') && (
                     <button
                       onClick={handleResolve}
                       className="px-4 py-2 bg-green-600 text-white font-bold uppercase text-xs hover:bg-green-700 flex items-center gap-2 rounded-lg transition-colors"
@@ -448,16 +449,16 @@ export function ReportModeration() {
                   {/* Emergency Response Status */}
                   {selectedReport.emergency_response_status && (
                     <div className={`border rounded-lg p-4 ${
-                      selectedReport.status === 'action_in_progress' ? 'bg-purple-600/10 border-purple-600/30' :
+                      selectedReport.status === 'response_dispatched' ? 'bg-purple-600/10 border-purple-600/30' :
                       selectedReport.status === 'resolved' ? 'bg-green-600/10 border-green-600/30' :
                       'bg-gray-900 border-gray-700'
                     }`}>
                       <h4 className={`text-xs font-bold uppercase mb-2 flex items-center gap-2 ${
-                        selectedReport.status === 'action_in_progress' ? 'text-purple-400' :
+                        selectedReport.status === 'response_dispatched' ? 'text-purple-400' :
                         selectedReport.status === 'resolved' ? 'text-green-400' :
                         'text-gray-400'
                       }`}>
-                        {selectedReport.status === 'action_in_progress' ? <Truck size={16} /> : <Clock size={16} />}
+                        {selectedReport.status === 'response_dispatched' ? <Truck size={16} /> : <Clock size={16} />}
                         Emergency Response
                       </h4>
                       <p className="text-sm text-gray-200">{selectedReport.emergency_response_status}</p>
