@@ -6,7 +6,7 @@ export interface AdminVerification {
   response_team_status: 'none' | 'dispatched' | 'on_site' | 'completed';
 }
 
-export type ReportStatus = 'pending' | 'verified' | 'rejected' | 'action_in_progress' | 'resolved';
+export type ReportStatus = 'pending' | 'verified' | 'rejected' | 'response_dispatched' | 'resolved';
 
 export interface FloodReport {
   report_id: string;
@@ -213,7 +213,7 @@ const SEED_REPORTS: FloodReport[] = [
     longitude: 80.0330,
     timestamp: Date.now() - 60 * 60 * 1000,
     media_url: null,
-    status: 'action_in_progress',
+    status: 'response_dispatched',
     admin_verification: { verified_by: 'CMD. PERERA', verified_time: Date.now() - 55 * 60 * 1000, response_team_status: 'on_site' },
     emergency_response_status: 'Emergency team on site. Rescue operations underway.',
   },
@@ -282,7 +282,7 @@ export const useReportStore = create<ReportStore>((set, get) => ({
         r.report_id === reportId
           ? {
               ...r,
-              status: 'action_in_progress' as const,
+              status: 'response_dispatched' as const,
               admin_verification: {
                 ...(r.admin_verification || { verified_by: 'CMD. PERERA', verified_time: Date.now() }),
                 verified_by: r.admin_verification?.verified_by || 'CMD. PERERA',
@@ -321,10 +321,10 @@ export const useReportStore = create<ReportStore>((set, get) => ({
   },
 
   getVerifiedReports: () => {
-    return sortReports(get().reports.filter((r) => r.status === 'verified' || r.status === 'action_in_progress'));
+    return sortReports(get().reports.filter((r) => r.status === 'verified' || r.status === 'response_dispatched'));
   },
 
   getPublicReports: () => {
-    return sortReports(get().reports.filter((r) => r.status !== 'rejected'));
+    return sortReports(get().reports.filter((r) => r.status === 'verified' || r.status === 'response_dispatched' || r.status === 'resolved'));
   },
 }));

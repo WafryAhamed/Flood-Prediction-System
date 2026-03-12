@@ -25,6 +25,7 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }>
   pending: { label: 'Pending verification', bg: 'bg-orange-500/10', text: 'text-orange-500' },
   verified: { label: 'Verified', bg: 'bg-blue-500/10', text: 'text-blue-600' },
   action_in_progress: { label: 'Help dispatched', bg: 'bg-purple-500/10', text: 'text-purple-600' },
+  response_dispatched: { label: 'Help dispatched', bg: 'bg-purple-500/10', text: 'text-purple-600' },
   resolved: { label: 'Resolved', bg: 'bg-green-500/10', text: 'text-green-600' },
   rejected: { label: 'Rejected', bg: 'bg-red-500/10', text: 'text-red-500' },
 };
@@ -48,14 +49,14 @@ export function CommunityReports() {
   const allReports = useReportStore((s) => s.reports);
   const [, setTick] = useState(0);
 
-  // Polling: refresh every 10 seconds to pick up status changes
+  // Polling: refresh every 15 seconds to pick up status changes
   useEffect(() => {
-    const interval = setInterval(() => setTick((t) => t + 1), 10000);
+    const interval = setInterval(() => setTick((t) => t + 1), 15000);
     return () => clearInterval(interval);
   }, []);
 
-  // Public sees everything except rejected
-  const visibleReports = allReports.filter((r) => r.status !== 'rejected').slice(0, 20);
+  // Public sees only verified, response_dispatched, or resolved
+  const visibleReports = allReports.filter((r) => r.status === 'verified' || r.status === 'response_dispatched' || r.status === 'resolved').slice(0, 20);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -197,12 +198,12 @@ export function CommunityReports() {
                   {/* Emergency response status message */}
                   {r.emergency_response_status && r.status !== 'pending' && (
                     <div className={`flex items-center gap-md text-xs font-bold mb-md px-md py-sm rounded-card ${
-                      r.status === 'action_in_progress' ? 'bg-purple-50 text-purple-700' :
+                      r.status === 'response_dispatched' ? 'bg-purple-50 text-purple-700' :
                       r.status === 'resolved' ? 'bg-green-50 text-green-700' :
                       r.status === 'verified' ? 'bg-blue-50 text-blue-700' :
                       'bg-gray-50 text-gray-600'
                     }`}>
-                      {r.status === 'action_in_progress' && <Truck size={14} />}
+                      {r.status === 'response_dispatched' && <Truck size={14} />}
                       {r.status === 'resolved' && <CheckCircle size={14} />}
                       {r.status === 'verified' && <ShieldCheck size={14} />}
                       {r.emergency_response_status}

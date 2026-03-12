@@ -116,7 +116,7 @@ function UserLocationMarker() {
 export function RiskMap() {
   const { weather, radarTileUrl, error } = useWeatherData();
   const verifiedReports = useReportStore((s) =>
-    s.reports.filter((r) => r.status === 'verified' || r.status === 'action_in_progress')
+    s.reports.filter((r) => r.status === 'verified' || r.status === 'response_dispatched')
   );
 
   return (
