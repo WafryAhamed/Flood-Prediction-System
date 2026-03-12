@@ -115,8 +115,8 @@ const DEFAULT_PAGE_VISIBILITY: PageVisibilityConfig = {
 };
 
 const SEED_SETTINGS: FrontendSettings = {
-  emergencyBannerActive: true,
-  emergencyBannerMessage: '⚠ Flood warning active in your area',
+  emergencyBannerActive: false,
+  emergencyBannerMessage: '',
   emergencyBannerRiskLevel: 'CRITICAL',
   siteFloodMode: 'normal',
   pageVisibility: DEFAULT_PAGE_VISIBILITY,
