@@ -38,6 +38,9 @@ import { DataUpload } from './pages/admin/DataUpload';
 import { AuditLogs } from './pages/admin/AuditLogs';
 import { Analytics } from './pages/admin/Analytics';
 import { FrontendControlCenter } from './pages/admin/FrontendControlCenter';
+import { SystemMaintenance } from './pages/admin/SystemMaintenance';
+import { UserManagement } from './pages/admin/UserManagement';
+import { ChatbotControl } from './pages/admin/ChatbotControl';
 import { useAdminControlStore } from './stores/adminControlStore';
 
 /** Wrapper to apply page transitions */
@@ -86,6 +89,9 @@ function AppContent() {
           <Route path="audit" element={<AuditLogs />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="frontend" element={<FrontendControlCenter />} />
+          <Route path="maintenance" element={<SystemMaintenance />} />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="chatbot" element={<ChatbotControl />} />
           </Route>
         </Route>
 

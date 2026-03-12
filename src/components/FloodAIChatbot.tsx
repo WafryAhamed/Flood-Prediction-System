@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, MessageCircle, X, Loader, AlertTriangle, MapPin, Home, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useMaintenanceStore } from '../stores/maintenanceStore';
+import type { ChatbotKnowledgeEntry } from '../types/admin';
 
 /* ================================================================== */
 /*  Types                                                              */
@@ -69,8 +71,18 @@ const QUICK_ACTIONS = [
 /*  Local fallback response engine                                     */
 /*  Used when the API key is invalid / network fails / quota exceeded  */
 /* ================================================================== */
-function getLocalResponse(userText: string): string {
+function getLocalResponse(userText: string, adminKnowledge?: ChatbotKnowledgeEntry[]): string {
   const q = userText.toLowerCase();
+
+  // Check admin-managed knowledge entries first
+  if (adminKnowledge) {
+    for (const entry of adminKnowledge) {
+      if (!entry.active) continue;
+      if (entry.keywords.some((kw) => q.includes(kw.toLowerCase()))) {
+        return entry.response;
+      }
+    }
+  }
 
   // Greetings
   if (/^(hi|hello|hey|good morning|good evening|ayubowan)/i.test(q)) {
@@ -135,6 +147,7 @@ function getLocalResponse(userText: string): string {
 /*  Component                                                          */
 /* ================================================================== */
 export function FloodAIChatbot() {
+  const chatbotKnowledge = useMaintenanceStore((s) => s.chatbotKnowledge);
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -167,9 +180,16 @@ export function FloodAIChatbot() {
       const history: ApiMessage[] = messages
         .slice(-MAX_HISTORY)
         .map((m) => ({ role: m.role, content: m.content }));
-      return [{ role: 'system', content: SYSTEM_PROMPT }, ...history, { role: 'user', content: userText }];
+      const activeKnowledge = chatbotKnowledge
+        .filter((k) => k.active)
+        .map((k) => `${k.category}: ${k.response}`)
+        .join('\n');
+      const enhancedPrompt = activeKnowledge
+        ? `${SYSTEM_PROMPT}\n\nADDITIONAL KNOWLEDGE (admin-managed):\n${activeKnowledge}`
+        : SYSTEM_PROMPT;
+      return [{ role: 'system', content: enhancedPrompt }, ...history, { role: 'user', content: userText }];
     },
-    [messages],
+    [messages, chatbotKnowledge],
   );
 
   /* Try OpenRouter API with fallback models ------------------------ */
@@ -257,7 +277,7 @@ export function FloodAIChatbot() {
         const aiReply = await callOpenRouter(trimmed);
 
         // 2️⃣ Use reply or fall back to local engine
-        const finalReply = aiReply || getLocalResponse(trimmed);
+        const finalReply = aiReply || getLocalResponse(trimmed, chatbotKnowledge);
 
         const aiMsg: ChatMessage = {
           id: (Date.now() + 1).toString(),
@@ -272,7 +292,7 @@ export function FloodAIChatbot() {
         const fallbackMsg: ChatMessage = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: getLocalResponse(trimmed),
+          content: getLocalResponse(trimmed, chatbotKnowledge),
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev.slice(-(MAX_HISTORY - 1)), fallbackMsg]);

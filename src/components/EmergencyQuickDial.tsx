@@ -1,9 +1,14 @@
 import React from 'react';
 import { Phone } from 'lucide-react';
+import { useMaintenanceStore } from '../stores/maintenanceStore';
 
 export function EmergencyQuickDial() {
+  const contacts = useMaintenanceStore((s) => s.emergencyContacts);
+  const activeContact = contacts.find((c) => c.active);
+  const emergencyNumber = activeContact?.number || '112';
+
   const handleEmergencyCall = () => {
-    window.location.href = 'tel:911';
+    window.location.href = `tel:${emergencyNumber}`;
   };
 
   return (
