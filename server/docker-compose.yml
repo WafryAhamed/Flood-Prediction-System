@@ -1,0 +1,160 @@
+version: "3.9"
+
+services:
+  # PostgreSQL Database with PostGIS
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: flood_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: floodweb
+      POSTGRES_USER: flood_user
+      POSTGRES_PASSWORD: flood_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flood_user -d floodweb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - flood_network
+
+  # Redis for Celery & caching
+  redis:
+    image: redis:7-alpine
+    container_name: flood_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - flood_network
+
+  # FastAPI Backend
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: flood_api
+    ports:
+      - "8000:8000"
+    environment:
+      PROJECT_NAME: "Flood Resilience System"
+      VERSION: "1.0.0"
+      ENVIRONMENT: development
+      DEBUG: "true"
+      DATABASE_URL: "postgresql+asyncpg://flood_user:flood_password@postgres:5432/floodweb"
+      REDIS_URL: "redis://redis:6379/0"
+      SECRET_KEY: "dev-secret-key-change-in-production"
+      CORS_ORIGINS: '["http://localhost:3000", "http://localhost:5173"]'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/__pycache__
+    command: >
+      sh -c "
+        alembic upgrade head &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+    networks:
+      - flood_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Celery Worker
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: flood_celery_worker
+    environment:
+      PROJECT_NAME: "Flood Resilience System"
+      ENVIRONMENT: development
+      DEBUG: "true"
+      DATABASE_URL: "postgresql+asyncpg://flood_user:flood_password@postgres:5432/floodweb"
+      REDIS_URL: "redis://redis:6379/0"
+      SECRET_KEY: "dev-secret-key-change-in-production"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - .:/app
+    command: celery -A app.core.celery_app worker --loglevel=info --queues=default,notifications,weather,ai,reports
+    networks:
+      - flood_network
+
+  # Celery Beat Scheduler
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: flood_celery_beat
+    environment:
+      PROJECT_NAME: "Flood Resilience System"
+      ENVIRONMENT: development
+      DEBUG: "true"
+      DATABASE_URL: "postgresql+asyncpg://flood_user:flood_password@postgres:5432/floodweb"
+      REDIS_URL: "redis://redis:6379/0"
+      SECRET_KEY: "dev-secret-key-change-in-production"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - .:/app
+    command: celery -A app.core.celery_app beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    networks:
+      - flood_network
+
+  # Flower - Celery monitoring
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: flood_flower
+    ports:
+      - "5555:5555"
+    environment:
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+    depends_on:
+      - redis
+    command: celery -A app.core.celery_app flower --port=5555
+    networks:
+      - flood_network
+
+  # Optional: pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: flood_pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@floodweb.local
+      PGADMIN_DEFAULT_PASSWORD: admin_password
+    depends_on:
+      - postgres
+    networks:
+      - flood_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  flood_network:
+    driver: bridge

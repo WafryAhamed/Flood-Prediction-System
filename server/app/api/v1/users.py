@@ -1,0 +1,287 @@
+"""
+User management API routes (admin).
+"""
+from typing import Annotated
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select, func, or_
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.session import get_db
+from app.api.deps import AdminUser, SuperAdminUser
+from app.services.auth_service import AuthService
+from app.models.auth import User, UserRole
+from app.schemas.auth import (
+    UserResponse,
+    UserListResponse,
+    UserCreateRequest,
+    UserUpdateRequest,
+    UserRoleUpdateRequest,
+    MessageResponse,
+)
+from app.schemas.base import PaginatedResponse
+
+
+router = APIRouter(prefix="/users", tags=["User Management"])
+
+
+@router.get("", response_model=PaginatedResponse[UserResponse])
+async def list_users(
+    _admin: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    search: str | None = Query(None, description="Search by name or email"),
+    role: UserRole | None = Query(None, description="Filter by role"),
+    is_active: bool | None = Query(None, description="Filter by active status"),
+    is_verified: bool | None = Query(None, description="Filter by verified status"),
+):
+    """List all users with pagination and filtering (admin only)."""
+    # Build query
+    query = select(User).where(User.deleted_at.is_(None))
+    count_query = select(func.count(User.id)).where(User.deleted_at.is_(None))
+    
+    # Apply filters
+    if search:
+        search_filter = or_(
+            User.full_name.ilike(f"%{search}%"),
+            User.email.ilike(f"%{search}%"),
+        )
+        query = query.where(search_filter)
+        count_query = count_query.where(search_filter)
+    
+    if role:
+        query = query.where(User.role == role)
+        count_query = count_query.where(User.role == role)
+    
+    if is_active is not None:
+        query = query.where(User.is_active == is_active)
+        count_query = count_query.where(User.is_active == is_active)
+    
+    if is_verified is not None:
+        query = query.where(User.is_verified == is_verified)
+        count_query = count_query.where(User.is_verified == is_verified)
+    
+    # Get total count
+    total_result = await db.execute(count_query)
+    total = total_result.scalar() or 0
+    
+    # Apply pagination
+    query = query.order_by(User.created_at.desc())
+    query = query.offset((page - 1) * page_size).limit(page_size)
+    
+    result = await db.execute(query)
+    users = result.scalars().all()
+    
+    return PaginatedResponse(
+        items=[UserResponse.model_validate(u) for u in users],
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@router.get("/{user_id}", response_model=UserResponse)
+async def get_user(
+    user_id: UUID,
+    _admin: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Get a specific user by ID (admin only)."""
+    auth_service = AuthService(db)
+    user = await auth_service.get_user_by_id(user_id)
+    
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    
+    return user
+
+
+@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def create_user(
+    data: UserCreateRequest,
+    _admin: SuperAdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Create a new user (super admin only)."""
+    auth_service = AuthService(db)
+    
+    # Check if email already exists
+    existing_user = await auth_service.get_user_by_email(data.email)
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered",
+        )
+    
+    user = await auth_service.create_admin_user(data)
+    return user
+
+
+@router.patch("/{user_id}", response_model=UserResponse)
+async def update_user(
+    user_id: UUID,
+    data: UserUpdateRequest,
+    _admin: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Update a user's profile (admin only)."""
+    auth_service = AuthService(db)
+    user = await auth_service.get_user_by_id(user_id)
+    
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    
+    updated_user = await auth_service.update_user(user, data)
+    return updated_user
+
+
+@router.patch("/{user_id}/role", response_model=UserResponse)
+async def update_user_role(
+    user_id: UUID,
+    data: UserRoleUpdateRequest,
+    _admin: SuperAdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Update a user's role (super admin only)."""
+    auth_service = AuthService(db)
+    user = await auth_service.get_user_by_id(user_id)
+    
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    
+    # Prevent changing own role
+    if user.id == _admin.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot change your own role",
+        )
+    
+    user.role = data.role
+    await db.commit()
+    await db.refresh(user)
+    
+    return user
+
+
+@router.post("/{user_id}/activate", response_model=UserResponse)
+async def activate_user(
+    user_id: UUID,
+    _admin: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Activate a user account (admin only)."""
+    auth_service = AuthService(db)
+    user = await auth_service.get_user_by_id(user_id)
+    
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    
+    user.is_active = True
+    await db.commit()
+    await db.refresh(user)
+    
+    return user
+
+
+@router.post("/{user_id}/deactivate", response_model=UserResponse)
+async def deactivate_user(
+    user_id: UUID,
+    _admin: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Deactivate a user account (admin only)."""
+    auth_service = AuthService(db)
+    user = await auth_service.get_user_by_id(user_id)
+    
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    
+    # Prevent deactivating own account
+    if user.id == _admin.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot deactivate your own account",
+        )
+    
+    user.is_active = False
+    await db.commit()
+    await db.refresh(user)
+    
+    return user
+
+
+@router.post("/{user_id}/verify", response_model=UserResponse)
+async def verify_user(
+    user_id: UUID,
+    _admin: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Mark a user as verified (admin only)."""
+    auth_service = AuthService(db)
+    user = await auth_service.get_user_by_id(user_id)
+    
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    
+    user.is_verified = True
+    await db.commit()
+    await db.refresh(user)
+    
+    return user
+
+
+@router.delete("/{user_id}", response_model=MessageResponse)
+async def delete_user(
+    user_id: UUID,
+    _admin: SuperAdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Soft delete a user account (super admin only)."""
+    auth_service = AuthService(db)
+    user = await auth_service.get_user_by_id(user_id)
+    
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    
+    # Prevent deleting own account
+    if user.id == _admin.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete your own account",
+        )
+    
+    success = await auth_service.soft_delete_user(user)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete user",
+        )
+    
+    return MessageResponse(
+        message=f"User {user.email} has been deleted",
+        success=True,
+    )
