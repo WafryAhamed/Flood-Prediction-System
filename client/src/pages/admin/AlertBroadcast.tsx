@@ -1,7 +1,25 @@
 import React, { useState } from 'react';
-import { Radio, Send, Globe, Clock, BarChart2, CheckCircle } from 'lucide-react';
+import { Radio, Send, Clock, BarChart2, CheckCircle } from 'lucide-react';
+import { useAdminControlStore } from '../../stores/adminControlStore';
 export function AlertBroadcast() {
   const [lang, setLang] = useState('en');
+  const [severity, setSeverity] = useState<'critical' | 'warning' | 'info'>('critical');
+  const [message, setMessage] = useState('');
+  const addBroadcastItem = useAdminControlStore((s) => s.addBroadcastItem);
+  const broadcastFeed = useAdminControlStore((s) => s.broadcastFeed);
+
+  const publishBroadcast = () => {
+    if (!message.trim()) return;
+    const now = new Date();
+    addBroadcastItem({
+      time: `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`,
+      text: message.trim(),
+      type: severity,
+      active: true,
+    });
+    setMessage('');
+  };
+
   return <div className="space-y-8">
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -37,10 +55,10 @@ export function AlertBroadcast() {
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-2">
                   Severity
                 </label>
-                <select className="w-full bg-gray-900 border border-gray-700 text-white p-2 text-sm focus:border-blue-400 outline-none rounded-lg">
-                  <option>Critical (Red)</option>
-                  <option>Warning (Orange)</option>
-                  <option>Info (Blue)</option>
+                <select value={severity} onChange={(e) => setSeverity(e.target.value as 'critical' | 'warning' | 'info')} className="w-full bg-gray-900 border border-gray-700 text-white p-2 text-sm focus:border-blue-400 outline-none rounded-lg">
+                  <option value="critical">Critical (Red)</option>
+                  <option value="warning">Warning (Orange)</option>
+                  <option value="info">Info (Blue)</option>
                 </select>
               </div>
             </div>
@@ -56,7 +74,7 @@ export function AlertBroadcast() {
                     </button>)}
                 </div>
               </div>
-              <textarea className="w-full bg-gray-900 border border-gray-700 text-white p-3 text-sm h-32 focus:border-blue-400 outline-none rounded-lg font-mono" placeholder="Type alert message here..."></textarea>
+              <textarea value={message} onChange={(e) => setMessage(e.target.value)} className="w-full bg-gray-900 border border-gray-700 text-white p-3 text-sm h-32 focus:border-blue-400 outline-none rounded-lg font-mono" placeholder="Type alert message here..."></textarea>
             </div>
 
             <div className="flex gap-4 pt-2 border-t border-gray-700">
@@ -75,7 +93,7 @@ export function AlertBroadcast() {
             </div>
 
             <div className="flex gap-2 pt-4">
-              <button className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase text-sm flex items-center justify-center gap-2 rounded-lg transition-colors">
+              <button onClick={publishBroadcast} className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase text-sm flex items-center justify-center gap-2 rounded-lg transition-colors">
                 <Send size={18} /> Broadcast Now
               </button>
               <button className="px-4 py-3 bg-gray-700 hover:bg-gray-600 text-gray-200 font-bold uppercase text-sm flex items-center justify-center gap-2 rounded-lg transition-colors">
@@ -124,36 +142,20 @@ export function AlertBroadcast() {
               Recent Broadcasts
             </h3>
             <div className="space-y-2">
-              {[{
-              msg: 'Evacuation order for Sector 7',
-              time: '2h ago',
-              status: 'Sent',
-              type: 'Critical'
-            }, {
-              msg: 'Heavy rain warning: Gampaha',
-              time: '5h ago',
-              status: 'Sent',
-              type: 'Warning'
-            }, {
-              msg: 'Water levels receding in Kalutara',
-              time: '1d ago',
-              status: 'Sent',
-              type: 'Info'
-            }].map((alert, i) => <div key={i} className="p-3 bg-gray-900 border border-gray-700 flex justify-between items-center rounded-lg hover:bg-gray-800 transition-colors">
+              {broadcastFeed.slice(0, 6).map((alert) => <div key={alert.id} className="p-3 bg-gray-900 border border-gray-700 flex justify-between items-center rounded-lg hover:bg-gray-800 transition-colors">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`w-2 h-2 rounded-full ${alert.type === 'Critical' ? 'bg-red-600' : alert.type === 'Warning' ? 'bg-orange-500' : 'bg-blue-400'}`}></span>
+                      <span className={`w-2 h-2 rounded-full ${alert.type === 'critical' ? 'bg-red-600' : alert.type === 'warning' ? 'bg-orange-500' : 'bg-blue-400'}`}></span>
                       <span className="text-sm font-bold text-white">
-                        {alert.msg}
+                        {alert.text}
                       </span>
                     </div>
                     <div className="text-xs text-gray-500">
-
                       {alert.time} • SMS, Push
                     </div>
                   </div>
                   <div className="flex items-center gap-1 text-xs text-green-500 font-bold uppercase">
-                    <CheckCircle size={14} /> {alert.status}
+                    <CheckCircle size={14} /> Sent
                   </div>
                 </div>)}
             </div>

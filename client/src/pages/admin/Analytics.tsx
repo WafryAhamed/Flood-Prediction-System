@@ -1,57 +1,73 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ScatterChart, Scatter, ZAxis } from 'recharts';
 import { Download, Filter, Database } from 'lucide-react';
-const trendData = [{
-  year: '2018',
-  events: 12,
-  damage: 450
-}, {
-  year: '2019',
-  events: 15,
-  damage: 520
-}, {
-  year: '2020',
-  events: 18,
-  damage: 610
-}, {
-  year: '2021',
-  events: 22,
-  damage: 780
-}, {
-  year: '2022',
-  events: 25,
-  damage: 890
-}, {
-  year: '2023',
-  events: 28,
-  damage: 950
-}];
-const scatterData = [{
-  x: 10,
-  y: 30,
-  z: 200
-}, {
-  x: 30,
-  y: 200,
-  z: 260
-}, {
-  x: 45,
-  y: 100,
-  z: 400
-}, {
-  x: 50,
-  y: 400,
-  z: 280
-}, {
-  x: 70,
-  y: 150,
-  z: 100
-}, {
-  x: 100,
-  y: 250,
-  z: 500
-}];
+import { useMaintenanceStore } from '../../stores/maintenanceStore';
+import { useReportStore } from '../../stores/reportStore';
+import { useAdminControlStore } from '../../stores/adminControlStore';
+
+const SEVERITY_SCORE: Record<string, number> = {
+  CRITICAL: 4,
+  HIGH: 3,
+  MEDIUM: 2,
+  LOW: 1,
+};
+
 export function Analytics() {
+  const historyData = useMaintenanceStore((s) => s.historyData);
+  const reports = useReportStore((s) => s.reports);
+  const broadcastFeed = useAdminControlStore((s) => s.broadcastFeed);
+
+  const trendData = useMemo(
+    () => [...historyData]
+      .sort((a, b) => a.year - b.year)
+      .map((entry) => ({
+        year: String(entry.year),
+        events: entry.floods,
+        damage: entry.rainfall,
+      })),
+    [historyData],
+  );
+
+  const rainfallByYear = useMemo(
+    () => new Map(historyData.map((entry) => [entry.year, entry.rainfall])),
+    [historyData],
+  );
+
+  const scatterData = useMemo(
+    () => reports.slice(0, 20).map((report) => {
+      const year = new Date(report.timestamp).getFullYear();
+      const rainfall = rainfallByYear.get(year) ?? 0;
+      return {
+        x: Math.round(rainfall / 20),
+        y: (SEVERITY_SCORE[report.severity_level] || 1) * 100,
+        z: Math.max(80, report.trust_score * 4),
+      };
+    }),
+    [reports, rainfallByYear],
+  );
+
+  const latestReport = reports[0];
+  const datasetRows = useMemo(() => [
+    {
+      name: `flood_history_${new Date().getFullYear()}.json`,
+      type: 'JSON',
+      size: `${historyData.length} rows`,
+      date: historyData.length > 0 ? `${Math.max(...historyData.map((item) => item.year))}` : 'N/A',
+    },
+    {
+      name: 'citizen_reports_live.json',
+      type: 'JSON',
+      size: `${reports.length} rows`,
+      date: latestReport ? new Date(latestReport.timestamp).toLocaleString() : 'N/A',
+    },
+    {
+      name: 'active_broadcast_feed.json',
+      type: 'JSON',
+      size: `${broadcastFeed.filter((item) => item.active).length} rows`,
+      date: broadcastFeed.find((item) => item.active)?.time || 'N/A',
+    },
+  ], [historyData, reports, latestReport, broadcastFeed]);
+
   return <div className="space-y-8">
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -152,22 +168,7 @@ export function Analytics() {
             </tr>
           </thead>
           <tbody className="text-sm font-semibold text-gray-300">
-            {[{
-            name: 'National_Rainfall_2023_Q4.csv',
-            type: 'CSV',
-            size: '45 MB',
-            date: 'Yesterday'
-          }, {
-            name: 'Flood_Risk_Model_v2.1.json',
-            type: 'JSON',
-            size: '12 MB',
-            date: '2 days ago'
-          }, {
-            name: 'Infrastructure_Audit_Log.pdf',
-            type: 'PDF',
-            size: '2.4 MB',
-            date: '1 week ago'
-          }].map((file, i) => <tr key={i} className="hover:bg-gray-900 border-b border-gray-700/50">
+            {datasetRows.map((file, i) => <tr key={i} className="hover:bg-gray-900 border-b border-gray-700/50">
                 <td className="p-4 font-bold text-white">{file.name}</td>
                 <td className="p-4">{file.type}</td>
                 <td className="p-4">{file.size}</td>

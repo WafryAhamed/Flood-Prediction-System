@@ -161,12 +161,13 @@ export interface AdminMapZone {
   zoneType: 'critical' | 'high-risk' | 'safe' | 'evacuation';
   description: string;
   visible: boolean;
+  polygon?: [number, number][];
 }
 
 export interface AdminMapMarker {
   id: string;
   label: string;
-  markerType: 'shelter' | 'hospital' | 'report';
+  markerType: 'shelter' | 'hospital' | 'report' | 'infrastructure';
   position: [number, number];
   detail: string;
   visible: boolean;
@@ -219,6 +220,7 @@ export interface EvacuationRoute {
   to: string;
   distance: string;
   status: 'active' | 'blocked' | 'caution';
+  path?: [number, number][];
 }
 
 // ═══ Simulation Defaults ═══

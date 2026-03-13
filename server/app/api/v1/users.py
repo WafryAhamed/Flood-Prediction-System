@@ -15,12 +15,11 @@ from app.models.auth import User, UserRole
 from app.schemas.auth import (
     UserResponse,
     UserListResponse,
-    UserCreateRequest,
+    AdminCreateUserRequest,
     UserUpdateRequest,
-    UserRoleUpdateRequest,
-    MessageResponse,
+    AdminUpdateUserRequest,
 )
-from app.schemas.base import PaginatedResponse
+from app.schemas.base import PaginatedResponse, MessageResponse
 
 
 router = APIRouter(prefix="/users", tags=["User Management"])
@@ -103,7 +102,7 @@ async def get_user(
 
 @router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
-    data: UserCreateRequest,
+    data: AdminCreateUserRequest,
     _admin: SuperAdminUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
@@ -146,11 +145,17 @@ async def update_user(
 @router.patch("/{user_id}/role", response_model=UserResponse)
 async def update_user_role(
     user_id: UUID,
-    data: UserRoleUpdateRequest,
+    data: AdminUpdateUserRequest,
     _admin: SuperAdminUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Update a user's role (super admin only)."""
+    if data.role is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Role is required",
+        )
+
     auth_service = AuthService(db)
     user = await auth_service.get_user_by_id(user_id)
     
@@ -273,13 +278,7 @@ async def delete_user(
             detail="Cannot delete your own account",
         )
     
-    success = await auth_service.soft_delete_user(user)
-    
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete user",
-        )
+    await auth_service.soft_delete_user(user)
     
     return MessageResponse(
         message=f"User {user.email} has been deleted",

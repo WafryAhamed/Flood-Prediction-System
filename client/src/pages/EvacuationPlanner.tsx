@@ -5,6 +5,7 @@ import { Navigation, AlertTriangle, ChevronDown, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SRI_LANKA_CENTER, SRI_LANKA_BOUNDS, DEFAULT_ZOOM } from '../hooks/useWeatherData';
 import { LatLngBoundsExpression } from 'leaflet';
+import { useMaintenanceStore } from '../stores/maintenanceStore';
 
 export function EvacuationPlanner() {
   const [routeActive, setRouteActive] = useState(false);
@@ -16,12 +17,19 @@ export function EvacuationPlanner() {
   });
 
   // Evacuation route: Mihintale → Anuradhapura hospital via highland road
-  const route = [
-    [8.3593, 80.5103],  // Mihintale
-    [8.3450, 80.4800],  // Intermediate
-    [8.3300, 80.4500],  // Intermediate
-    [8.3114, 80.4037],  // Anuradhapura
+  const evacuationRoutes = useMaintenanceStore((s) => s.evacuationRoutes);
+  const selectedRoute = evacuationRoutes.find((r) => r.status === 'active') || evacuationRoutes[0];
+  const route = selectedRoute?.path || [
+    [8.3593, 80.5103],
+    [8.3450, 80.4800],
+    [8.3300, 80.4500],
+    [8.3114, 80.4037],
   ];
+  const routeFrom = selectedRoute?.from || 'Mihintale';
+  const routeTo = selectedRoute?.to || 'Anuradhapura Hospital';
+  const routeDistance = selectedRoute?.distance || '12.4 km';
+  const routeStart = route[0] as [number, number];
+  const routeEnd = route[route.length - 1] as [number, number];
 
   return (
     <div className="h-screen flex flex-col relative bg-bg-primary">
@@ -62,11 +70,11 @@ export function EvacuationPlanner() {
                   weight: 3
                 }}
               />
-              <Marker position={[8.3593, 80.5103]}>
-                <Popup>Start — Mihintale</Popup>
+              <Marker position={routeStart}>
+                <Popup>Start — {routeFrom}</Popup>
               </Marker>
-              <Marker position={[8.3114, 80.4037]}>
-                <Popup>Safe Zone — Anuradhapura Hospital</Popup>
+              <Marker position={routeEnd}>
+                <Popup>Safe Zone — {routeTo}</Popup>
               </Marker>
             </>
           )}
@@ -82,7 +90,7 @@ export function EvacuationPlanner() {
           </button>
         ) : (
           <div className="absolute bottom-24 md:bottom-lg left-lg z-20 bg-bg-card border border-border-light px-lg py-md font-bold uppercase rounded-card shadow-card text-xs text-text-primary">
-            Route Active • 12.4km • 25 mins
+            Route Active • {routeDistance} • 25 mins
           </div>
         )}
 
@@ -164,10 +172,10 @@ export function EvacuationPlanner() {
               <div className="p-inner border-t border-border-light">
                 <h4 className="font-bold text-xs uppercase mb-md text-text-primary">Directions</h4>
                 <ol className="list-decimal list-inside space-y-md text-xs font-semibold text-text-secondary">
-                  <li>Head South from Mihintale on A12 (3km)</li>
+                  <li>Head from {routeFrom} using the marked safe corridor</li>
                   <li>Turn Right onto Anuradhapura Rd</li>
                   <li className="text-caution">CAUTION: Low-lying area ahead</li>
-                  <li>Arrive at Anuradhapura General Hospital</li>
+                  <li>Arrive at {routeTo}</li>
                 </ol>
               </div>
             )}

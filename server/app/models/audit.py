@@ -97,7 +97,7 @@ class AuditLog(BaseModel):
     )
     
     # Additional metadata
-    metadata: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    metadata_json: Mapped[Optional[dict]] = mapped_column("metadata", JSONB, nullable=True)
 
 
 class SystemEvent(BaseModel):

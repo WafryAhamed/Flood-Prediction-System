@@ -146,7 +146,7 @@ class Broadcast(AuditedModel):
     cancellation_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     # Metadata
-    metadata: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    metadata_json: Mapped[Optional[dict]] = mapped_column("metadata", JSONB, nullable=True)
     
     # Relationships
     targets: Mapped[List["BroadcastTarget"]] = relationship("BroadcastTarget", back_populates="broadcast")

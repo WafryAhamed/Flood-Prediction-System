@@ -258,7 +258,7 @@ class ReportEvent(BaseModel):
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     # Metadata
-    metadata: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    metadata_json: Mapped[Optional[dict]] = mapped_column("metadata", JSONB, nullable=True)
     
     # Relationships
     report: Mapped["CitizenReport"] = relationship("CitizenReport", back_populates="events")

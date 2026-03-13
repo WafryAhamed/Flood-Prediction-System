@@ -9,7 +9,12 @@ from sqlalchemy import (
     Index, Enum as SQLEnum
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
-from pgvector.sqlalchemy import Vector
+try:
+    from pgvector.sqlalchemy import Vector
+    _VECTOR_TYPE = lambda dim: Vector(dim)  # noqa: E731
+except Exception:
+    Vector = None
+    _VECTOR_TYPE = lambda dim: JSONB  # noqa: E731
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 
@@ -116,7 +121,7 @@ class ModelRegistry(AuditedModel):
     is_default: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
     # Relationships
-    predictions: Mapped[List["FloodPrediction"]] = relationship("FloodPrediction", back_populates="model")
+    predictions: Mapped[List["FloodPrediction"]] = relationship("FloodPrediction", foreign_keys="FloodPrediction.model_id", back_populates="registry_model")
 
 
 # ============================================================================
@@ -153,7 +158,7 @@ class KnowledgeDocument(AuditedModel):
     
     # Metadata
     tags: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
-    metadata: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    metadata_json: Mapped[Optional[dict]] = mapped_column("metadata", JSONB, nullable=True)
     
     # Language
     primary_language: Mapped[str] = mapped_column(String(5), default="en", nullable=False)
@@ -206,15 +211,7 @@ class ChunkEmbedding(BaseModel):
     """Vector embeddings for document chunks using pgvector."""
     
     __tablename__ = "chunk_embeddings"
-    __table_args__ = (
-        Index(
-            "ix_chunk_embeddings_vector",
-            "embedding",
-            postgresql_using="ivfflat",
-            postgresql_with={"lists": 100},
-            postgresql_ops={"embedding": "vector_cosine_ops"},
-        ),
-    )
+    __table_args__ = ()
 
     chunk_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -223,8 +220,8 @@ class ChunkEmbedding(BaseModel):
         nullable=False,
     )
     
-    # Vector embedding (1536 dimensions for OpenAI ada-002, adjust as needed)
-    embedding: Mapped[list] = mapped_column(Vector(1536), nullable=False)
+    # Vector embedding (384 dimensions for sentence-transformers/all-MiniLM-L6-v2; falls back to JSONB if pgvector not installed)
+    embedding: Mapped[list] = mapped_column(_VECTOR_TYPE(384), nullable=False)
     
     # Model used for embedding
     model_name: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -332,7 +329,7 @@ class ChatMessage(BaseModel):
     retrieved_chunks: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)  # IDs of chunks used
     
     # Metadata
-    metadata: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    metadata_json: Mapped[Optional[dict]] = mapped_column("metadata", JSONB, nullable=True)
     
     # Relationships
     session: Mapped["ChatSession"] = relationship("ChatSession", back_populates="messages")

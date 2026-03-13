@@ -1,6 +1,40 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Hammer, Truck, HeartHandshake, FileText, CheckCircle } from 'lucide-react';
+import { useAdminControlStore } from '../../stores/adminControlStore';
+import { useReportStore } from '../../stores/reportStore';
+
 export function RecoveryCommand() {
+  const recoveryProgress = useAdminControlStore((s) => s.recoveryProgress);
+  const broadcastFeed = useAdminControlStore((s) => s.broadcastFeed);
+  const reports = useReportStore((s) => s.reports);
+
+  const progressByLabel = useMemo(() => {
+    const get = (needle: string, fallback: number) => {
+      const match = recoveryProgress.find((item) => item.label.toLowerCase().includes(needle.toLowerCase()));
+      return match?.percent ?? fallback;
+    };
+    return {
+      road: get('Road', 85),
+      power: get('Power', 62),
+      aid: get('Water', 45),
+    };
+  }, [recoveryProgress]);
+
+  const pendingApprovals = useMemo(
+    () => reports
+      .filter((report) => report.status === 'pending' || report.status === 'verified')
+      .slice(0, 3)
+      .map((report) => ({
+        item: `Response approval: ${report.location_name}`,
+        status: report.status === 'pending' ? 'Pending' : 'Review',
+        req: `${report.severity_level} • Trust ${report.trust_score}`,
+      })),
+    [reports],
+  );
+
+  const latestNotice = broadcastFeed.find((item) => item.active);
+  const resolvedCount = reports.filter((report) => report.status === 'resolved').length;
+
   return <div className="space-y-8">
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -8,7 +42,7 @@ export function RecoveryCommand() {
             Post-Flood Recovery
           </h2>
           <p className="text-sm font-semibold text-gray-400">
-            PHASE 2: RESTORATION • DAY 4
+            PHASE 2: RESTORATION • RESOLVED CASES: {resolvedCount}
           </p>
         </div>
         <div className="flex gap-2">
@@ -32,11 +66,11 @@ export function RecoveryCommand() {
                   <span className="font-bold text-sm text-white flex items-center gap-2">
                     <Truck size={16} /> Road Network
                   </span>
-                  <span className="font-semibold text-green-500">85%</span>
+                  <span className="font-semibold text-green-500">{progressByLabel.road}%</span>
                 </div>
                 <div className="w-full bg-gray-900 h-3 rounded-full overflow-hidden">
                   <div className="bg-green-500 h-full" style={{
-                  width: '85%'
+                  width: `${progressByLabel.road}%`
                 }}></div>
                 </div>
               </div>
@@ -46,11 +80,11 @@ export function RecoveryCommand() {
                   <span className="font-bold text-sm text-white flex items-center gap-2">
                     <Hammer size={16} /> Power Grid
                   </span>
-                  <span className="font-semibold text-yellow-400">62%</span>
+                  <span className="font-semibold text-yellow-400">{progressByLabel.power}%</span>
                 </div>
                 <div className="w-full bg-gray-900 h-3 rounded-full overflow-hidden">
                   <div className="bg-yellow-400 h-full" style={{
-                  width: '62%'
+                  width: `${progressByLabel.power}%`
                 }}></div>
                 </div>
               </div>
@@ -60,11 +94,11 @@ export function RecoveryCommand() {
                   <span className="font-bold text-sm text-white flex items-center gap-2">
                     <HeartHandshake size={16} /> Aid Distribution
                   </span>
-                  <span className="font-semibold text-blue-400">45%</span>
+                  <span className="font-semibold text-blue-400">{progressByLabel.aid}%</span>
                 </div>
                 <div className="w-full bg-gray-900 h-3 rounded-full overflow-hidden">
                   <div className="bg-blue-400 h-full" style={{
-                  width: '45%'
+                  width: `${progressByLabel.aid}%`
                 }}></div>
                 </div>
               </div>
@@ -98,19 +132,7 @@ export function RecoveryCommand() {
               Pending Approvals
             </h3>
             <div className="space-y-3">
-              {[{
-              item: 'Road Repair Budget: Zone 4',
-              status: 'Pending',
-              req: 'LKR 2.5M'
-            }, {
-              item: 'School Reopening: Gampaha',
-              status: 'Review',
-              req: 'Safety Check'
-            }, {
-              item: 'Medical Camp Deployment',
-              status: 'Urgent',
-              req: 'Personnel'
-            }].map((task, i) => <div key={i} className="p-4 bg-gray-900 border border-gray-700 flex justify-between items-center rounded">
+              {pendingApprovals.map((task, i) => <div key={i} className="p-4 bg-gray-900 border border-gray-700 flex justify-between items-center rounded">
                   <div>
                     <div className="text-sm font-bold text-white">
                       {task.item}
@@ -133,7 +155,7 @@ export function RecoveryCommand() {
                 + Draft New Bulletin
               </button>
               <div className="p-2 bg-blue-400/10 border border-blue-400/30 text-[10px] text-blue-400 rounded">
-                Active: "Safe Water Guidelines" (Sent 2h ago)
+                {latestNotice ? `Active: "${latestNotice.text}" (Sent ${latestNotice.time})` : 'No active public bulletins'}
               </div>
             </div>
           </div>

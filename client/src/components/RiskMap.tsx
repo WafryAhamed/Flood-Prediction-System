@@ -4,6 +4,7 @@ import { Icon, LatLngBoundsExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useWeatherData, SRI_LANKA_CENTER, SRI_LANKA_BOUNDS, DEFAULT_ZOOM } from '../hooks/useWeatherData';
 import { useReportStore } from '../stores/reportStore';
+import { useMaintenanceStore } from '../stores/maintenanceStore';
 
 // Marker icons
 const redIcon = new Icon({
@@ -41,44 +42,22 @@ function getReportSeverityIcon(severity: string) {
   }
 }
 
-// --- Sri Lanka Flood Risk Zones (real geographic polygons) ---
-
-// Critical zone: Kelani River basin near Colombo (flood-prone lowlands)
-const criticalZone: [number, number][] = [
-  [6.93, 79.85], [6.95, 79.90], [6.98, 79.92],
-  [7.00, 79.88], [6.97, 79.84], [6.93, 79.85],
-];
-
-// High risk zone: Kalu Ganga basin — Ratnapura area
-const highRiskZone: [number, number][] = [
-  [6.65, 80.35], [6.70, 80.42], [6.72, 80.40],
-  [6.70, 80.33], [6.66, 80.32], [6.65, 80.35],
-];
-
-// Safe zone: Mihintale highland area
-const safeZone: [number, number][] = [
-  [8.34, 80.48], [8.37, 80.52], [8.39, 80.51],
-  [8.38, 80.47], [8.35, 80.46], [8.34, 80.48],
-];
-
-// --- Points of Interest ---
-const markers = [
-  { pos: [8.3593, 80.5103] as [number, number], label: 'Mihintale — Command Center', type: 'shelter' as const, detail: 'Main coordination hub' },
-  { pos: [8.3114, 80.4037] as [number, number], label: 'Anuradhapura Hospital', type: 'hospital' as const, detail: 'District General Hospital — 500 beds' },
-  { pos: [6.9271, 79.8612] as [number, number], label: 'Colombo Shelter', type: 'shelter' as const, detail: 'Emergency Shelter — Capacity 2,000' },
-  { pos: [6.6828, 80.3964] as [number, number], label: 'Ratnapura Flood Report', type: 'report' as const, detail: 'Water level rising — 1.8 m above normal' },
-  { pos: [7.2906, 80.6337] as [number, number], label: 'Kandy General Hospital', type: 'hospital' as const, detail: 'Teaching Hospital — 1,200 beds' },
-  { pos: [7.8731, 80.6517] as [number, number], label: 'Dambulla Shelter', type: 'shelter' as const, detail: 'Safe zone shelter — Capacity 800' },
-];
-
-function getMarkerIcon(type: 'shelter' | 'hospital' | 'report') {
+function getMarkerIcon(type: 'shelter' | 'hospital' | 'report' | 'infrastructure') {
   switch (type) {
     case 'shelter': return greenIcon;
     case 'hospital': return blueIcon;
     case 'report': return orangeIcon;
+    case 'infrastructure': return violetIcon;
     default: return redIcon;
   }
 }
+
+const ZONE_STYLES: Record<string, { color: string; fillColor: string; fillOpacity: number; title: string }> = {
+  critical: { color: '#DC2626', fillColor: '#DC2626', fillOpacity: 0.45, title: 'Critical Flood Zone' },
+  'high-risk': { color: '#F97316', fillColor: '#F97316', fillOpacity: 0.4, title: 'High Risk Zone' },
+  safe: { color: '#16A34A', fillColor: '#16A34A', fillOpacity: 0.4, title: 'Safe Assembly Area' },
+  evacuation: { color: '#3B82F6', fillColor: '#3B82F6', fillOpacity: 0.25, title: 'Evacuation Zone' },
+};
 
 // Component to fly to user location when detected
 function UserLocationMarker() {
@@ -115,6 +94,8 @@ function UserLocationMarker() {
 
 export function RiskMap() {
   const { weather, radarTileUrl, error } = useWeatherData();
+  const mapZones = useMaintenanceStore((s) => s.mapZones.filter((z) => z.visible && z.polygon && z.polygon.length > 2));
+  const mapMarkers = useMaintenanceStore((s) => s.mapMarkers.filter((m) => m.visible));
   const verifiedReports = useReportStore((s) =>
     s.reports.filter((r) => r.status === 'verified' || r.status === 'response_dispatched')
   );
@@ -141,42 +122,26 @@ export function RiskMap() {
           <TileLayer url={radarTileUrl} opacity={0.5} />
         )}
 
-        {/* Critical Flood Zone — Kelani River */}
-        <Polygon
-          positions={criticalZone}
-          pathOptions={{ color: '#DC2626', weight: 3, fillColor: '#DC2626', fillOpacity: 0.45 }}
-        >
-          <Popup>
-            <div className="font-black text-lg uppercase text-red-600">Critical Flood Zone</div>
-            <div className="font-bold text-sm">Kelani River Basin — Evacuate Immediately</div>
-          </Popup>
-        </Polygon>
+        {/* Dynamic risk zones */}
+        {mapZones.map((zone) => {
+          const style = ZONE_STYLES[zone.zoneType] || ZONE_STYLES.critical;
+          return (
+          <Polygon
+            key={zone.id}
+            positions={zone.polygon as [number, number][]}
+            pathOptions={{ color: style.color, weight: 3, fillColor: style.fillColor, fillOpacity: style.fillOpacity }}
+          >
+            <Popup>
+              <div className="font-black text-lg uppercase" style={{ color: style.color }}>{style.title}</div>
+              <div className="font-bold text-sm">{zone.description}</div>
+            </Popup>
+          </Polygon>
+          );
+        })}
 
-        {/* High Risk Zone — Ratnapura */}
-        <Polygon
-          positions={highRiskZone}
-          pathOptions={{ color: '#F97316', weight: 3, fillColor: '#F97316', fillOpacity: 0.4 }}
-        >
-          <Popup>
-            <div className="font-black text-lg uppercase text-orange-500">High Risk Zone</div>
-            <div className="font-bold text-sm">Kalu Ganga Basin — Prepare for evacuation</div>
-          </Popup>
-        </Polygon>
-
-        {/* Safe Zone — Mihintale */}
-        <Polygon
-          positions={safeZone}
-          pathOptions={{ color: '#16A34A', weight: 3, fillColor: '#16A34A', fillOpacity: 0.4 }}
-        >
-          <Popup>
-            <div className="font-black text-lg uppercase text-green-600">Safe Assembly Area</div>
-            <div className="font-bold text-sm">Mihintale Highland — Capacity: 85%</div>
-          </Popup>
-        </Polygon>
-
-        {/* POI Markers */}
-        {markers.map((m, i) => (
-          <Marker key={i} position={m.pos} icon={getMarkerIcon(m.type)}>
+        {/* Dynamic POI Markers */}
+        {mapMarkers.map((m) => (
+          <Marker key={m.id} position={m.position} icon={getMarkerIcon(m.markerType)}>
             <Popup>
               <div className="font-black uppercase text-sm">{m.label}</div>
               <div className="text-xs mt-1">{m.detail}</div>

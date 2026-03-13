@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { fetchWeatherSnapshot } from '../services/integrationApi';
 
 const DEFAULT_LAT = parseFloat(import.meta.env.VITE_DEFAULT_LAT || '8.3593');
 const DEFAULT_LON = parseFloat(import.meta.env.VITE_DEFAULT_LON || '80.5103');
-const WEATHER_API = import.meta.env.VITE_WEATHER_API || 'https://api.open-meteo.com';
-const RAIN_API = import.meta.env.VITE_RAIN_API || 'https://api.rainviewer.com';
 
 // Refresh interval: 5 minutes
 const REFRESH_MS = 5 * 60 * 1000;
@@ -14,11 +13,6 @@ export interface WeatherData {
   rainfall: number;
   weatherCode: number;
   time: string;
-}
-
-export interface RainRadarFrame {
-  path: string;
-  time: number;
 }
 
 export interface UseWeatherResult {
@@ -41,24 +35,9 @@ export function useWeatherData(
 
   const fetchWeather = useCallback(async () => {
     try {
-      const url = `${WEATHER_API}/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=precipitation`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Weather API returned ${res.status}`);
-      const data = await res.json();
-
-      const current = data.current_weather;
-      // Get the current hour's precipitation from the hourly array
-      const now = new Date();
-      const hourIndex = now.getUTCHours();
-      const rainfall = data.hourly?.precipitation?.[hourIndex] ?? 0;
-
-      setWeather({
-        temperature: current.temperature,
-        windSpeed: current.windspeed,
-        rainfall,
-        weatherCode: current.weathercode,
-        time: current.time,
-      });
+      const snapshot = await fetchWeatherSnapshot(lat, lon);
+      setWeather(snapshot.weather);
+      setRadarTileUrl(snapshot.radarTileUrl);
       setError(null);
       setLastUpdated(new Date());
     } catch (err) {
@@ -67,36 +46,16 @@ export function useWeatherData(
     }
   }, [lat, lon]);
 
-  const fetchRadar = useCallback(async () => {
-    try {
-      const res = await fetch(`${RAIN_API}/public/weather-maps.json`);
-      if (!res.ok) throw new Error(`Radar API returned ${res.status}`);
-      const data = await res.json();
-
-      // Use the most recent radar frame
-      const frames: RainRadarFrame[] = data.radar?.past ?? [];
-      if (frames.length > 0) {
-        const latest = frames[frames.length - 1];
-        // RainViewer tile URL pattern: https://tilecache.rainviewer.com{path}/256/{z}/{x}/{y}/2/1_1.png
-        setRadarTileUrl(`https://tilecache.rainviewer.com${latest.path}/256/{z}/{x}/{y}/2/1_1.png`);
-      }
-    } catch (err) {
-      console.error('Radar fetch failed:', err);
-      // Non-critical — just no overlay
-    }
-  }, []);
-
   useEffect(() => {
     setLoading(true);
-    Promise.all([fetchWeather(), fetchRadar()]).finally(() => setLoading(false));
+    fetchWeather().finally(() => setLoading(false));
 
     const interval = setInterval(() => {
       fetchWeather();
-      fetchRadar();
     }, REFRESH_MS);
 
     return () => clearInterval(interval);
-  }, [fetchWeather, fetchRadar]);
+  }, [fetchWeather]);
 
   return { weather, radarTileUrl, loading, error, lastUpdated };
 }

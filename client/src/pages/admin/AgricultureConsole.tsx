@@ -1,30 +1,94 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Sprout, CloudRain, Droplets, Tractor, AlertTriangle, TrendingDown, Wheat, Fish, Bug, BarChart3, Clock, MapPin, Users, Truck, ShieldAlert, Thermometer } from 'lucide-react';
+import { useAdminControlStore } from '../../stores/adminControlStore';
+import { useReportStore } from '../../stores/reportStore';
+import { useWeatherData } from '../../hooks/useWeatherData';
+
 export function AgricultureConsole() {
-  const districts = [
-    { name: 'Polonnaruwa', crop: 'Paddy', risk: 'Critical', depth: '1.2m', area: '12,400 Ha', farmers: 3200 },
-    { name: 'Anuradhapura', crop: 'Paddy', risk: 'High', depth: '0.8m', area: '9,800 Ha', farmers: 2850 },
-    { name: 'Kurunegala', crop: 'Vegetable', risk: 'High', depth: '0.6m', area: '7,200 Ha', farmers: 2100 },
-    { name: 'Batticaloa', crop: 'Paddy', risk: 'Moderate', depth: '0.4m', area: '5,600 Ha', farmers: 1800 },
-    { name: 'Trincomalee', crop: 'Mixed', risk: 'Moderate', depth: '0.3m', area: '4,100 Ha', farmers: 1450 },
-    { name: 'Matale', crop: 'Vegetable', risk: 'Low', depth: '0.2m', area: '3,200 Ha', farmers: 980 },
+  const agricultureZones = useAdminControlStore((s) => s.agricultureZones);
+  const agricultureAdvisories = useAdminControlStore((s) => s.agricultureAdvisories);
+  const agricultureActions = useAdminControlStore((s) => s.agricultureActions);
+  const recoveryProgress = useAdminControlStore((s) => s.recoveryProgress);
+  const broadcastFeed = useAdminControlStore((s) => s.broadcastFeed);
+  const dashboardResources = useAdminControlStore((s) => s.dashboardResources);
+  const reports = useReportStore((s) => s.reports);
+  const { weather } = useWeatherData();
+
+  const districts = useMemo(() => {
+    const source = agricultureZones.length > 0 ? agricultureZones : [{ id: 'fallback', district: 'Colombo District', riskLevel: 'HIGH' as const }];
+    return source.map((zone, index) => {
+      const districtName = zone.district.split(',')[0].trim();
+      const zoneReports = reports.filter((report) => report.location_name.toLowerCase().includes(districtName.toLowerCase()));
+      const farmers = 900 + zoneReports.length * 320 + index * 140;
+      const area = 3200 + zoneReports.length * 550 + index * 900;
+      const rainfallDepth = ((weather?.rainfall ?? 1.8) / 4 + index * 0.08).toFixed(1);
+      return {
+        name: districtName,
+        crop: agricultureAdvisories[index % Math.max(agricultureAdvisories.length, 1)]?.cropName || 'Mixed',
+        risk: zone.riskLevel === 'CRITICAL' ? 'Critical' : zone.riskLevel === 'HIGH' ? 'High' : zone.riskLevel === 'MODERATE' ? 'Moderate' : 'Low',
+        depth: `${rainfallDepth}m`,
+        area: `${area.toLocaleString()} Ha`,
+        farmers,
+      };
+    });
+  }, [agricultureZones, agricultureAdvisories, reports, weather]);
+
+  const cropBreakdown = useMemo(() => {
+    const palette = ['bg-red-500', 'bg-yellow-400', 'bg-green-400', 'bg-orange-400', 'bg-blue-400'];
+    const source = agricultureAdvisories.length > 0 ? agricultureAdvisories : [{ cropName: 'Paddy', statusLabel: 'Alert' }];
+    return source.slice(0, 5).map((advisory, index) => {
+      const baseLoss = advisory.statusLabel.toLowerCase().includes('alert') ? 12 : 6;
+      const pctLoss = Math.min(35, baseLoss + index * 3 + Math.round((weather?.rainfall ?? 0) / 2));
+      const area = 1200 + index * 1800 + reports.length * 40;
+      return {
+        type: advisory.cropName,
+        area: `${area.toLocaleString()} Ha`,
+        pctLoss,
+        color: palette[index % palette.length],
+      };
+    });
+  }, [agricultureAdvisories, weather, reports]);
+
+  const recentAdvisories = useMemo(() => {
+    const fromBroadcast = broadcastFeed
+      .filter((item) => item.active)
+      .slice(0, 3)
+      .map((item) => ({
+        time: item.time,
+        msg: item.text,
+        severity: item.type === 'critical' ? 'critical' : item.type === 'warning' ? 'high' : 'moderate',
+      }));
+
+    const fromActions = agricultureActions.slice(0, 2).map((action, index) => ({
+      time: new Date(Date.now() - index * 45 * 60 * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      msg: action.text,
+      severity: 'moderate',
+    }));
+
+    return [...fromBroadcast, ...fromActions];
+  }, [broadcastFeed, agricultureActions]);
+
+  const totalCropExposure = districts.reduce((sum, district) => sum + Number(district.area.replace(/[^0-9]/g, '')), 0);
+  const farmersAffected = districts.reduce((sum, district) => sum + district.farmers, 0);
+  const projectedLossLkrM = Math.max(25, Math.round(totalCropExposure * ((weather?.rainfall ?? 3) / 100)));
+  const livestockAtRisk = Math.round(farmersAffected * 0.65);
+  const reliefDeployed = recoveryProgress.length > 0
+    ? Math.round(recoveryProgress.reduce((sum, item) => sum + item.percent, 0) / recoveryProgress.length)
+    : 0;
+
+  const planningBars = [
+    { label: 'Seed Distribution', value: recoveryProgress[0]?.percent ?? 45, color: 'bg-blue-400' },
+    { label: 'Compensation Fund', value: recoveryProgress[2]?.percent ?? 12, color: 'bg-yellow-400' },
+    { label: 'Equipment Dispatch', value: recoveryProgress[1]?.percent ?? 62, color: 'bg-green-400' },
+    { label: 'Labor Assistance', value: Math.round((recoveryProgress[3]?.percent ?? 56) * 0.5), color: 'bg-purple-400' },
+    { label: 'Livestock Feed', value: Math.max(10, Math.round(reliefDeployed * 0.6)), color: 'bg-orange-400' },
   ];
 
-  const cropBreakdown = [
-    { type: 'Paddy (Rice)', area: '28,400 Ha', pctLoss: 22, color: 'bg-red-500' },
-    { type: 'Vegetables', area: '8,600 Ha', pctLoss: 14, color: 'bg-yellow-400' },
-    { type: 'Coconut', area: '4,200 Ha', pctLoss: 6, color: 'bg-green-400' },
-    { type: 'Banana & Fruits', area: '2,800 Ha', pctLoss: 10, color: 'bg-orange-400' },
-    { type: 'Other Crops', area: '1,200 Ha', pctLoss: 4, color: 'bg-blue-400' },
-  ];
-
-  const recentAdvisories = [
-    { time: '08:30', msg: 'Polonnaruwa — immediate paddy harvest advisory issued', severity: 'critical' },
-    { time: '07:15', msg: 'Anuradhapura — water pumping operations initiated in 12 zones', severity: 'high' },
-    { time: '06:00', msg: 'Kurunegala — vegetable salvage teams deployed to 8 divisions', severity: 'high' },
-    { time: '04:45', msg: 'Batticaloa — drainage canal capacity at 85%, monitoring active', severity: 'moderate' },
-    { time: '03:20', msg: 'Trincomalee — livestock relocation advisory for coastal farms', severity: 'moderate' },
-  ];
+  const teamsDeployed = `${dashboardResources.filter((resource) => resource.visible).length}/${Math.max(10, dashboardResources.length + 6)}`;
+  const pumpsActive = Math.max(4, Math.round((weather?.rainfall ?? 2) * 3));
+  const drainageCleared = `${Math.max(20, Math.round((recoveryProgress[0]?.percent ?? 55) * 0.8))}%`;
+  const livestockShelters = Math.max(2, dashboardResources.filter((resource) => resource.status !== 'FULL').length);
+  const soilSamplesPending = Math.max(20, reports.filter((report) => report.status === 'pending').length * 18);
 
   const getRiskColor = (risk: string) => {
     switch (risk) {
@@ -67,32 +131,32 @@ export function AgricultureConsole() {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <div className="bg-gray-800 border border-gray-700 border-l-4 border-l-red-600 p-4 rounded-lg">
           <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">Total Crop Exposure</div>
-          <div className="text-xl font-bold text-red-600">45,200 Ha</div>
+          <div className="text-xl font-bold text-red-600">{totalCropExposure.toLocaleString()} Ha</div>
           <div className="text-[10px] text-red-600">High Risk Zone</div>
         </div>
         <div className="bg-gray-800 border border-gray-700 border-l-4 border-l-blue-400 p-4 rounded-lg">
           <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">Farmers Affected</div>
-          <div className="text-xl font-bold text-white">12,850</div>
+          <div className="text-xl font-bold text-white">{farmersAffected.toLocaleString()}</div>
           <div className="text-[10px] text-gray-400">Est. Households</div>
         </div>
         <div className="bg-gray-800 border border-gray-700 border-l-4 border-l-yellow-400 p-4 rounded-lg">
           <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">Proj. Economic Loss</div>
-          <div className="text-xl font-bold text-yellow-400">LKR 450M</div>
+          <div className="text-xl font-bold text-yellow-400">LKR {projectedLossLkrM}M</div>
           <div className="text-[10px] text-yellow-400">-15% Yield</div>
         </div>
         <div className="bg-gray-800 border border-gray-700 border-l-4 border-l-orange-400 p-4 rounded-lg">
           <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">Livestock at Risk</div>
-          <div className="text-xl font-bold text-orange-400">8,400</div>
+          <div className="text-xl font-bold text-orange-400">{livestockAtRisk.toLocaleString()}</div>
           <div className="text-[10px] text-orange-400">Cattle & Poultry</div>
         </div>
         <div className="bg-gray-800 border border-gray-700 border-l-4 border-l-purple-400 p-4 rounded-lg">
           <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">Districts Affected</div>
-          <div className="text-xl font-bold text-purple-400">6</div>
+          <div className="text-xl font-bold text-purple-400">{districts.length}</div>
           <div className="text-[10px] text-purple-400">2 Critical</div>
         </div>
         <div className="bg-gray-800 border border-gray-700 border-l-4 border-l-green-400 p-4 rounded-lg">
           <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">Relief Deployed</div>
-          <div className="text-xl font-bold text-green-400">38%</div>
+          <div className="text-xl font-bold text-green-400">{reliefDeployed}%</div>
           <div className="text-[10px] text-green-400">Of Total Allocation</div>
         </div>
       </div>
@@ -118,7 +182,7 @@ export function AgricultureConsole() {
                 </div>
               </div>
               <div className="absolute top-4 left-4 bg-gray-900/90 px-3 py-1.5 border border-gray-700 rounded text-[10px] text-gray-300 flex items-center gap-2">
-                <Thermometer size={12} /> Soil Moisture: 87% (Saturated)
+                <Thermometer size={12} /> Soil Moisture: {Math.min(99, Math.max(45, Math.round((weather?.rainfall ?? 1) * 12)))}% (Saturated)
               </div>
             </div>
           </div>
@@ -196,51 +260,17 @@ export function AgricultureConsole() {
               Relief Planning
             </h3>
             <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-gray-300">Seed Distribution</span>
-                  <span className="text-blue-400">45%</span>
+              {planningBars.map((bar) => (
+                <div key={bar.label}>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-gray-300">{bar.label}</span>
+                    <span className="text-gray-300">{bar.value}%</span>
+                  </div>
+                  <div className="w-full bg-gray-900 h-1.5 rounded">
+                    <div className={`${bar.color} h-full rounded`} style={{ width: `${bar.value}%` }}></div>
+                  </div>
                 </div>
-                <div className="w-full bg-gray-900 h-1.5 rounded">
-                  <div className="bg-blue-400 h-full rounded" style={{ width: '45%' }}></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-gray-300">Compensation Fund</span>
-                  <span className="text-yellow-400">12%</span>
-                </div>
-                <div className="w-full bg-gray-900 h-1.5 rounded">
-                  <div className="bg-yellow-400 h-full rounded" style={{ width: '12%' }}></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-gray-300">Equipment Dispatch</span>
-                  <span className="text-green-400">62%</span>
-                </div>
-                <div className="w-full bg-gray-900 h-1.5 rounded">
-                  <div className="bg-green-400 h-full rounded" style={{ width: '62%' }}></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-gray-300">Labor Assistance</span>
-                  <span className="text-purple-400">28%</span>
-                </div>
-                <div className="w-full bg-gray-900 h-1.5 rounded">
-                  <div className="bg-purple-400 h-full rounded" style={{ width: '28%' }}></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-gray-300">Livestock Feed</span>
-                  <span className="text-orange-400">35%</span>
-                </div>
-                <div className="w-full bg-gray-900 h-1.5 rounded">
-                  <div className="bg-orange-400 h-full rounded" style={{ width: '35%' }}></div>
-                </div>
-              </div>
+              ))}
             </div>
             <button className="w-full mt-4 py-3 border border-gray-700 text-sm font-bold uppercase text-gray-300 hover:bg-gray-700 rounded transition-colors">
               Manage Relief
@@ -255,23 +285,23 @@ export function AgricultureConsole() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-xs text-gray-300">Teams Deployed</span>
-                <span className="text-xs font-bold text-green-400">24 / 30</span>
+                <span className="text-xs font-bold text-green-400">{teamsDeployed}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-gray-300">Water Pumps Active</span>
-                <span className="text-xs font-bold text-blue-400">18</span>
+                <span className="text-xs font-bold text-blue-400">{pumpsActive}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-gray-300">Drainage Cleared</span>
-                <span className="text-xs font-bold text-yellow-400">67%</span>
+                <span className="text-xs font-bold text-yellow-400">{drainageCleared}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-gray-300">Shelters for Livestock</span>
-                <span className="text-xs font-bold text-orange-400">12 active</span>
+                <span className="text-xs font-bold text-orange-400">{livestockShelters} active</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-gray-300">Soil Samples Pending</span>
-                <span className="text-xs font-bold text-purple-400">140</span>
+                <span className="text-xs font-bold text-purple-400">{soilSamplesPending}</span>
               </div>
             </div>
           </div>

@@ -26,9 +26,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     Shutdown: Clean up resources
     """
     # Startup
-    print(f"Starting {settings.PROJECT_NAME} v{settings.VERSION}")
-    print(f"Environment: {settings.ENVIRONMENT}")
-    print(f"Debug mode: {settings.DEBUG}")
+    print(f"Starting {settings.app_name} v{settings.version}")
+    print(f"Environment: {settings.app_env}")
+    print(f"Debug mode: {settings.debug}")
     
     # In production, you would initialize:
     # - Database connection pool
@@ -50,7 +50,7 @@ def create_application() -> FastAPI:
     Creates and configures the FastAPI application instance.
     """
     app = FastAPI(
-        title=settings.PROJECT_NAME,
+        title=settings.app_name,
         description="""
 ## Flood Resilience System API
 
@@ -73,17 +73,17 @@ Protected endpoints require a Bearer token in the Authorization header.
 - Authenticated endpoints: 500 requests/minute
 - Admin endpoints: 1000 requests/minute
         """,
-        version=settings.VERSION,
-        openapi_url=f"{settings.API_V1_PREFIX}/openapi.json" if settings.DEBUG else None,
-        docs_url=f"{settings.API_V1_PREFIX}/docs" if settings.DEBUG else None,
-        redoc_url=f"{settings.API_V1_PREFIX}/redoc" if settings.DEBUG else None,
+        version=settings.version,
+        openapi_url=f"{settings.api_v1_prefix}/openapi.json" if settings.debug else None,
+        docs_url=f"{settings.api_v1_prefix}/docs" if settings.debug else None,
+        redoc_url=f"{settings.api_v1_prefix}/redoc" if settings.debug else None,
         lifespan=lifespan,
     )
     
     # Configure CORS
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS,
+        allow_origins=settings.cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -122,7 +122,7 @@ Protected endpoints require a Bearer token in the Authorization header.
     ) -> JSONResponse:
         """Catch-all exception handler for unhandled errors."""
         # In production, log to error monitoring service
-        if settings.DEBUG:
+        if settings.debug:
             import traceback
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -138,7 +138,7 @@ Protected endpoints require a Bearer token in the Authorization header.
         )
     
     # Include API router
-    app.include_router(api_router, prefix=settings.API_V1_PREFIX)
+    app.include_router(api_router, prefix=settings.api_v1_prefix)
     
     # Health check endpoint (outside versioned API)
     @app.get("/health", tags=["Health"])
@@ -150,17 +150,17 @@ Protected endpoints require a Bearer token in the Authorization header.
         """
         return {
             "status": "healthy",
-            "version": settings.VERSION,
-            "environment": settings.ENVIRONMENT,
+            "version": settings.version,
+            "environment": settings.app_env,
         }
     
     @app.get("/", tags=["Root"])
     async def root() -> dict:
         """Root endpoint with API information."""
         return {
-            "name": settings.PROJECT_NAME,
-            "version": settings.VERSION,
-            "docs_url": f"{settings.API_V1_PREFIX}/docs" if settings.DEBUG else None,
+            "name": settings.app_name,
+            "version": settings.version,
+            "docs_url": f"{settings.api_v1_prefix}/docs" if settings.debug else None,
             "health_url": "/health",
         }
     

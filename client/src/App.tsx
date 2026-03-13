@@ -42,6 +42,7 @@ import { SystemMaintenance } from './pages/admin/SystemMaintenance';
 import { UserManagement } from './pages/admin/UserManagement';
 import { ChatbotControl } from './pages/admin/ChatbotControl';
 import { useAdminControlStore } from './stores/adminControlStore';
+import { usePlatformRealtimeSync } from './hooks/usePlatformRealtimeSync';
 
 /** Wrapper to apply page transitions */
 function PageTransition({ children }: { children: React.ReactNode }) {
@@ -54,6 +55,8 @@ function PageTransition({ children }: { children: React.ReactNode }) {
 }
 
 function AppContent() {
+  usePlatformRealtimeSync();
+
   const onboardingDone = useOnboardingComplete();
   const [showOnboarding, setShowOnboarding] = useState(!onboardingDone);
 

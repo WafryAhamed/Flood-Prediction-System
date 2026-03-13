@@ -1,6 +1,56 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ShieldAlert, Zap, Droplets, Truck, Activity } from 'lucide-react';
+import { useMaintenanceStore } from '../../stores/maintenanceStore';
+import { useReportStore } from '../../stores/reportStore';
+import { useWeatherData } from '../../hooks/useWeatherData';
+
+const TYPE_ICON = {
+  infrastructure: Truck,
+  hospital: Zap,
+  shelter: Droplets,
+  report: ShieldAlert,
+} as const;
+
 export function InfrastructureMonitor() {
+  const mapMarkers = useMaintenanceStore((s) => s.mapMarkers);
+  const simulationDefaults = useMaintenanceStore((s) => s.simulationDefaults);
+  const updateSimulationDefaults = useMaintenanceStore((s) => s.updateSimulationDefaults);
+  const reports = useReportStore((s) => s.reports);
+  const { weather } = useWeatherData();
+
+  const [rainfallInput, setRainfallInput] = useState(simulationDefaults.rainfall);
+  const [drainageInput, setDrainageInput] = useState(simulationDefaults.drainage);
+
+  useEffect(() => {
+    setRainfallInput(simulationDefaults.rainfall);
+    setDrainageInput(simulationDefaults.drainage);
+  }, [simulationDefaults]);
+
+  const assets = useMemo(() => {
+    const visible = mapMarkers.filter((marker) => marker.visible).slice(0, 3);
+    return visible.map((marker) => {
+      const markerReports = reports.filter((report) => report.location_name.toLowerCase().includes(marker.label.split(' ')[0].toLowerCase()));
+      const highestSeverity = markerReports.some((report) => report.severity_level === 'CRITICAL')
+        ? 92
+        : markerReports.some((report) => report.severity_level === 'HIGH')
+          ? 78
+          : 62;
+      const weatherBoost = Math.round((weather?.rainfall ?? 0) * 2);
+      const risk = Math.min(99, highestSeverity + weatherBoost);
+      return {
+        name: marker.label,
+        type: marker.markerType,
+        risk,
+        impact: risk >= 90 ? 'Critical' : risk >= 75 ? 'High' : 'Moderate',
+        icon: TYPE_ICON[marker.markerType] || Truck,
+      };
+    });
+  }, [mapMarkers, reports, weather]);
+
+  const riskAssetCount = assets.filter((asset) => asset.risk >= 75).length;
+  const projectedRoadBlocked = Math.min(100, Math.round((rainfallInput + (weather?.rainfall ?? 0)) * 0.7));
+  const projectedPowerOutage = Math.max(500, Math.round((100 - drainageInput) * 180));
+
   return <div className="space-y-8">
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -8,7 +58,7 @@ export function InfrastructureMonitor() {
             Critical Infrastructure
           </h2>
           <p className="text-sm font-semibold text-gray-400">
-            VULNERABILITY SCAN: COMPLETE • 4 ASSETS AT RISK
+            VULNERABILITY SCAN: COMPLETE • {riskAssetCount} ASSETS AT RISK
           </p>
         </div>
       </div>
@@ -21,25 +71,7 @@ export function InfrastructureMonitor() {
               Priority Assets at Risk
             </h3>
             <div className="space-y-4">
-              {[{
-              name: 'Kelani Bridge',
-              type: 'Transport',
-              risk: 92,
-              impact: 'Critical',
-              icon: Truck
-            }, {
-              name: 'Substation 4',
-              type: 'Power',
-              risk: 78,
-              impact: 'High',
-              icon: Zap
-            }, {
-              name: 'Main Drainage Pump A',
-              type: 'Water',
-              risk: 65,
-              impact: 'High',
-              icon: Droplets
-            }].map((asset, i) => <div key={i} className="flex items-center gap-4 p-4 bg-gray-900 border border-gray-700 border-l-4 border-l-red-600 rounded">
+              {assets.map((asset, i) => <div key={i} className="flex items-center gap-4 p-4 bg-gray-900 border border-gray-700 border-l-4 border-l-red-600 rounded">
                   <div className="w-10 h-10 bg-gray-700 flex items-center justify-center text-gray-300">
                     <asset.icon size={20} />
                   </div>
@@ -96,7 +128,7 @@ export function InfrastructureMonitor() {
               <label className="text-sm font-bold text-gray-400 block mb-2">
                 Rainfall Increase
               </label>
-              <input type="range" className="w-full accent-blue-400" />
+              <input type="range" min={0} max={100} value={rainfallInput} onChange={(e) => setRainfallInput(Number(e.target.value))} className="w-full accent-blue-400" />
               <div className="flex justify-between text-[10px] text-gray-500 font-semibold">
                 <span>Current</span>
                 <span>+50%</span>
@@ -108,7 +140,7 @@ export function InfrastructureMonitor() {
               <label className="text-sm font-bold text-gray-400 block mb-2">
                 Drainage Efficiency
               </label>
-              <input type="range" className="w-full accent-blue-400" />
+              <input type="range" min={0} max={100} value={drainageInput} onChange={(e) => setDrainageInput(Number(e.target.value))} className="w-full accent-blue-400" />
             </div>
 
             <div className="p-4 bg-gray-900 border border-gray-700 mt-4 rounded">
@@ -118,16 +150,16 @@ export function InfrastructureMonitor() {
               <ul className="space-y-2 text-xs text-gray-400">
                 <li className="flex justify-between">
                   <span>Road Network</span>
-                  <span className="text-red-600">32% Blocked</span>
+                  <span className="text-red-600">{projectedRoadBlocked}% Blocked</span>
                 </li>
                 <li className="flex justify-between">
                   <span>Power Outage</span>
-                  <span className="text-yellow-400">12k Households</span>
+                  <span className="text-yellow-400">{projectedPowerOutage.toLocaleString()} Households</span>
                 </li>
               </ul>
             </div>
 
-            <button className="w-full py-3 bg-blue-400 text-black font-bold uppercase text-sm hover:bg-blue-500 rounded transition-colors">
+            <button onClick={() => updateSimulationDefaults({ rainfall: rainfallInput, drainage: drainageInput })} className="w-full py-3 bg-blue-400 text-black font-bold uppercase text-sm hover:bg-blue-500 rounded transition-colors">
               Run Simulation
             </button>
           </div>

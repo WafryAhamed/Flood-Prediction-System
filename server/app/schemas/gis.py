@@ -347,3 +347,23 @@ class MapDataResponse(BaseSchema):
     shelters: List[ShelterMapResponse] = []
     routes: List[EvacuationRouteGeoJSON] = []
     infrastructure: List[InfrastructureAssetResponse] = []
+
+
+# ---------------------------------------------------------------------------
+# Router-compatible aliases and missing classes
+# ---------------------------------------------------------------------------
+DistrictCreateRequest = DistrictCreate
+DistrictUpdateRequest = DistrictUpdate
+RiskZoneCreateRequest = RiskZoneCreate
+RiskZoneUpdateRequest = RiskZoneUpdate
+DistrictRiskSnapshotResponse = DistrictDetailResponse
+ShelterDetailResponse = ShelterResponse
+ShelterCreateRequest = ShelterCreate
+ShelterUpdateRequest = ShelterUpdate
+EvacuationRouteCreateRequest = EvacuationRouteCreate
+EvacuationRouteUpdateRequest = EvacuationRouteUpdate
+
+
+class ShelterCapacityUpdate(BaseSchema):
+    """Update current occupancy of a shelter."""
+    current_occupancy: int = Field(ge=0)

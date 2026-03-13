@@ -3,6 +3,7 @@ import { Send, MessageCircle, X, Loader, AlertTriangle, MapPin, Home, ShieldChec
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMaintenanceStore } from '../stores/maintenanceStore';
 import type { ChatbotKnowledgeEntry } from '../types/admin';
+import { sendChatMessage } from '../services/integrationApi';
 
 /* ================================================================== */
 /*  Types                                                              */
@@ -14,51 +15,10 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-interface ApiMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
-
 /* ================================================================== */
 /*  Constants                                                          */
 /* ================================================================== */
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const FALLBACK_MODELS = [
-  'qwen/qwen3-vl-30b-a3b-thinking',
-  'google/gemma-3-1b-it:free',
-  'mistralai/mistral-small-3.1-24b-instruct:free',
-  'openai/gpt-4o-mini',
-];
 const MAX_HISTORY = 10;
-
-const SYSTEM_PROMPT = `You are the Flood Safety Assistant for Sri Lanka. Help citizens during floods and heavy rainfall.
-
-STRICT RULES:
-- Only answer questions about floods, rain, evacuation, shelters, safety, or weather in Sri Lanka.
-- Maximum 3 sentences per response. Keep answers short, clear, and practical.
-- If a user asks something unrelated, reply exactly: "I can only assist with flood safety and emergency information in Sri Lanka."
-
-EMERGENCY CONTACTS:
-Emergency Hotline: 112 | Police: 119 | Ambulance/Fire: 110 | Disaster Management Centre (DMC): 117
-
-FLOOD SAFETY:
-- Move to higher ground immediately if water levels rise.
-- Avoid walking or driving through floodwater.
-- Stay away from rivers, canals, and drainage during heavy rain.
-- Follow DMC instructions.
-
-EVACUATION:
-- Follow evacuation notices from local authorities.
-- Move to nearest safe shelter (schools, temples, government buildings, designated relief shelters).
-- Carry documents, drinking water, medicine, and a flashlight.
-
-HIGH-RISK DISTRICTS: Colombo, Gampaha, Kalutara, Ratnapura, Matara, Galle, Anuradhapura, Batticaloa.
-
-MONSOON SEASONS: Southwest Monsoon (May–September), Northeast Monsoon (December–February). Flood risk highest during these periods.
-
-FLOOD WARNING SIGNS: rapidly rising river water, continuous heavy rainfall, blocked drainage, landslides in hill areas.
-
-Always prioritize safety. Never give long explanations. Keep answers simple and direct.`;
 
 const QUICK_ACTIONS = [
   { icon: AlertTriangle, label: 'Am I in danger?', prompt: 'Am I in danger right now? What should I do?' },
@@ -174,86 +134,24 @@ export function FloodAIChatbot() {
     if (isOpen) setTimeout(() => inputRef.current?.focus(), 200);
   }, [isOpen]);
 
-  /* Build API payload (last N messages) ---------------------------- */
-  const buildApiMessages = useCallback(
-    (userText: string): ApiMessage[] => {
-      const history: ApiMessage[] = messages
-        .slice(-MAX_HISTORY)
-        .map((m) => ({ role: m.role, content: m.content }));
-      const activeKnowledge = chatbotKnowledge
-        .filter((k) => k.active)
-        .map((k) => `${k.category}: ${k.response}`)
-        .join('\n');
-      const enhancedPrompt = activeKnowledge
-        ? `${SYSTEM_PROMPT}\n\nADDITIONAL KNOWLEDGE (admin-managed):\n${activeKnowledge}`
-        : SYSTEM_PROMPT;
-      return [{ role: 'system', content: enhancedPrompt }, ...history, { role: 'user', content: userText }];
-    },
-    [messages, chatbotKnowledge],
-  );
+  const callBackendAssistant = useCallback(async (userText: string): Promise<string | null> => {
+    try {
+      const response = await sendChatMessage({
+        message: userText,
+        history: messages
+          .slice(-MAX_HISTORY)
+          .map((m) => ({ role: m.role, content: m.content })),
+        knowledge: chatbotKnowledge
+          .filter((k) => k.active)
+          .map((k) => ({ category: k.category, keywords: k.keywords, response: k.response })),
+      });
 
-  /* Try OpenRouter API with fallback models ------------------------ */
-  const callOpenRouter = async (userText: string): Promise<string | null> => {
-    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-    if (!apiKey) {
-      console.warn('VITE_OPENROUTER_API_KEY not set — using local responses.');
+      return response.reply?.trim() || null;
+    } catch (error) {
+      console.warn('Backend chatbot request failed:', error);
       return null;
     }
-
-    const apiMessages = buildApiMessages(userText);
-
-    for (const model of FALLBACK_MODELS) {
-      try {
-        const res = await fetch(OPENROUTER_URL, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': window.location.origin,
-            'X-Title': 'Flood Resilience System',
-          },
-          body: JSON.stringify({
-            model,
-            messages: apiMessages,
-            max_tokens: 1024,
-            temperature: 0.4,
-          }),
-        });
-
-        if (res.status === 401) {
-          // Auth failure — key is invalid, no point trying other models
-          const errBody = await res.text();
-          console.error(`OpenRouter 401 (invalid key): ${errBody}`);
-          return null;
-        }
-
-        if (!res.ok) {
-          const errBody = await res.text();
-          console.warn(`OpenRouter ${res.status} with model ${model}:`, errBody);
-          continue; // try the next model
-        }
-
-        const data = await res.json();
-        console.log('OpenRouter OK:', model, JSON.stringify(data).slice(0, 200));
-
-        let rawReply =
-          data.choices?.[0]?.message?.content ??
-          data.choices?.[0]?.text ??
-          '';
-
-        // Strip <think>…</think> blocks produced by thinking models
-        rawReply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-
-        if (rawReply) return rawReply;
-        // Empty response — try next model
-      } catch (networkErr) {
-        console.warn(`Network error with model ${model}:`, networkErr);
-        continue;
-      }
-    }
-
-    return null; // all models failed
-  };
+  }, [messages, chatbotKnowledge]);
 
   /* Send message --------------------------------------------------- */
   const sendMessage = useCallback(
@@ -273,8 +171,8 @@ export function FloodAIChatbot() {
       setIsLoading(true);
 
       try {
-        // 1️⃣ Try OpenRouter API
-        const aiReply = await callOpenRouter(trimmed);
+        // 1️⃣ Try backend AI service
+        const aiReply = await callBackendAssistant(trimmed);
 
         // 2️⃣ Use reply or fall back to local engine
         const finalReply = aiReply || getLocalResponse(trimmed, chatbotKnowledge);
@@ -300,8 +198,7 @@ export function FloodAIChatbot() {
         setIsLoading(false);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isLoading, buildApiMessages],
+    [isLoading, chatbotKnowledge, callBackendAssistant],
   );
 
   /* Key handler ---------------------------------------------------- */

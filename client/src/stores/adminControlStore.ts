@@ -4,6 +4,7 @@
 // All data is seeded from current hardcoded values to preserve existing behavior.
 
 import { create } from 'zustand';
+import { saveAdminControlState } from '../services/integrationApi';
 import type {
   BroadcastFeedItem,
   DashboardResource,
@@ -126,6 +127,8 @@ const SEED_SETTINGS: FrontendSettings = {
 // ═══ Store Interface ═══
 
 interface AdminControlStore {
+  hydrateFromBackend: (state: Record<string, unknown>) => void;
+
   // Broadcast feed
   broadcastFeed: BroadcastFeedItem[];
   addBroadcastItem: (item: Omit<BroadcastFeedItem, 'id'>) => void;
@@ -171,80 +174,165 @@ interface AdminControlStore {
 let nextBroadcastId = 100;
 let nextRecoveryUpdateId = 100;
 
-export const useAdminControlStore = create<AdminControlStore>((set) => ({
+function pickPersistableState(state: AdminControlStore) {
+  return {
+    broadcastFeed: state.broadcastFeed,
+    dashboardResources: state.dashboardResources,
+    agricultureAdvisories: state.agricultureAdvisories,
+    agricultureActions: state.agricultureActions,
+    agricultureZones: state.agricultureZones,
+    recoveryProgress: state.recoveryProgress,
+    recoveryNeeds: state.recoveryNeeds,
+    recoveryUpdates: state.recoveryUpdates,
+    recoveryResources: state.recoveryResources,
+    learnGuides: state.learnGuides,
+    learnTips: state.learnTips,
+    featuredWisdom: state.featuredWisdom,
+    frontendSettings: state.frontendSettings,
+  };
+}
+
+export const useAdminControlStore = create<AdminControlStore>((set, get) => ({
+  hydrateFromBackend: (incoming) => {
+    const source = incoming as Partial<ReturnType<typeof pickPersistableState>>;
+    set((state) => ({
+      broadcastFeed: source.broadcastFeed || state.broadcastFeed,
+      dashboardResources: source.dashboardResources || state.dashboardResources,
+      agricultureAdvisories: source.agricultureAdvisories || state.agricultureAdvisories,
+      agricultureActions: source.agricultureActions || state.agricultureActions,
+      agricultureZones: source.agricultureZones || state.agricultureZones,
+      recoveryProgress: source.recoveryProgress || state.recoveryProgress,
+      recoveryNeeds: source.recoveryNeeds || state.recoveryNeeds,
+      recoveryUpdates: source.recoveryUpdates || state.recoveryUpdates,
+      recoveryResources: source.recoveryResources || state.recoveryResources,
+      learnGuides: source.learnGuides || state.learnGuides,
+      learnTips: source.learnTips || state.learnTips,
+      featuredWisdom: source.featuredWisdom || state.featuredWisdom,
+      frontendSettings: source.frontendSettings || state.frontendSettings,
+    }));
+  },
+
   // ── Broadcast Feed ──
   broadcastFeed: SEED_BROADCASTS,
-  addBroadcastItem: (item) => set((s) => ({
-    broadcastFeed: [{ ...item, id: `bf-${nextBroadcastId++}` }, ...s.broadcastFeed],
-  })),
-  removeBroadcastItem: (id) => set((s) => ({
-    broadcastFeed: s.broadcastFeed.filter((b) => b.id !== id),
-  })),
-  toggleBroadcastItem: (id) => set((s) => ({
-    broadcastFeed: s.broadcastFeed.map((b) => b.id === id ? { ...b, active: !b.active } : b),
-  })),
+  addBroadcastItem: (item) => {
+    set((s) => ({
+      broadcastFeed: [{ ...item, id: `bf-${nextBroadcastId++}` }, ...s.broadcastFeed],
+    }));
+    void saveAdminControlState(pickPersistableState(get()));
+  },
+  removeBroadcastItem: (id) => {
+    set((s) => ({
+      broadcastFeed: s.broadcastFeed.filter((b) => b.id !== id),
+    }));
+    void saveAdminControlState(pickPersistableState(get()));
+  },
+  toggleBroadcastItem: (id) => {
+    set((s) => ({
+      broadcastFeed: s.broadcastFeed.map((b) => b.id === id ? { ...b, active: !b.active } : b),
+    }));
+    void saveAdminControlState(pickPersistableState(get()));
+  },
 
   // ── Dashboard Resources ──
   dashboardResources: SEED_RESOURCES,
-  updateResource: (id, updates) => set((s) => ({
-    dashboardResources: s.dashboardResources.map((r) => r.id === id ? { ...r, ...updates } : r),
-  })),
+  updateResource: (id, updates) => {
+    set((s) => ({
+      dashboardResources: s.dashboardResources.map((r) => r.id === id ? { ...r, ...updates } : r),
+    }));
+    void saveAdminControlState(pickPersistableState(get()));
+  },
 
   // ── Agriculture ──
   agricultureAdvisories: SEED_AGRI_ADVISORIES,
-  updateAdvisory: (id, updates) => set((s) => ({
-    agricultureAdvisories: s.agricultureAdvisories.map((a) => a.id === id ? { ...a, ...updates } : a),
-  })),
+  updateAdvisory: (id, updates) => {
+    set((s) => ({
+      agricultureAdvisories: s.agricultureAdvisories.map((a) => a.id === id ? { ...a, ...updates } : a),
+    }));
+    void saveAdminControlState(pickPersistableState(get()));
+  },
   agricultureActions: SEED_AGRI_ACTIONS,
-  updateAction: (id, text) => set((s) => ({
-    agricultureActions: s.agricultureActions.map((a) => a.id === id ? { ...a, text } : a),
-  })),
+  updateAction: (id, text) => {
+    set((s) => ({
+      agricultureActions: s.agricultureActions.map((a) => a.id === id ? { ...a, text } : a),
+    }));
+    void saveAdminControlState(pickPersistableState(get()));
+  },
   agricultureZones: SEED_AGRI_ZONES,
-  updateZone: (id, updates) => set((s) => ({
-    agricultureZones: s.agricultureZones.map((z) => z.id === id ? { ...z, ...updates } : z),
-  })),
+  updateZone: (id, updates) => {
+    set((s) => ({
+      agricultureZones: s.agricultureZones.map((z) => z.id === id ? { ...z, ...updates } : z),
+    }));
+    void saveAdminControlState(pickPersistableState(get()));
+  },
 
   // ── Recovery ──
   recoveryProgress: SEED_RECOVERY_PROGRESS,
-  updateRecoveryProgress: (id, percent) => set((s) => ({
-    recoveryProgress: s.recoveryProgress.map((p) => p.id === id ? { ...p, percent: Math.max(0, Math.min(100, percent)) } : p),
-  })),
+  updateRecoveryProgress: (id, percent) => {
+    set((s) => ({
+      recoveryProgress: s.recoveryProgress.map((p) => p.id === id ? { ...p, percent: Math.max(0, Math.min(100, percent)) } : p),
+    }));
+    void saveAdminControlState(pickPersistableState(get()));
+  },
   recoveryNeeds: SEED_RECOVERY_NEEDS,
-  updateRecoveryNeed: (id, updates) => set((s) => ({
-    recoveryNeeds: s.recoveryNeeds.map((n) => n.id === id ? { ...n, ...updates } : n),
-  })),
+  updateRecoveryNeed: (id, updates) => {
+    set((s) => ({
+      recoveryNeeds: s.recoveryNeeds.map((n) => n.id === id ? { ...n, ...updates } : n),
+    }));
+    void saveAdminControlState(pickPersistableState(get()));
+  },
   recoveryUpdates: SEED_RECOVERY_UPDATES,
-  addRecoveryUpdate: (item) => set((s) => ({
-    recoveryUpdates: [{ ...item, id: `ru-${nextRecoveryUpdateId++}` }, ...s.recoveryUpdates],
-  })),
+  addRecoveryUpdate: (item) => {
+    set((s) => ({
+      recoveryUpdates: [{ ...item, id: `ru-${nextRecoveryUpdateId++}` }, ...s.recoveryUpdates],
+    }));
+    void saveAdminControlState(pickPersistableState(get()));
+  },
   recoveryResources: SEED_RECOVERY_RESOURCES,
 
   // ── Learn Hub ──
   learnGuides: SEED_LEARN_GUIDES,
-  updateLearnGuide: (id, updates) => set((s) => ({
-    learnGuides: s.learnGuides.map((g) => g.id === id ? { ...g, ...updates } : g),
-  })),
+  updateLearnGuide: (id, updates) => {
+    set((s) => ({
+      learnGuides: s.learnGuides.map((g) => g.id === id ? { ...g, ...updates } : g),
+    }));
+    void saveAdminControlState(pickPersistableState(get()));
+  },
   learnTips: SEED_LEARN_TIPS,
-  updateLearnTips: (id, tips) => set((s) => ({
-    learnTips: s.learnTips.map((t) => t.id === id ? { ...t, tips } : t),
-  })),
+  updateLearnTips: (id, tips) => {
+    set((s) => ({
+      learnTips: s.learnTips.map((t) => t.id === id ? { ...t, tips } : t),
+    }));
+    void saveAdminControlState(pickPersistableState(get()));
+  },
   featuredWisdom: SEED_WISDOM,
-  updateFeaturedWisdom: (updates) => set((s) => ({
-    featuredWisdom: { ...s.featuredWisdom, ...updates },
-  })),
+  updateFeaturedWisdom: (updates) => {
+    set((s) => ({
+      featuredWisdom: { ...s.featuredWisdom, ...updates },
+    }));
+    void saveAdminControlState(pickPersistableState(get()));
+  },
 
   // ── Frontend Settings ──
   frontendSettings: SEED_SETTINGS,
-  updateFrontendSettings: (updates) => set((s) => ({
-    frontendSettings: { ...s.frontendSettings, ...updates },
-  })),
-  setPageVisibility: (page, visible) => set((s) => ({
-    frontendSettings: {
-      ...s.frontendSettings,
-      pageVisibility: { ...s.frontendSettings.pageVisibility, [page]: visible },
-    },
-  })),
-  setSiteFloodMode: (mode) => set((s) => ({
-    frontendSettings: { ...s.frontendSettings, siteFloodMode: mode },
-  })),
+  updateFrontendSettings: (updates) => {
+    set((s) => ({
+      frontendSettings: { ...s.frontendSettings, ...updates },
+    }));
+    void saveAdminControlState(pickPersistableState(get()));
+  },
+  setPageVisibility: (page, visible) => {
+    set((s) => ({
+      frontendSettings: {
+        ...s.frontendSettings,
+        pageVisibility: { ...s.frontendSettings.pageVisibility, [page]: visible },
+      },
+    }));
+    void saveAdminControlState(pickPersistableState(get()));
+  },
+  setSiteFloodMode: (mode) => {
+    set((s) => ({
+      frontendSettings: { ...s.frontendSettings, siteFloodMode: mode },
+    }));
+    void saveAdminControlState(pickPersistableState(get()));
+  },
 }));

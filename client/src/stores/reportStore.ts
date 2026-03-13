@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { applyReportAction, createReport } from '../services/integrationApi';
 
 export interface AdminVerification {
   verified_by: string;
@@ -39,8 +40,39 @@ function sortReports(reports: FloodReport[]): FloodReport[] {
   });
 }
 
+function normalizeReport(input: unknown): FloodReport | null {
+  if (!input || typeof input !== 'object') return null;
+  const candidate = input as Partial<FloodReport> & Record<string, unknown>;
+
+  const status = (candidate.status as ReportStatus) || 'pending';
+  const severity = (candidate.severity_level as FloodReport['severity_level']) || 'MEDIUM';
+
+  if (!candidate.report_id || !candidate.location_name || typeof candidate.latitude !== 'number' || typeof candidate.longitude !== 'number') {
+    return null;
+  }
+
+  return {
+    report_id: String(candidate.report_id),
+    user_id: String(candidate.user_id || '#0000'),
+    trust_score: Number(candidate.trust_score ?? 75),
+    severity_level: severity,
+    description: String(candidate.description || ''),
+    location_name: String(candidate.location_name),
+    latitude: Number(candidate.latitude),
+    longitude: Number(candidate.longitude),
+    timestamp: Number(candidate.timestamp ?? Date.now()),
+    media_url: (candidate.media_url as string | null | undefined) ?? null,
+    status,
+    admin_verification: (candidate.admin_verification as AdminVerification | null | undefined) ?? null,
+    emergency_response_status: String(candidate.emergency_response_status || ''),
+  };
+}
+
 interface ReportStore {
   reports: FloodReport[];
+  hydrateReports: (reports: unknown[]) => void;
+  /** Insert a new report or update an existing one in-place (used by SSE events). */
+  upsertReport: (report: unknown) => void;
   addReport: (report: Omit<FloodReport, 'report_id' | 'status' | 'timestamp' | 'user_id' | 'trust_score' | 'admin_verification' | 'emergency_response_status'>) => void;
   verifyReport: (reportId: string) => void;
   rejectReport: (reportId: string) => void;
@@ -222,98 +254,109 @@ const SEED_REPORTS: FloodReport[] = [
 export const useReportStore = create<ReportStore>((set, get) => ({
   reports: SEED_REPORTS,
 
+  hydrateReports: (incoming) => {
+    const normalized = incoming
+      .map((item) => normalizeReport(item))
+      .filter((item): item is FloodReport => item !== null);
+    if (normalized.length > 0) {
+      set({ reports: sortReports(normalized) });
+    }
+  },
+
+  upsertReport: (report) => {
+    const normalized = normalizeReport(report);
+    if (!normalized) return;
+    set((state) => {
+      const exists = state.reports.some((r) => r.report_id === normalized.report_id);
+      if (exists) {
+        return {
+          reports: sortReports(
+            state.reports.map((r) =>
+              r.report_id === normalized.report_id ? normalized : r
+            )
+          ),
+        };
+      }
+      return {
+        reports: sortReports([normalized, ...state.reports]).slice(0, 200),
+      };
+    });
+  },
+
   addReport: (partial) => {
-    const report: FloodReport = {
-      ...partial,
-      report_id: generateId(),
-      user_id: generateUserId(),
-      trust_score: generateTrustScore(),
-      timestamp: Date.now(),
-      status: 'pending',
-      admin_verification: null,
-      emergency_response_status: '',
-    };
-    set((state) => ({
-      reports: [report, ...state.reports].slice(0, 50),
-    }));
+    void createReport({
+      severity_level: partial.severity_level,
+      description: partial.description,
+      location_name: partial.location_name,
+      latitude: partial.latitude,
+      longitude: partial.longitude,
+      media_url: partial.media_url,
+    })
+      .then((serverReport) => {
+        const normalized = normalizeReport(serverReport);
+        if (!normalized) throw new Error('Invalid report payload from backend');
+        set((state) => ({
+          reports: sortReports([
+            normalized,
+            ...state.reports.filter((r) => r.report_id !== normalized.report_id),
+          ]).slice(0, 200),
+        }));
+      })
+      .catch(() => {
+        const fallback: FloodReport = {
+          ...partial,
+          report_id: generateId(),
+          user_id: generateUserId(),
+          trust_score: generateTrustScore(),
+          timestamp: Date.now(),
+          status: 'pending',
+          admin_verification: null,
+          emergency_response_status: '',
+        };
+        set((state) => ({
+          reports: [fallback, ...state.reports].slice(0, 200),
+        }));
+      });
   },
 
   verifyReport: (reportId) => {
-    set((state) => ({
-      reports: state.reports.map((r) =>
-        r.report_id === reportId
-          ? {
-              ...r,
-              status: 'verified' as const,
-              admin_verification: {
-                verified_by: 'CMD. PERERA',
-                verified_time: Date.now(),
-                response_team_status: 'none' as const,
-              },
-              emergency_response_status: 'Report verified by authorities.',
-            }
-          : r
-      ),
-    }));
+    void applyReportAction(reportId, 'verify').then((serverReport) => {
+      const normalized = normalizeReport(serverReport);
+      if (!normalized) return;
+      set((state) => ({
+        reports: state.reports.map((r) => (r.report_id === reportId ? normalized : r)),
+      }));
+    });
   },
 
   rejectReport: (reportId) => {
-    set((state) => ({
-      reports: state.reports.map((r) =>
-        r.report_id === reportId
-          ? {
-              ...r,
-              status: 'rejected' as const,
-              admin_verification: {
-                verified_by: 'CMD. PERERA',
-                verified_time: Date.now(),
-                response_team_status: 'none' as const,
-              },
-              emergency_response_status: 'Report rejected — not verified.',
-            }
-          : r
-      ),
-    }));
+    void applyReportAction(reportId, 'reject').then((serverReport) => {
+      const normalized = normalizeReport(serverReport);
+      if (!normalized) return;
+      set((state) => ({
+        reports: state.reports.map((r) => (r.report_id === reportId ? normalized : r)),
+      }));
+    });
   },
 
   dispatchHelp: (reportId) => {
-    set((state) => ({
-      reports: state.reports.map((r) =>
-        r.report_id === reportId
-          ? {
-              ...r,
-              status: 'response_dispatched' as const,
-              admin_verification: {
-                ...(r.admin_verification || { verified_by: 'CMD. PERERA', verified_time: Date.now() }),
-                verified_by: r.admin_verification?.verified_by || 'CMD. PERERA',
-                verified_time: r.admin_verification?.verified_time || Date.now(),
-                response_team_status: 'dispatched' as const,
-              },
-              emergency_response_status: 'Emergency team dispatched to this location.',
-            }
-          : r
-      ),
-    }));
+    void applyReportAction(reportId, 'dispatch').then((serverReport) => {
+      const normalized = normalizeReport(serverReport);
+      if (!normalized) return;
+      set((state) => ({
+        reports: state.reports.map((r) => (r.report_id === reportId ? normalized : r)),
+      }));
+    });
   },
 
   resolveReport: (reportId) => {
-    set((state) => ({
-      reports: state.reports.map((r) =>
-        r.report_id === reportId
-          ? {
-              ...r,
-              status: 'resolved' as const,
-              admin_verification: {
-                ...(r.admin_verification || { verified_by: 'CMD. PERERA', verified_time: Date.now() }),
-                verified_by: r.admin_verification?.verified_by || 'CMD. PERERA',
-                verified_time: r.admin_verification?.verified_time || Date.now(),
-                response_team_status: 'completed' as const,
-              },
-              emergency_response_status: 'Situation resolved.',
-            }
-          : r
-      ),
-    }));
+    void applyReportAction(reportId, 'resolve').then((serverReport) => {
+      const normalized = normalizeReport(serverReport);
+      if (!normalized) return;
+      set((state) => ({
+        reports: state.reports.map((r) => (r.report_id === reportId ? normalized : r)),
+      }));
+    });
   },
 
   getPendingReports: () => {

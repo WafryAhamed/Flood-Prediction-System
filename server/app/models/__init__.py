@@ -107,6 +107,13 @@ from app.models.ai import (
     ChatSessionStatus,
 )
 
+# Extras models
+from app.models.extras import (
+    FloodHistory,
+    SimulationScenario,
+    UserSafetyProfile,
+)
+
 # Audit models
 from app.models.audit import (
     AuditLog,
@@ -222,4 +229,8 @@ __all__ = [
     "AuditAction",
     "SystemEventType",
     "JobStatus",
+    # Extras
+    "FloodHistory",
+    "SimulationScenario",
+    "UserSafetyProfile",
 ]

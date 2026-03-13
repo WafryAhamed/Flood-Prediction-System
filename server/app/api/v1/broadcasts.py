@@ -3,7 +3,7 @@ Broadcast and notification API routes.
 """
 from typing import Annotated
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select, func
@@ -17,10 +17,8 @@ from app.models.alerts import (
     BroadcastType,
     BroadcastPriority,
     BroadcastStatus,
-    BroadcastTarget,
     NotificationDelivery,
     ChannelType,
-    DeliveryStatus,
     EmergencyContact,
     UserNotificationPreference,
     DeviceToken,
@@ -72,10 +70,10 @@ async def list_broadcasts(
         count_query = count_query.where(Broadcast.status == status_filter)
     
     if active_only:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         active_filter = (
-            (Broadcast.status == BroadcastStatus.PUBLISHED) &
-            ((Broadcast.expires_at.is_(None)) | (Broadcast.expires_at > now))
+            (Broadcast.status == BroadcastStatus.ACTIVE) &
+            ((Broadcast.active_to.is_(None)) | (Broadcast.active_to > now))
         )
         query = query.where(active_filter)
         count_query = count_query.where(active_filter)
@@ -89,11 +87,15 @@ async def list_broadcasts(
     result = await db.execute(query)
     broadcasts = result.scalars().all()
     
+    total_pages = (total + page_size - 1) // page_size if page_size else 1
     return PaginatedResponse(
         items=[BroadcastResponse.model_validate(b) for b in broadcasts],
         total=total,
         page=page,
         page_size=page_size,
+        total_pages=total_pages,
+        has_next=page < total_pages,
+        has_prev=page > 1,
     )
 
 
@@ -104,11 +106,10 @@ async def get_active_broadcasts(
     limit: int = Query(10, ge=1, le=50),
 ):
     """Get currently active broadcasts for display."""
-    now = datetime.utcnow()
-    
+    now = datetime.now(timezone.utc)
     query = select(Broadcast).where(
-        Broadcast.status == BroadcastStatus.PUBLISHED,
-        (Broadcast.expires_at.is_(None)) | (Broadcast.expires_at > now),
+        Broadcast.status == BroadcastStatus.ACTIVE,
+        (Broadcast.active_to.is_(None)) | (Broadcast.active_to > now),
     )
     
     # Filter by district if specified
@@ -211,42 +212,27 @@ async def create_broadcast(
     broadcast = Broadcast(
         broadcast_type=data.broadcast_type,
         priority=data.priority,
-        title_en=data.title_en,
+        title=data.title,
         title_si=data.title_si,
         title_ta=data.title_ta,
-        message_en=data.message_en,
+        message=data.message,
         message_si=data.message_si,
         message_ta=data.message_ta,
-        instructions_en=data.instructions_en,
-        instructions_si=data.instructions_si,
-        instructions_ta=data.instructions_ta,
-        created_by_id=operator.id,
+        action_required=data.action_required,
+        action_required_si=data.action_required_si,
+        action_required_ta=data.action_required_ta,
+        author_id=operator.id,
         status=BroadcastStatus.DRAFT,
         channels=data.channels or [ChannelType.IN_APP],
-        expires_at=data.expires_at,
-        source_system=data.source_system,
-        metadata=data.metadata,
+        active_from=data.active_from,
+        active_to=data.active_to,
+        target_districts=data.target_districts,
+        requires_approval=data.requires_approval,
+        metadata_json=data.metadata_json,
     )
     
     db.add(broadcast)
     await db.flush()  # Get the ID
-    
-    # Add targets
-    if data.target_district_ids:
-        for district_id in data.target_district_ids:
-            target = BroadcastTarget(
-                broadcast_id=broadcast.id,
-                district_id=district_id,
-            )
-            db.add(target)
-    
-    if data.target_zone_ids:
-        for zone_id in data.target_zone_ids:
-            target = BroadcastTarget(
-                broadcast_id=broadcast.id,
-                zone_id=zone_id,
-            )
-            db.add(target)
     
     await db.commit()
     await db.refresh(broadcast)
@@ -312,8 +298,8 @@ async def publish_broadcast(
             detail="Only draft broadcasts can be published",
         )
     
-    broadcast.status = BroadcastStatus.PUBLISHED
-    broadcast.published_at = datetime.utcnow()
+    broadcast.status = BroadcastStatus.ACTIVE
+    broadcast.active_from = datetime.now(timezone.utc)
     
     await db.commit()
     await db.refresh(broadcast)
@@ -404,14 +390,17 @@ async def get_my_notification_preferences(
     if prefs is None:
         # Return defaults
         return NotificationPreferencesResponse(
-            user_id=current_user.id,
+            id=current_user.id,
             push_enabled=True,
             sms_enabled=False,
             email_enabled=True,
-            in_app_enabled=True,
+            voice_enabled=False,
+            receive_critical=True,
+            receive_high=True,
+            receive_medium=True,
+            receive_low=False,
             quiet_hours_enabled=False,
-            min_priority_for_quiet_hours="critical",
-            language_preference=current_user.preferred_language,
+            preferred_language=current_user.preferred_language,
         )
     
     return NotificationPreferencesResponse.model_validate(prefs)
@@ -449,120 +438,87 @@ async def update_my_notification_preferences(
     return NotificationPreferencesResponse.model_validate(prefs)
 
 
-# --- Emergency Contacts ---
+# --- Emergency Contacts (public services: police, fire, medical, etc.) ---
 
 contacts_router = APIRouter(prefix="/emergency-contacts", tags=["Emergency Contacts"])
 
 
-@contacts_router.get("/me", response_model=list[EmergencyContactResponse])
-async def get_my_emergency_contacts(
-    current_user: CurrentUser,
+@contacts_router.get("", response_model=list[EmergencyContactResponse])
+async def list_emergency_contacts(
     db: Annotated[AsyncSession, Depends(get_db)],
+    category: str | None = None,
+    featured_only: bool = False,
 ):
-    """Get current user's emergency contacts."""
-    query = (
-        select(EmergencyContact)
-        .where(EmergencyContact.user_id == current_user.id)
-        .order_by(EmergencyContact.priority)
-    )
+    """List active public emergency contacts (police, fire, medical, etc.)."""
+    query = select(EmergencyContact).where(EmergencyContact.is_active == True)  # noqa: E712
+    if category:
+        query = query.where(EmergencyContact.category == category)
+    if featured_only:
+        query = query.where(EmergencyContact.is_featured == True)  # noqa: E712
+    query = query.order_by(EmergencyContact.display_order)
     result = await db.execute(query)
-    contacts = result.scalars().all()
-    
-    return [EmergencyContactResponse.model_validate(c) for c in contacts]
+    return [EmergencyContactResponse.model_validate(c) for c in result.scalars().all()]
 
 
-@contacts_router.post("/me", response_model=EmergencyContactResponse, status_code=status.HTTP_201_CREATED)
-async def add_emergency_contact(
+@contacts_router.post("", response_model=EmergencyContactResponse, status_code=status.HTTP_201_CREATED)
+async def create_emergency_contact(
     data: EmergencyContactCreateRequest,
-    current_user: CurrentUser,
+    _admin: AdminUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    """Add an emergency contact."""
-    # Count existing contacts
-    count_result = await db.execute(
-        select(func.count(EmergencyContact.id)).where(
-            EmergencyContact.user_id == current_user.id
-        )
-    )
-    count = count_result.scalar() or 0
-    
-    if count >= 5:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Maximum of 5 emergency contacts allowed",
-        )
-    
+    """Create a new public emergency contact (admin only)."""
     contact = EmergencyContact(
-        user_id=current_user.id,
         name=data.name,
-        relationship=data.relationship,
+        name_si=data.name_si,
+        name_ta=data.name_ta,
+        category=data.category,
         phone=data.phone,
+        phone_alt=data.phone_alt,
         email=data.email,
-        priority=data.priority or count + 1,
-        notify_on_emergency=data.notify_on_emergency,
+        website=data.website,
+        description=data.description,
+        coverage_districts=data.coverage_districts,
+        display_order=data.display_order,
+        is_featured=data.is_featured,
     )
-    
     db.add(contact)
     await db.commit()
     await db.refresh(contact)
-    
     return EmergencyContactResponse.model_validate(contact)
 
 
-@contacts_router.patch("/me/{contact_id}", response_model=EmergencyContactResponse)
+@contacts_router.patch("/{contact_id}", response_model=EmergencyContactResponse)
 async def update_emergency_contact(
     contact_id: UUID,
     data: EmergencyContactUpdateRequest,
-    current_user: CurrentUser,
+    _admin: AdminUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    """Update an emergency contact."""
-    query = select(EmergencyContact).where(
-        EmergencyContact.id == contact_id,
-        EmergencyContact.user_id == current_user.id,
-    )
-    result = await db.execute(query)
+    """Update a public emergency contact (admin only)."""
+    result = await db.execute(select(EmergencyContact).where(EmergencyContact.id == contact_id))
     contact = result.scalar_one_or_none()
-    
     if contact is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Emergency contact not found",
-        )
-    
-    update_data = data.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Emergency contact not found")
+    for field, value in data.model_dump(exclude_unset=True).items():
         setattr(contact, field, value)
-    
     await db.commit()
     await db.refresh(contact)
-    
     return EmergencyContactResponse.model_validate(contact)
 
 
-@contacts_router.delete("/me/{contact_id}", response_model=MessageResponse)
+@contacts_router.delete("/{contact_id}", response_model=MessageResponse)
 async def delete_emergency_contact(
     contact_id: UUID,
-    current_user: CurrentUser,
+    _admin: AdminUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    """Delete an emergency contact."""
-    query = select(EmergencyContact).where(
-        EmergencyContact.id == contact_id,
-        EmergencyContact.user_id == current_user.id,
-    )
-    result = await db.execute(query)
+    """Delete a public emergency contact (admin only)."""
+    result = await db.execute(select(EmergencyContact).where(EmergencyContact.id == contact_id))
     contact = result.scalar_one_or_none()
-    
     if contact is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Emergency contact not found",
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Emergency contact not found")
     await db.delete(contact)
     await db.commit()
-    
     return MessageResponse(message="Emergency contact deleted", success=True)
 
 

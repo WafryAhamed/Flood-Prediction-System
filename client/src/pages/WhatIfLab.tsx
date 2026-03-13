@@ -1,17 +1,27 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Sliders, RefreshCw, X, HelpCircle } from 'lucide-react';
 import { UnifiedCard } from '../components/ui/UnifiedCard';
 import { RiskIndicator } from '../components/ui/RiskIndicator';
 import { Tooltip } from '../components/ui/Tooltip';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useMaintenanceStore } from '../stores/maintenanceStore';
 
 export function WhatIfLab() {
+  const simulationDefaults = useMaintenanceStore((s) => s.simulationDefaults);
   const [params, setParams] = useState({
-    rainfall: 50,
-    drainage: 50,
-    urbanization: 50
+    rainfall: simulationDefaults.rainfall,
+    drainage: simulationDefaults.drainage,
+    urbanization: simulationDefaults.urbanization
   });
   const [showControls, setShowControls] = useState(false);
+
+  useEffect(() => {
+    setParams({
+      rainfall: simulationDefaults.rainfall,
+      drainage: simulationDefaults.drainage,
+      urbanization: simulationDefaults.urbanization,
+    });
+  }, [simulationDefaults]);
 
   const riskLevel =
     params.rainfall > 80 && params.drainage < 40
@@ -24,9 +34,9 @@ export function WhatIfLab() {
 
   const handleReset = () => {
     setParams({
-      rainfall: 50,
-      drainage: 50,
-      urbanization: 50
+      rainfall: simulationDefaults.rainfall,
+      drainage: simulationDefaults.drainage,
+      urbanization: simulationDefaults.urbanization,
     });
   };
 

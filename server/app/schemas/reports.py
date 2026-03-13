@@ -213,3 +213,14 @@ class ReportDashboardStats(BaseSchema):
     by_type: ReportStatsByType
     avg_resolution_time_hours: Optional[float] = None
     pending_high_urgency: int = 0
+
+
+# ---------------------------------------------------------------------------
+# Router-compatible aliases
+# ---------------------------------------------------------------------------
+ReportCreateRequest = ReportCreate
+ReportUpdateRequest = ReportUpdate
+ReportModerationRequest = ReportModerationAction
+ReportStatusUpdateRequest = ReportUpdate
+ReportFilterParams = ReportFilter
+ReportStatsResponse = ReportDashboardStats

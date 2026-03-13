@@ -105,7 +105,9 @@ def require_roles(*roles: UserRole):
     async def role_checker(
         current_user: Annotated[User, Depends(get_current_user)],
     ) -> User:
-        if current_user.role not in roles:
+        user_role_names = {r.name for r in current_user.roles}
+        required_role_values = {r.value for r in roles}
+        if not (user_role_names & required_role_values):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Insufficient permissions. Required roles: {[r.value for r in roles]}",
@@ -154,3 +156,4 @@ CurrentVerifiedUser = Annotated[User, Depends(get_current_verified_user)]
 AdminUser = Annotated[User, RequireAdmin]
 SuperAdminUser = Annotated[User, RequireSuperAdmin]
 ModeratorUser = Annotated[User, RequireModerator]
+OperatorUser = Annotated[User, RequireOperator]

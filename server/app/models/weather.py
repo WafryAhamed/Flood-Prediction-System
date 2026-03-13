@@ -177,7 +177,7 @@ class RadarSnapshot(BaseModel):
     )
     
     # Metadata
-    metadata: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    metadata_json: Mapped[Optional[dict]] = mapped_column("metadata", JSONB, nullable=True)
 
 
 class RiverGaugeReading(BaseModel):
@@ -317,3 +317,8 @@ class FloodPrediction(BaseModel):
     
     # Explanation (for SHAP values, feature importance, etc.)
     explanation: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+
+    # Relationships
+    registry_model: Mapped[Optional["ModelRegistry"]] = relationship(  # type: ignore[name-defined]
+        "ModelRegistry", foreign_keys=[model_id], back_populates="predictions"
+    )

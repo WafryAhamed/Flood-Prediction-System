@@ -340,7 +340,7 @@ class InfrastructureAsset(AuditedModel):
     threshold_critical: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     
     # Metadata
-    metadata: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    metadata_json: Mapped[Optional[dict]] = mapped_column("metadata", JSONB, nullable=True)
     
     # Visibility
     is_visible: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

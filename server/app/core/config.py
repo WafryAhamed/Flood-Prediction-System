@@ -4,7 +4,7 @@ Uses pydantic-settings for environment variable management.
 """
 from functools import lru_cache
 from typing import List, Optional
-from pydantic import Field, field_validator, AnyHttpUrl
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     # APPLICATION
     # =========================================================================
     app_name: str = "Flood Resilience System"
+    version: str = "1.0.0"
     app_env: str = "development"
     debug: bool = False
     api_v1_prefix: str = "/api/v1"
@@ -134,11 +135,62 @@ class Settings(BaseSettings):
     def max_upload_size_bytes(self) -> int:
         return self.max_upload_size_mb * 1024 * 1024
 
+    # -----------------------------------------------------------------
+    # Backwards-compatible aliases (legacy uppercase accessors)
+    # -----------------------------------------------------------------
+    @property
+    def PROJECT_NAME(self) -> str:
+        return self.app_name
+
+    @property
+    def VERSION(self) -> str:
+        return self.version
+
+    @property
+    def ENVIRONMENT(self) -> str:
+        return self.app_env
+
+    @property
+    def DEBUG(self) -> bool:
+        return self.debug
+
+    @property
+    def API_V1_PREFIX(self) -> str:
+        return self.api_v1_prefix
+
+    @property
+    def CORS_ORIGINS(self) -> List[str]:
+        return self.cors_origins
+
+    @property
+    def REDIS_URL(self) -> str:
+        return self.redis_url
+
+    @property
+    def DATABASE_URL(self) -> str:
+        return self.database_url
+
+    @property
+    def JWT_SECRET_KEY(self) -> str:
+        return self.jwt_secret_key
+
+    @property
+    def JWT_ALGORITHM(self) -> str:
+        return self.jwt_algorithm
+
+    @property
+    def ACCESS_TOKEN_EXPIRE_MINUTES(self) -> int:
+        return self.jwt_access_token_expire_minutes
+
+    @property
+    def REFRESH_TOKEN_EXPIRE_DAYS(self) -> int:
+        return self.jwt_refresh_token_expire_days
+
 
 @lru_cache
 def get_settings() -> Settings:
     """Get cached settings instance."""
-    return Settings()
+    return Settings()  # pyright: ignore[reportCallIssue]
 
 
 settings = get_settings()

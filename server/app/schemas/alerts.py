@@ -43,6 +43,7 @@ class BroadcastCreate(BroadcastBase):
     related_shelter_ids: Optional[List[UUID]] = None
     related_route_ids: Optional[List[UUID]] = None
     requires_approval: bool = False
+    metadata_json: Optional[dict[str, object]] = None
 
 
 class BroadcastUpdate(BaseSchema):
@@ -140,7 +141,8 @@ class DeliveryStatsResponse(BaseSchema):
     sent: int = 0
     delivered: int = 0
     failed: int = 0
-    by_channel: dict = {}
+    delivery_rate: float = 0.0
+    by_channel: dict[str, int] = Field(default_factory=dict)
 
 
 class NotificationDeliveryResponse(IDSchema):
@@ -234,7 +236,7 @@ class NotificationPreferencesUpdate(BaseSchema):
     preferred_language: Optional[str] = Field(default=None, pattern="^(en|si|ta)$")
 
 
-class NotificationPreferencesResponse(BaseSchema, IDSchema):
+class NotificationPreferencesResponse(IDSchema):
     """User notification preferences response."""
     
     push_enabled: bool
@@ -275,6 +277,26 @@ class ActiveAlertResponse(BaseSchema):
     target_districts: Optional[List[str]] = None
     active_from: datetime
     active_to: Optional[datetime] = None
+
+
+# ---------------------------------------------------------------------------
+# Name aliases used by broadcasts.py routes
+# ---------------------------------------------------------------------------
+
+BroadcastCreateRequest = BroadcastCreate
+BroadcastUpdateRequest = BroadcastUpdate
+BroadcastDeliveryStats = DeliveryStatsResponse
+EmergencyContactCreateRequest = EmergencyContactCreate
+EmergencyContactUpdateRequest = EmergencyContactUpdate
+NotificationPreferencesUpdateRequest = NotificationPreferencesUpdate
+
+
+class DeviceTokenRegisterRequest(BaseSchema):
+    """Device push-notification token registration."""
+
+    token: str
+    platform: str = Field(max_length=50)
+    device_name: Optional[str] = Field(default=None, max_length=255)
 
 
 # Forward refs

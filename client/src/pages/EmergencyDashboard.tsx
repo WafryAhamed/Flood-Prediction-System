@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
 import { useWeatherData } from '../hooks/useWeatherData';
 import { useAdminControlStore } from '../stores/adminControlStore';
+import { useMaintenanceStore } from '../stores/maintenanceStore';
 
 export function EmergencyDashboard() {
   const [time, setTime] = useState(new Date());
@@ -13,6 +14,7 @@ export function EmergencyDashboard() {
   const { weather } = useWeatherData();
   const broadcastFeed = useAdminControlStore((s) => s.broadcastFeed);
   const dashboardResources = useAdminControlStore((s) => s.dashboardResources);
+  const dashboardOverrides = useMaintenanceStore((s) => s.dashboardOverrides);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 600);
@@ -35,10 +37,21 @@ export function EmergencyDashboard() {
     });
   };
 
+  const windSpeed = dashboardOverrides.windSpeed ?? weather?.windSpeed ?? null;
+  const rainfall = dashboardOverrides.rainfall ?? weather?.rainfall ?? null;
+  const computedRisk = rainfall === null
+    ? 'MODERATE'
+    : rainfall > 5
+      ? 'CRITICAL'
+      : rainfall > 2
+        ? 'HIGH'
+        : 'MODERATE';
+  const riskLevel = dashboardOverrides.riskStatus || computedRisk;
+
   const metrics = [
-    { icon: Wind, label: 'Wind Speed', value: weather ? `${weather.windSpeed}` : '—', unit: 'km/h', color: 'bg-blue-100 text-blue-600', animation: 'animate-wind' },
-    { icon: Droplets, label: 'Rainfall', value: weather ? `${weather.rainfall}` : '—', unit: 'mm', color: 'bg-red-100 text-red-600', animation: 'animate-water-ripple' },
-    { icon: AlertTriangle, label: 'Risk Level', value: weather && weather.rainfall > 5 ? 'CRITICAL' : weather && weather.rainfall > 2 ? 'HIGH' : 'MODERATE', unit: '', color: 'bg-orange-100 text-orange-600', animation: 'animate-warning-flash' },
+    { icon: Wind, label: 'Wind Speed', value: windSpeed !== null ? `${windSpeed}` : '—', unit: 'km/h', color: 'bg-blue-100 text-blue-600', animation: 'animate-wind' },
+    { icon: Droplets, label: 'Rainfall', value: rainfall !== null ? `${rainfall}` : '—', unit: 'mm', color: 'bg-red-100 text-red-600', animation: 'animate-water-ripple' },
+    { icon: AlertTriangle, label: 'Risk Level', value: riskLevel, unit: '', color: 'bg-orange-100 text-orange-600', animation: 'animate-warning-flash' },
     { icon: CheckCircle, label: 'System Status', value: 'ACTIVE', unit: '', color: 'bg-green-100 text-green-600', animation: 'animate-pulse-green' }
   ];
 

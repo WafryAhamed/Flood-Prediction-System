@@ -24,8 +24,8 @@ from app.schemas.auth import (
     UserResponse,
     UserUpdateRequest,
     ChangePasswordRequest,
-    MessageResponse,
 )
+from app.schemas.base import MessageResponse
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])

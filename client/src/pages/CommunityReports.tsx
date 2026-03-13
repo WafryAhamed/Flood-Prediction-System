@@ -1,25 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Camera, MapPin, Send, AlertTriangle, Plus, X, CheckCircle, Clock, Truck, ShieldCheck } from 'lucide-react';
 import { UnifiedCard } from '../components/ui/UnifiedCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { useReportStore, FloodReport } from '../stores/reportStore';
+import { useMaintenanceStore } from '../stores/maintenanceStore';
 
 const SEVERITY_MAP: Record<string, FloodReport['severity_level']> = {
   Low: 'LOW',
   Medium: 'MEDIUM',
   Critical: 'CRITICAL',
 };
-
-// Sample locations for submitted reports
-const LOCATIONS = [
-  { name: 'Kelaniya, Gampaha', lat: 6.9533, lng: 79.9220 },
-  { name: 'Kaduwela, Colombo', lat: 6.9310, lng: 79.9830 },
-  { name: 'Colombo 07', lat: 6.9271, lng: 79.8612 },
-  { name: 'Biyagama, Gampaha', lat: 6.9692, lng: 79.9820 },
-  { name: 'Hanwella, Colombo', lat: 6.9010, lng: 80.0852 },
-];
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
   pending: { label: 'Pending verification', bg: 'bg-orange-500/10', text: 'text-orange-500' },
@@ -47,7 +39,34 @@ export function CommunityReports() {
   const [submitToast, setSubmitToast] = useState(false);
   const addReport = useReportStore((s) => s.addReport);
   const allReports = useReportStore((s) => s.reports);
+  const mapMarkers = useMaintenanceStore((s) => s.mapMarkers.filter((marker) => marker.visible));
   const [, setTick] = useState(0);
+
+  const locationOptions = useMemo(() => {
+    const fromMarkers = mapMarkers.slice(0, 8).map((marker) => ({
+      name: marker.label,
+      lat: marker.position[0],
+      lng: marker.position[1],
+    }));
+
+    if (fromMarkers.length > 0) {
+      return fromMarkers;
+    }
+
+    const fromReports = allReports.slice(0, 8).map((report) => ({
+      name: report.location_name,
+      lat: report.latitude,
+      lng: report.longitude,
+    }));
+
+    if (fromReports.length > 0) {
+      return fromReports;
+    }
+
+    return [{ name: 'Sri Lanka Flood Network', lat: 8.3593, lng: 80.5103 }];
+  }, [mapMarkers, allReports]);
+
+  const locationPreview = locationOptions[0];
 
   // Polling: refresh every 15 seconds to pick up status changes
   useEffect(() => {
@@ -67,7 +86,7 @@ export function CommunityReports() {
 
   const handleSubmitReport = useCallback(() => {
     if (!reportType) return;
-    const loc = LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)];
+    const loc = locationOptions[Math.floor(Math.random() * locationOptions.length)] || locationOptions[0];
     addReport({
       severity_level: SEVERITY_MAP[reportType] || 'MEDIUM',
       description: description.trim() || 'Water level rising rapidly. Road impassable.',
@@ -80,7 +99,7 @@ export function CommunityReports() {
     setDescription('');
     setSubmitToast(true);
     setTimeout(() => setSubmitToast(false), 5000);
-  }, [reportType, description, addReport]);
+  }, [reportType, description, addReport, locationOptions]);
 
   const formatTimeAgo = (ts: number) => {
     const mins = Math.floor((Date.now() - ts) / 60000);
@@ -303,7 +322,7 @@ export function CommunityReports() {
                   <div className="flex items-center gap-md p-md border border-gray-200 bg-primary-bg rounded-soft">
                     <MapPin size={18} className="text-primary-text shrink-0" />
                     <span className="font-mono font-semibold text-xs text-secondary-text flex-1">
-                      6.9271° N, 79.8612° E
+                      {locationPreview.lat.toFixed(4)}° N, {locationPreview.lng.toFixed(4)}° E
                     </span>
                     <span className="text-xs font-bold uppercase bg-safe-green text-white px-md py-xs rounded-soft shrink-0">
                       GPS
@@ -389,7 +408,7 @@ export function CommunityReports() {
             <div className="flex items-center gap-md p-md border border-gray-200 bg-primary-bg rounded-soft">
               <MapPin size={18} className="text-primary-text shrink-0" />
               <span className="font-mono font-semibold text-xs text-secondary-text flex-1">
-                6.9271° N, 79.8612° E
+                {locationPreview.lat.toFixed(4)}° N, {locationPreview.lng.toFixed(4)}° E
               </span>
               <span className="text-xs font-bold uppercase bg-safe-green text-white px-md py-xs rounded-soft shrink-0">
                 GPS

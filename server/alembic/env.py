@@ -10,7 +10,8 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 
 from alembic import context
 from app.core.config import settings
-from app.models import Base
+from app.models.base import Base
+import app.models  # noqa: F401 – ensure all model classes register on Base.metadata
 
 
 # this is the Alembic Config object, which provides
@@ -53,7 +54,25 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+    # Exclude PostGIS and other extension-managed system tables from autogenerate
+    _EXCLUDE_TABLES = {
+        "spatial_ref_sys",
+        "geography_columns",
+        "geometry_columns",
+        "raster_columns",
+        "raster_overviews",
+    }
+
+    def include_object(obj, name, type_, reflected, compare_to):
+        if type_ == "table" and name in _EXCLUDE_TABLES:
+            return False
+        return True
+
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        include_object=include_object,
+    )
 
     with context.begin_transaction():
         context.run_migrations()
@@ -63,10 +82,10 @@ async def run_async_migrations() -> None:
     """Run migrations using async engine."""
     
     configuration = config.get_section(config.config_ini_section)
-    configuration["sqlalchemy.url"] = str(settings.DATABASE_URL)
+    configuration["sqlalchemy.url"] = str(settings.database_url)
     
     connectable = create_async_engine(
-        str(settings.DATABASE_URL),
+        str(settings.database_url),
         poolclass=pool.NullPool,
     )
 

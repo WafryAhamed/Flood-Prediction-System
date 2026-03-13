@@ -256,3 +256,20 @@ class RainViewerRequest(BaseSchema):
     bounds: Optional[dict] = None  # GeoJSON polygon/bbox
     past_frames: int = Field(default=6, ge=1, le=12)
     future_frames: int = Field(default=3, ge=0, le=6)
+
+
+# ---------------------------------------------------------------------------
+# Router-compatible classes
+# ---------------------------------------------------------------------------
+class WeatherAlertCreateRequest(BaseSchema):
+    """Create a new weather alert."""
+    source: str
+    external_id: Optional[str] = None
+    alert_type: AlertType
+    severity: AlertSeverity
+    headline: str
+    description: Optional[str] = None
+    instructions: Optional[str] = None
+    valid_from: datetime
+    valid_to: datetime
+    affected_districts: Optional[List[str]] = None

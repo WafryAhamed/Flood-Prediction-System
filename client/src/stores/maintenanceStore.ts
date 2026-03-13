@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { saveMaintenanceState } from '../services/integrationApi';
 import type {
   EmergencyContact,
   AdminMapZone,
@@ -22,9 +23,30 @@ const SEED_EMERGENCY_CONTACTS: EmergencyContact[] = [
 ];
 
 const SEED_MAP_ZONES: AdminMapZone[] = [
-  { id: 'mz-1', name: 'Kelani River Basin', zoneType: 'critical', description: 'Evacuate Immediately — Critical flood zone', visible: true },
-  { id: 'mz-2', name: 'Kalu Ganga Basin', zoneType: 'high-risk', description: 'Prepare for evacuation — High risk', visible: true },
-  { id: 'mz-3', name: 'Mihintale Highland', zoneType: 'safe', description: 'Safe zone — Highland area', visible: true },
+  {
+    id: 'mz-1',
+    name: 'Kelani River Basin',
+    zoneType: 'critical',
+    description: 'Evacuate Immediately — Critical flood zone',
+    visible: true,
+    polygon: [[6.93, 79.85], [6.95, 79.90], [6.98, 79.92], [7.00, 79.88], [6.97, 79.84], [6.93, 79.85]],
+  },
+  {
+    id: 'mz-2',
+    name: 'Kalu Ganga Basin',
+    zoneType: 'high-risk',
+    description: 'Prepare for evacuation — High risk',
+    visible: true,
+    polygon: [[6.65, 80.35], [6.70, 80.42], [6.72, 80.40], [6.70, 80.33], [6.66, 80.32], [6.65, 80.35]],
+  },
+  {
+    id: 'mz-3',
+    name: 'Mihintale Highland',
+    zoneType: 'safe',
+    description: 'Safe zone — Highland area',
+    visible: true,
+    polygon: [[8.34, 80.48], [8.37, 80.52], [8.39, 80.51], [8.38, 80.47], [8.35, 80.46], [8.34, 80.48]],
+  },
 ];
 
 const SEED_MAP_MARKERS: AdminMapMarker[] = [
@@ -80,9 +102,33 @@ const SEED_HISTORY: FloodHistoryEntry[] = [
 ];
 
 const SEED_EVACUATION: EvacuationRoute[] = [
-  { id: 'er-1', name: 'Mihintale → Anuradhapura Hospital', from: 'Mihintale', to: 'Anuradhapura Hospital', distance: '12.4 km', status: 'active' },
-  { id: 'er-2', name: 'Kelaniya → Colombo Shelter', from: 'Kelaniya', to: 'Colombo Central Shelter', distance: '8.2 km', status: 'active' },
-  { id: 'er-3', name: 'Kaduwela → Malabe Heights', from: 'Kaduwela', to: 'Malabe Heights', distance: '5.6 km', status: 'caution' },
+  {
+    id: 'er-1',
+    name: 'Mihintale → Anuradhapura Hospital',
+    from: 'Mihintale',
+    to: 'Anuradhapura Hospital',
+    distance: '12.4 km',
+    status: 'active',
+    path: [[8.3593, 80.5103], [8.3450, 80.4800], [8.3300, 80.4500], [8.3114, 80.4037]],
+  },
+  {
+    id: 'er-2',
+    name: 'Kelaniya → Colombo Shelter',
+    from: 'Kelaniya',
+    to: 'Colombo Central Shelter',
+    distance: '8.2 km',
+    status: 'active',
+    path: [[6.9533, 79.9220], [6.9450, 79.9000], [6.9350, 79.8800], [6.9271, 79.8612]],
+  },
+  {
+    id: 'er-3',
+    name: 'Kaduwela → Malabe Heights',
+    from: 'Kaduwela',
+    to: 'Malabe Heights',
+    distance: '5.6 km',
+    status: 'caution',
+    path: [[6.9310, 79.9830], [6.9350, 79.9650], [6.9400, 79.9450], [6.9500, 79.9300]],
+  },
 ];
 
 const SEED_SIMULATION: SimulationDefaults = {
@@ -100,6 +146,8 @@ const SEED_DASHBOARD_OVERRIDES: DashboardOverrides = {
 // ═══ Store Interface ═══
 
 interface MaintenanceStore {
+  hydrateFromBackend: (state: Record<string, unknown>) => void;
+
   // Emergency Contacts
   emergencyContacts: EmergencyContact[];
   addEmergencyContact: (contact: Omit<EmergencyContact, 'id'>) => void;
@@ -156,76 +204,151 @@ function genId(prefix: string): string {
   return `${prefix}-${nextId++}`;
 }
 
-export const useMaintenanceStore = create<MaintenanceStore>((set) => ({
+function pickPersistableState(state: MaintenanceStore) {
+  return {
+    emergencyContacts: state.emergencyContacts,
+    mapZones: state.mapZones,
+    mapMarkers: state.mapMarkers,
+    chatbotKnowledge: state.chatbotKnowledge,
+    users: state.users,
+    systemSettings: state.systemSettings,
+    historyData: state.historyData,
+    evacuationRoutes: state.evacuationRoutes,
+    simulationDefaults: state.simulationDefaults,
+    dashboardOverrides: state.dashboardOverrides,
+  };
+}
+
+export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
+  hydrateFromBackend: (incoming) => {
+    const source = incoming as Partial<ReturnType<typeof pickPersistableState>>;
+    set((state) => ({
+      emergencyContacts: source.emergencyContacts || state.emergencyContacts,
+      mapZones: source.mapZones || state.mapZones,
+      mapMarkers: source.mapMarkers || state.mapMarkers,
+      chatbotKnowledge: source.chatbotKnowledge || state.chatbotKnowledge,
+      users: source.users || state.users,
+      systemSettings: source.systemSettings || state.systemSettings,
+      historyData: source.historyData || state.historyData,
+      evacuationRoutes: source.evacuationRoutes || state.evacuationRoutes,
+      simulationDefaults: source.simulationDefaults || state.simulationDefaults,
+      dashboardOverrides: source.dashboardOverrides || state.dashboardOverrides,
+    }));
+  },
+
   // ── Emergency Contacts ──
   emergencyContacts: SEED_EMERGENCY_CONTACTS,
-  addEmergencyContact: (contact) =>
-    set((s) => ({ emergencyContacts: [...s.emergencyContacts, { ...contact, id: genId('ec') }] })),
-  updateEmergencyContact: (id, updates) =>
-    set((s) => ({ emergencyContacts: s.emergencyContacts.map((c) => (c.id === id ? { ...c, ...updates } : c)) })),
-  removeEmergencyContact: (id) =>
-    set((s) => ({ emergencyContacts: s.emergencyContacts.filter((c) => c.id !== id) })),
+  addEmergencyContact: (contact) => {
+    set((s) => ({ emergencyContacts: [...s.emergencyContacts, { ...contact, id: genId('ec') }] }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
+  updateEmergencyContact: (id, updates) => {
+    set((s) => ({ emergencyContacts: s.emergencyContacts.map((c) => (c.id === id ? { ...c, ...updates } : c)) }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
+  removeEmergencyContact: (id) => {
+    set((s) => ({ emergencyContacts: s.emergencyContacts.filter((c) => c.id !== id) }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
 
   // ── Map Management ──
   mapZones: SEED_MAP_ZONES,
-  updateMapZone: (id, updates) =>
-    set((s) => ({ mapZones: s.mapZones.map((z) => (z.id === id ? { ...z, ...updates } : z)) })),
+  updateMapZone: (id, updates) => {
+    set((s) => ({ mapZones: s.mapZones.map((z) => (z.id === id ? { ...z, ...updates } : z)) }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
   mapMarkers: SEED_MAP_MARKERS,
-  updateMapMarker: (id, updates) =>
-    set((s) => ({ mapMarkers: s.mapMarkers.map((m) => (m.id === id ? { ...m, ...updates } : m)) })),
-  addMapMarker: (marker) =>
-    set((s) => ({ mapMarkers: [...s.mapMarkers, { ...marker, id: genId('mm') }] })),
-  removeMapMarker: (id) =>
-    set((s) => ({ mapMarkers: s.mapMarkers.filter((m) => m.id !== id) })),
+  updateMapMarker: (id, updates) => {
+    set((s) => ({ mapMarkers: s.mapMarkers.map((m) => (m.id === id ? { ...m, ...updates } : m)) }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
+  addMapMarker: (marker) => {
+    set((s) => ({ mapMarkers: [...s.mapMarkers, { ...marker, id: genId('mm') }] }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
+  removeMapMarker: (id) => {
+    set((s) => ({ mapMarkers: s.mapMarkers.filter((m) => m.id !== id) }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
 
   // ── Chatbot Knowledge ──
   chatbotKnowledge: SEED_CHATBOT_KNOWLEDGE,
-  addKnowledgeEntry: (entry) =>
-    set((s) => ({ chatbotKnowledge: [...s.chatbotKnowledge, { ...entry, id: genId('ck') }] })),
-  updateKnowledgeEntry: (id, updates) =>
-    set((s) => ({ chatbotKnowledge: s.chatbotKnowledge.map((e) => (e.id === id ? { ...e, ...updates } : e)) })),
-  removeKnowledgeEntry: (id) =>
-    set((s) => ({ chatbotKnowledge: s.chatbotKnowledge.filter((e) => e.id !== id) })),
+  addKnowledgeEntry: (entry) => {
+    set((s) => ({ chatbotKnowledge: [...s.chatbotKnowledge, { ...entry, id: genId('ck') }] }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
+  updateKnowledgeEntry: (id, updates) => {
+    set((s) => ({ chatbotKnowledge: s.chatbotKnowledge.map((e) => (e.id === id ? { ...e, ...updates } : e)) }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
+  removeKnowledgeEntry: (id) => {
+    set((s) => ({ chatbotKnowledge: s.chatbotKnowledge.filter((e) => e.id !== id) }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
 
   // ── Users ──
   users: SEED_USERS,
-  suspendUser: (id) =>
-    set((s) => ({ users: s.users.map((u) => (u.id === id ? { ...u, status: 'suspended' as const } : u)) })),
-  activateUser: (id) =>
-    set((s) => ({ users: s.users.map((u) => (u.id === id ? { ...u, status: 'active' as const } : u)) })),
-  deleteUser: (id) =>
-    set((s) => ({ users: s.users.map((u) => (u.id === id ? { ...u, status: 'deleted' as const } : u)) })),
+  suspendUser: (id) => {
+    set((s) => ({ users: s.users.map((u) => (u.id === id ? { ...u, status: 'suspended' as const } : u)) }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
+  activateUser: (id) => {
+    set((s) => ({ users: s.users.map((u) => (u.id === id ? { ...u, status: 'active' as const } : u)) }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
+  deleteUser: (id) => {
+    set((s) => ({ users: s.users.map((u) => (u.id === id ? { ...u, status: 'deleted' as const } : u)) }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
 
   // ── System Settings ──
   systemSettings: SEED_SYSTEM_SETTINGS,
-  updateSystemSettings: (updates) =>
-    set((s) => ({ systemSettings: { ...s.systemSettings, ...updates } })),
+  updateSystemSettings: (updates) => {
+    set((s) => ({ systemSettings: { ...s.systemSettings, ...updates } }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
 
   // ── History ──
   historyData: SEED_HISTORY,
-  updateHistoryEntry: (id, updates) =>
-    set((s) => ({ historyData: s.historyData.map((h) => (h.id === id ? { ...h, ...updates } : h)) })),
-  addHistoryEntry: (entry) =>
-    set((s) => ({ historyData: [...s.historyData, { ...entry, id: genId('fh') }] })),
-  removeHistoryEntry: (id) =>
-    set((s) => ({ historyData: s.historyData.filter((h) => h.id !== id) })),
+  updateHistoryEntry: (id, updates) => {
+    set((s) => ({ historyData: s.historyData.map((h) => (h.id === id ? { ...h, ...updates } : h)) }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
+  addHistoryEntry: (entry) => {
+    set((s) => ({ historyData: [...s.historyData, { ...entry, id: genId('fh') }] }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
+  removeHistoryEntry: (id) => {
+    set((s) => ({ historyData: s.historyData.filter((h) => h.id !== id) }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
 
   // ── Evacuation ──
   evacuationRoutes: SEED_EVACUATION,
-  updateEvacuationRoute: (id, updates) =>
-    set((s) => ({ evacuationRoutes: s.evacuationRoutes.map((r) => (r.id === id ? { ...r, ...updates } : r)) })),
-  addEvacuationRoute: (route) =>
-    set((s) => ({ evacuationRoutes: [...s.evacuationRoutes, { ...route, id: genId('er') }] })),
-  removeEvacuationRoute: (id) =>
-    set((s) => ({ evacuationRoutes: s.evacuationRoutes.filter((r) => r.id !== id) })),
+  updateEvacuationRoute: (id, updates) => {
+    set((s) => ({ evacuationRoutes: s.evacuationRoutes.map((r) => (r.id === id ? { ...r, ...updates } : r)) }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
+  addEvacuationRoute: (route) => {
+    set((s) => ({ evacuationRoutes: [...s.evacuationRoutes, { ...route, id: genId('er') }] }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
+  removeEvacuationRoute: (id) => {
+    set((s) => ({ evacuationRoutes: s.evacuationRoutes.filter((r) => r.id !== id) }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
 
   // ── Simulation ──
   simulationDefaults: SEED_SIMULATION,
-  updateSimulationDefaults: (updates) =>
-    set((s) => ({ simulationDefaults: { ...s.simulationDefaults, ...updates } })),
+  updateSimulationDefaults: (updates) => {
+    set((s) => ({ simulationDefaults: { ...s.simulationDefaults, ...updates } }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
 
   // ── Dashboard Overrides ──
   dashboardOverrides: SEED_DASHBOARD_OVERRIDES,
-  updateDashboardOverrides: (updates) =>
-    set((s) => ({ dashboardOverrides: { ...s.dashboardOverrides, ...updates } })),
+  updateDashboardOverrides: (updates) => {
+    set((s) => ({ dashboardOverrides: { ...s.dashboardOverrides, ...updates } }));
+    void saveMaintenanceState(pickPersistableState(get()));
+  },
 }));
