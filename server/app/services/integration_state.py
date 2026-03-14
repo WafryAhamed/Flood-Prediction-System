@@ -45,6 +45,13 @@ DEFAULT_FALLBACK_REPLY = (
     "For urgent help call 112 or the Disaster Management Centre at 117."
 )
 
+DEFAULT_EMERGENCY_CONTACTS: list[dict[str, str | bool]] = [
+    {"label": "Emergency Hotline", "number": "112", "type": "police", "active": True},
+    {"label": "Police", "number": "119", "type": "police", "active": True},
+    {"label": "Ambulance / Fire", "number": "110", "type": "ambulance", "active": True},
+    {"label": "Disaster Management Centre", "number": "117", "type": "disaster", "active": True},
+]
+
 
 class IntegrationStateService:
     def __init__(self) -> None:
@@ -95,7 +102,7 @@ class IntegrationStateService:
                 return
             try:
                 from app.models.audit import SystemSetting  # lazy import avoids circular
-                from app.models.reports import CitizenReport, ReportStatus, UrgencyLevel
+                from app.models.reports import CitizenReport
 
                 async with async_session_factory() as session:
                     # Load adminControl and maintenance from system_settings
@@ -133,7 +140,7 @@ class IntegrationStateService:
             from app.models.audit import SystemSetting  # lazy import
 
             async with async_session_factory() as session:
-                stmt = pg_insert(SystemSetting.__table__).values(
+                stmt = pg_insert(cast(Any, SystemSetting.__table__)).values(
                     key=key,
                     value=json.dumps(value, ensure_ascii=False),
                     value_type="json",
@@ -177,6 +184,65 @@ class IntegrationStateService:
             async with self._lock:
                 for queue in stale:
                     self._subscribers.discard(queue)
+
+    async def publish_event(self, event_name: str, payload: Any) -> None:
+        """Public wrapper for broadcasting realtime events from integration routes."""
+        await self._publish(event_name, payload)
+
+    @staticmethod
+    def _normalize_contact_type(value: Any) -> str:
+        allowed = {"police", "ambulance", "fire", "disaster", "custom"}
+        candidate = str(value or "custom").strip().lower()
+        return candidate if candidate in allowed else "custom"
+
+    @classmethod
+    def _contact_row_to_payload(cls, row: Any) -> JsonDict:
+        return {
+            "id": str(row.id),
+            "label": str(row.name or "Emergency Contact"),
+            "number": str(row.phone or ""),
+            "type": cls._normalize_contact_type(getattr(row, "category", "custom")),
+            "active": bool(getattr(row, "is_active", True)),
+        }
+
+    async def _load_emergency_contacts(self) -> list[JsonDict]:
+        """Load emergency contacts from DB, seeding defaults when table is empty."""
+        try:
+            from app.models.alerts import EmergencyContact
+
+            async with async_session_factory() as session:
+                query = select(EmergencyContact).order_by(
+                    EmergencyContact.display_order.asc(),
+                    EmergencyContact.created_at.asc(),
+                )
+                result = await session.execute(query)
+                rows = result.scalars().all()
+
+                if not rows:
+                    for idx, item in enumerate(DEFAULT_EMERGENCY_CONTACTS):
+                        contact = EmergencyContact(
+                            name=str(item["label"]),
+                            category=self._normalize_contact_type(item.get("type")),
+                            phone=str(item["number"]),
+                            display_order=idx,
+                            is_active=bool(item.get("active", True)),
+                        )
+                        session.add(contact)
+                    await session.commit()
+
+                    result = await session.execute(query)
+                    rows = result.scalars().all()
+
+                return [self._contact_row_to_payload(row) for row in rows]
+        except Exception:
+            return []
+
+    async def _load_map_markers_from_settings(self) -> list[JsonDict]:
+        """Load map markers from integration maintenance settings persisted in DB."""
+        await self._ensure_loaded()
+        maintenance = self._as_dict(self._state.get("maintenance"))
+        markers = self._as_list_of_dict(maintenance.get("mapMarkers"))
+        return markers
 
     @staticmethod
     def _db_report_to_integration(r: Any) -> JsonDict:
@@ -233,7 +299,15 @@ class IntegrationStateService:
     async def get_bootstrap(self) -> JsonDict:
         await self._ensure_loaded()
         async with self._lock:
-            return self._deepcopy_json(self._state)
+            snapshot = self._deepcopy_json(self._state)
+
+        maintenance = self._as_dict(snapshot.get("maintenance"))
+        maintenance["emergencyContacts"] = await self._load_emergency_contacts()
+        if "mapMarkers" not in maintenance:
+            maintenance["mapMarkers"] = await self._load_map_markers_from_settings()
+        snapshot["maintenance"] = maintenance
+
+        return snapshot
 
     async def set_admin_control(self, payload: JsonDict) -> JsonDict:
         await self._ensure_loaded()
@@ -359,7 +433,7 @@ class IntegrationStateService:
         # Persist status change to DB
         if updated is not None:
             try:
-                from app.models.reports import CitizenReport, ReportStatus, UrgencyLevel
+                from app.models.reports import CitizenReport, ReportStatus
 
                 db_status_map = {
                     "verified": ReportStatus.VERIFIED,
@@ -462,6 +536,68 @@ class IntegrationStateService:
             "riskLevel": risk_level,
         }
 
+    async def _persist_chat_interaction(
+        self,
+        user_message: str,
+        assistant_reply: str,
+        source: str,
+        model: str,
+        history: list[JsonDict] | None,
+        knowledge: list[JsonDict] | None,
+    ) -> None:
+        """Persist one chat exchange to PostgreSQL for auditing/analytics."""
+        try:
+            from app.models.ai import ChatMessage, ChatSession, ChatSessionStatus
+
+            now = datetime.now(timezone.utc)
+            session_token = f"integration-{uuid4().hex}"
+            context_payload: JsonDict = {
+                "source": source,
+                "model": model,
+                "history_items": len(history or []),
+                "knowledge_items": len(knowledge or []),
+                "channel": "integration_api",
+            }
+
+            async with async_session_factory() as session:
+                chat_session = ChatSession(
+                    user_id=None,
+                    session_token=session_token,
+                    status=ChatSessionStatus.ACTIVE,
+                    started_at=now,
+                    last_activity_at=now,
+                    ended_at=now,
+                    context=context_payload,
+                    language="en",
+                    message_count=2,
+                )
+                session.add(chat_session)
+                await session.flush()
+
+                session.add(
+                    ChatMessage(
+                        session_id=chat_session.id,
+                        role="user",
+                        content=user_message,
+                        sent_at=now,
+                        metadata_json={"source": "integration_api"},
+                    )
+                )
+                session.add(
+                    ChatMessage(
+                        session_id=chat_session.id,
+                        role="assistant",
+                        content=assistant_reply,
+                        sent_at=now,
+                        metadata_json={"source": source, "model": model},
+                    )
+                )
+
+                await session.commit()
+        except Exception:
+            # Chat logging should never break user-facing responses.
+            pass
+
     @staticmethod
     def _fallback_chat_reply(message: str, knowledge: list[JsonDict] | None) -> str:
         normalized = message.lower()
@@ -492,11 +628,20 @@ class IntegrationStateService:
     ) -> JsonDict:
         clean_message = message.strip()
         if not clean_message:
-            return {
+            fallback_result = {
                 "reply": DEFAULT_FALLBACK_REPLY,
                 "source": "fallback",
                 "model": "local-keyword-fallback",
             }
+            await self._persist_chat_interaction(
+                user_message=clean_message,
+                assistant_reply=str(fallback_result["reply"]),
+                source=str(fallback_result["source"]),
+                model=str(fallback_result["model"]),
+                history=history,
+                knowledge=knowledge,
+            )
+            return fallback_result
 
         api_key = settings.openrouter_api_key
         if api_key:
@@ -564,20 +709,38 @@ class IntegrationStateService:
                         )
                         reply = str(raw_reply or "").replace("<think>", "").replace("</think>", "").strip()
                         if reply:
-                            return {
+                            ai_result = {
                                 "reply": reply,
                                 "source": "ai",
                                 "model": model,
                             }
+                            await self._persist_chat_interaction(
+                                user_message=clean_message,
+                                assistant_reply=reply,
+                                source="ai",
+                                model=model,
+                                history=history,
+                                knowledge=knowledge,
+                            )
+                            return ai_result
                     except Exception:
                         continue
 
         fallback = self._fallback_chat_reply(clean_message, knowledge)
-        return {
+        fallback_result = {
             "reply": fallback,
             "source": "fallback",
             "model": "local-keyword-fallback",
         }
+        await self._persist_chat_interaction(
+            user_message=clean_message,
+            assistant_reply=fallback,
+            source="fallback",
+            model="local-keyword-fallback",
+            history=history,
+            knowledge=knowledge,
+        )
+        return fallback_result
 
 
 integration_state_service = IntegrationStateService()

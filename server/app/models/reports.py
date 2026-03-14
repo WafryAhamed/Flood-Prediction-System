@@ -2,8 +2,8 @@
 Citizen report and moderation models.
 """
 import uuid
-from datetime import datetime
-from typing import Optional, List
+from datetime import datetime, timezone
+from typing import Any, Optional, List, TYPE_CHECKING, cast
 from sqlalchemy import (
     String, Text, Boolean, Integer, Float, DateTime, ForeignKey,
     Index, Enum as SQLEnum, CheckConstraint
@@ -14,6 +14,16 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 
 from app.models.base import BaseModel, AuditedModel
+
+
+if TYPE_CHECKING:
+    from app.models.auth import User
+    from app.models.gis import District
+
+
+def utc_now() -> datetime:
+    """Return a timezone-aware UTC timestamp."""
+    return datetime.now(timezone.utc)
 
 
 class ReportType(str, enum.Enum):
@@ -116,7 +126,7 @@ class CitizenReport(AuditedModel):
     # Timestamps
     submitted_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=datetime.utcnow,
+        default=utc_now,
         nullable=False,
     )
     verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -144,7 +154,7 @@ class CitizenReport(AuditedModel):
     
     # AI verification
     ai_verification_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # 0-1
-    ai_flags: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    ai_flags: Mapped[Optional[dict[str, Any]]] = mapped_column(JSONB, nullable=True)
     
     # Dispatch info
     dispatch_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -174,6 +184,22 @@ class CitizenReport(AuditedModel):
     media: Mapped[List["ReportMedia"]] = relationship("ReportMedia", back_populates="report", cascade="all, delete-orphan")
     events: Mapped[List["ReportEvent"]] = relationship("ReportEvent", back_populates="report", cascade="all, delete-orphan")
     upvotes: Mapped[List["ReportUpvote"]] = relationship("ReportUpvote", back_populates="report", cascade="all, delete-orphan")
+
+    @property
+    def upvote_count(self) -> int:
+        """Return the number of loaded upvotes without triggering implicit async IO."""
+        upvotes = self.__dict__.get("upvotes")
+        if isinstance(upvotes, list):
+            return len(cast(list[Any], upvotes))
+        return 0
+
+    @property
+    def has_media(self) -> bool:
+        """Return whether media is loaded and present without triggering implicit async IO."""
+        media = self.__dict__.get("media")
+        if isinstance(media, list):
+            return len(cast(list[Any], media)) > 0
+        return False
 
 
 class ReportMedia(BaseModel):
@@ -209,7 +235,7 @@ class ReportMedia(BaseModel):
     
     # AI analysis
     ai_caption: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    ai_labels: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
+    ai_labels: Mapped[Optional[list[Any]]] = mapped_column(JSONB, nullable=True)
     ai_confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     is_nsfw: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
@@ -240,7 +266,7 @@ class ReportEvent(BaseModel):
     event_type: Mapped[str] = mapped_column(String(50), nullable=False)  # status_change, note_added, etc.
     event_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=datetime.utcnow,
+        default=utc_now,
         nullable=False,
     )
     
@@ -258,7 +284,7 @@ class ReportEvent(BaseModel):
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     # Metadata
-    metadata_json: Mapped[Optional[dict]] = mapped_column("metadata", JSONB, nullable=True)
+    metadata_json: Mapped[Optional[dict[str, Any]]] = mapped_column("metadata", JSONB, nullable=True)
     
     # Relationships
     report: Mapped["CitizenReport"] = relationship("CitizenReport", back_populates="events")
@@ -327,6 +353,6 @@ class ReportVerificationScore(BaseModel):
     # Last recalculated
     calculated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=datetime.utcnow,
+        default=utc_now,
         nullable=False,
     )

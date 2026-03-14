@@ -13,5 +13,5 @@ SELECT extversion FROM pg_extension WHERE extname = 'pgvector';
 -- Note: These are created by SQLAlchemy models, but having them here ensures they exist
 
 -- Grant privileges
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO flood_user;
-GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO flood_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO postgres;
+GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO postgres;

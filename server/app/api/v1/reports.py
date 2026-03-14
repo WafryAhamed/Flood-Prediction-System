@@ -1,12 +1,14 @@
 """
 Citizen reports API routes.
 """
-from typing import Annotated
+import logging
+from math import ceil
+from typing import Annotated, Any
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
-from sqlalchemy import select, func, or_, and_
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -17,7 +19,6 @@ from app.models.reports import (
     ReportType,
     ReportStatus,
     UrgencyLevel,
-    ReportMedia,
     ReportUpvote,
     ReportEvent,
 )
@@ -29,15 +30,29 @@ from app.schemas.reports import (
     ReportUpdateRequest,
     ReportModerationRequest,
     ReportStatusUpdateRequest,
-    ReportFilterParams,
     ReportStatsResponse,
-    ReportListResponse,
+    ReportStatsByStatus,
+    ReportStatsByType,
 )
 from app.schemas.base import PaginatedResponse, MessageResponse
 from app.core.security import generate_report_id
 
 
 router = APIRouter(prefix="/reports", tags=["Citizen Reports"])
+logger = logging.getLogger(__name__)
+
+
+def _build_paginated_response(items: list[ReportResponse], total: int, page: int, page_size: int) -> PaginatedResponse[ReportResponse]:
+    total_pages = max(1, ceil(total / page_size)) if total else 1
+    return PaginatedResponse[ReportResponse](
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+        has_next=page < total_pages,
+        has_prev=page > 1,
+    )
 
 
 @router.get("", response_model=PaginatedResponse[ReportResponse])
@@ -63,8 +78,8 @@ async def list_reports(
     Public endpoint - returns only verified reports for unauthenticated users.
     """
     # Build base query
-    query = select(CitizenReport).where(CitizenReport.deleted_at.is_(None))
-    count_query = select(func.count(CitizenReport.id)).where(CitizenReport.deleted_at.is_(None))
+    query = select(CitizenReport).where(CitizenReport.is_deleted.is_(False))
+    count_query = select(func.count(CitizenReport.id)).where(CitizenReport.is_deleted.is_(False))
     
     # For unauthenticated users or if verified_only, show only verified
     if _user is None or verified_only:
@@ -81,8 +96,8 @@ async def list_reports(
         count_query = count_query.where(CitizenReport.status == status_filter)
     
     if urgency:
-        query = query.where(CitizenReport.urgency_level == urgency)
-        count_query = count_query.where(CitizenReport.urgency_level == urgency)
+        query = query.where(CitizenReport.urgency == urgency)
+        count_query = count_query.where(CitizenReport.urgency == urgency)
     
     if district_id:
         query = query.where(CitizenReport.district_id == district_id)
@@ -100,22 +115,22 @@ async def list_reports(
         count_query = count_query.where(bbox_filter)
     
     if since:
-        query = query.where(CitizenReport.created_at >= since)
-        count_query = count_query.where(CitizenReport.created_at >= since)
+        query = query.where(CitizenReport.submitted_at >= since)
+        count_query = count_query.where(CitizenReport.submitted_at >= since)
     
     # Get total count
     total_result = await db.execute(count_query)
     total = total_result.scalar() or 0
     
     # Apply pagination and ordering
-    query = query.order_by(CitizenReport.created_at.desc())
+    query = query.order_by(CitizenReport.submitted_at.desc())
     query = query.offset((page - 1) * page_size).limit(page_size)
-    query = query.options(selectinload(CitizenReport.media))
+    query = query.options(selectinload(CitizenReport.media), selectinload(CitizenReport.upvotes))
     
     result = await db.execute(query)
     reports = result.scalars().all()
     
-    return PaginatedResponse(
+    return _build_paginated_response(
         items=[ReportResponse.model_validate(r) for r in reports],
         total=total,
         page=page,
@@ -135,26 +150,26 @@ async def list_my_reports(
         select(CitizenReport)
         .where(
             CitizenReport.reporter_id == current_user.id,
-            CitizenReport.deleted_at.is_(None),
+            CitizenReport.is_deleted.is_(False),
         )
-        .order_by(CitizenReport.created_at.desc())
+        .order_by(CitizenReport.submitted_at.desc())
     )
     
     count_query = select(func.count(CitizenReport.id)).where(
         CitizenReport.reporter_id == current_user.id,
-        CitizenReport.deleted_at.is_(None),
+        CitizenReport.is_deleted.is_(False),
     )
     
     total_result = await db.execute(count_query)
     total = total_result.scalar() or 0
     
     query = query.offset((page - 1) * page_size).limit(page_size)
-    query = query.options(selectinload(CitizenReport.media))
+    query = query.options(selectinload(CitizenReport.media), selectinload(CitizenReport.upvotes))
     
     result = await db.execute(query)
     reports = result.scalars().all()
     
-    return PaginatedResponse(
+    return _build_paginated_response(
         items=[ReportResponse.model_validate(r) for r in reports],
         total=total,
         page=page,
@@ -169,13 +184,13 @@ async def get_report_stats(
     since: datetime | None = None,
 ):
     """Get report statistics."""
-    base_filter = [CitizenReport.deleted_at.is_(None)]
+    base_filter: list[Any] = [CitizenReport.is_deleted.is_(False)]
     
     if district_id:
         base_filter.append(CitizenReport.district_id == district_id)
     
     if since:
-        base_filter.append(CitizenReport.created_at >= since)
+        base_filter.append(CitizenReport.submitted_at >= since)
     
     # Total reports
     total_query = select(func.count(CitizenReport.id)).where(*base_filter)
@@ -200,22 +215,52 @@ async def get_report_stats(
     type_result = await db.execute(type_query)
     by_type = {str(row[0].value): row[1] for row in type_result.all()}
     
-    # By urgency
-    urgency_query = (
-        select(CitizenReport.urgency_level, func.count(CitizenReport.id))
-        .where(*base_filter)
-        .group_by(CitizenReport.urgency_level)
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_query = select(func.count(CitizenReport.id)).where(*base_filter, CitizenReport.submitted_at >= today_start)
+    today_result = await db.execute(today_query)
+    reports_today = today_result.scalar() or 0
+
+    avg_resolution_query = select(
+        func.avg(func.extract("epoch", CitizenReport.resolved_at - CitizenReport.submitted_at)) / 3600.0
+    ).where(
+        *base_filter,
+        CitizenReport.resolved_at.is_not(None),
     )
-    urgency_result = await db.execute(urgency_query)
-    by_urgency = {str(row[0].value): row[1] for row in urgency_result.all()}
+    avg_resolution_result = await db.execute(avg_resolution_query)
+    avg_resolution_time_hours = avg_resolution_result.scalar()
+
+    pending_high_query = select(func.count(CitizenReport.id)).where(
+        *base_filter,
+        CitizenReport.status == ReportStatus.PENDING,
+        CitizenReport.urgency.in_([UrgencyLevel.CRITICAL, UrgencyLevel.HIGH]),
+    )
+    pending_high_result = await db.execute(pending_high_query)
+    pending_high_urgency = pending_high_result.scalar() or 0
+
+    by_status_payload = ReportStatsByStatus(
+        pending=by_status.get("pending", 0),
+        verified=by_status.get("verified", 0),
+        rejected=by_status.get("rejected", 0),
+        dispatched=by_status.get("dispatched", 0),
+        resolved=by_status.get("resolved", 0),
+    )
+
+    by_type_payload = ReportStatsByType(
+        flood=by_type.get("flood", 0),
+        road_blocked=by_type.get("road_blocked", 0),
+        landslide=by_type.get("landslide", 0),
+        power_outage=by_type.get("power_outage", 0),
+        rescue_needed=by_type.get("rescue_needed", 0),
+        other=by_type.get("other", 0),
+    )
     
     return ReportStatsResponse(
         total_reports=total,
-        by_status=by_status,
-        by_type=by_type,
-        by_urgency=by_urgency,
-        pending_count=by_status.get("pending", 0),
-        verified_count=by_status.get("verified", 0),
+        reports_today=reports_today,
+        by_status=by_status_payload,
+        by_type=by_type_payload,
+        avg_resolution_time_hours=float(avg_resolution_time_hours) if avg_resolution_time_hours is not None else None,
+        pending_high_urgency=pending_high_urgency,
     )
 
 
@@ -227,17 +272,18 @@ async def get_report(
 ):
     """Get a specific report by ID."""
     # Support both UUID and report_id formats
-    query = select(CitizenReport).where(CitizenReport.deleted_at.is_(None))
+    query = select(CitizenReport).where(CitizenReport.is_deleted.is_(False))
     
     try:
         uuid_id = UUID(report_id)
         query = query.where(CitizenReport.id == uuid_id)
     except ValueError:
-        query = query.where(CitizenReport.report_id == report_id)
+        query = query.where(CitizenReport.public_id == report_id)
     
     query = query.options(
         selectinload(CitizenReport.media),
         selectinload(CitizenReport.events),
+        selectinload(CitizenReport.upvotes),
     )
     
     result = await db.execute(query)
@@ -268,25 +314,26 @@ async def create_report(
     """Submit a new citizen report."""
     # Auto-detect district from coordinates (simplified - should use PostGIS ST_Contains)
     district_id = data.district_id
-    if district_id is None and data.latitude and data.longitude:
-        # In production, use spatial query to find containing district
-        pass
+    if district_id is None and data.district_code:
+        district_result = await db.execute(
+            select(District.id).where(District.code == data.district_code)
+        )
+        district_id = district_result.scalar_one_or_none()
     
     report = CitizenReport(
-        report_id=generate_report_id(),
+        public_id=generate_report_id(),
         reporter_id=current_user.id,
         report_type=data.report_type,
         title=data.title,
         description=data.description,
-        description_si=data.description_si,
-        description_ta=data.description_ta,
         latitude=data.latitude,
         longitude=data.longitude,
-        address=data.address,
+        location_description=data.location_description,
         district_id=district_id,
-        urgency_level=data.urgency_level or UrgencyLevel.MEDIUM,
+        urgency=data.urgency or UrgencyLevel.MEDIUM,
         people_affected=data.people_affected,
-        contact_phone=data.contact_phone,
+        reporter_name=None if data.is_anonymous else (data.reporter_name or current_user.full_name),
+        reporter_phone=data.reporter_phone or current_user.phone,
         is_anonymous=data.is_anonymous,
         status=ReportStatus.PENDING,
     )
@@ -299,11 +346,14 @@ async def create_report(
     event = ReportEvent(
         report_id=report.id,
         event_type="submitted",
-        description="Report submitted",
         actor_id=current_user.id,
+        actor_name=current_user.full_name,
+        notes="Report submitted",
     )
     db.add(event)
     await db.commit()
+
+    logger.info("Citizen report created", extra={"report_id": str(report.public_id), "user_id": str(current_user.id)})
     
     return ReportResponse.model_validate(report)
 
@@ -320,7 +370,7 @@ async def update_report(
         select(CitizenReport)
         .where(
             CitizenReport.id == report_id,
-            CitizenReport.deleted_at.is_(None),
+            CitizenReport.is_deleted.is_(False),
         )
     )
     
@@ -354,6 +404,8 @@ async def update_report(
     
     await db.commit()
     await db.refresh(report)
+
+    logger.info("Citizen report updated", extra={"report_id": str(report.public_id), "user_id": str(current_user.id)})
     
     return ReportResponse.model_validate(report)
 
@@ -368,7 +420,7 @@ async def upvote_report(
     # Check report exists
     query = select(CitizenReport).where(
         CitizenReport.id == report_id,
-        CitizenReport.deleted_at.is_(None),
+        CitizenReport.is_deleted.is_(False),
     )
     result = await db.execute(query)
     report = result.scalar_one_or_none()
@@ -399,10 +451,9 @@ async def upvote_report(
     )
     db.add(upvote)
     
-    # Increment counter
-    report.upvote_count += 1
-    
     await db.commit()
+
+    logger.info("Citizen report upvoted", extra={"report_id": str(report.public_id), "user_id": str(current_user.id)})
     
     return MessageResponse(message="Report upvoted", success=True)
 
@@ -434,11 +485,11 @@ async def remove_upvote(
     )
     report = report_result.scalar_one_or_none()
     
-    if report:
-        report.upvote_count = max(0, report.upvote_count - 1)
-    
     await db.delete(upvote)
     await db.commit()
+
+    if report is not None:
+        logger.info("Citizen report upvote removed", extra={"report_id": str(report.public_id), "user_id": str(current_user.id)})
     
     return MessageResponse(message="Upvote removed", success=True)
 
@@ -452,7 +503,7 @@ async def delete_report(
     """Delete a report (soft delete, only by reporter)."""
     query = select(CitizenReport).where(
         CitizenReport.id == report_id,
-        CitizenReport.deleted_at.is_(None),
+        CitizenReport.is_deleted.is_(False),
     )
     result = await db.execute(query)
     report = result.scalar_one_or_none()
@@ -471,8 +522,11 @@ async def delete_report(
         )
     
     # Soft delete
-    report.deleted_at = datetime.utcnow()
+    report.is_deleted = True
+    report.deleted_at = datetime.now(timezone.utc)
     await db.commit()
+
+    logger.info("Citizen report deleted", extra={"report_id": str(report.public_id), "user_id": str(current_user.id)})
     
     return MessageResponse(message="Report deleted", success=True)
 
@@ -501,22 +555,27 @@ async def verify_report(
         )
     
     report.status = ReportStatus.VERIFIED
-    report.verified_by_id = moderator.id
-    report.verified_at = datetime.utcnow()
+    report.moderator_id = moderator.id
+    report.verified_at = datetime.now(timezone.utc)
     report.moderator_notes = data.notes
     
     # Create event
     event = ReportEvent(
         report_id=report.id,
         event_type="verified",
-        description=f"Report verified by {moderator.full_name}",
         actor_id=moderator.id,
-        metadata={"notes": data.notes} if data.notes else None,
+        actor_name=moderator.full_name,
+        old_value=ReportStatus.PENDING.value,
+        new_value=ReportStatus.VERIFIED.value,
+        notes=data.notes or f"Report verified by {moderator.full_name}",
+        metadata_json={"notes": data.notes} if data.notes else None,
     )
     db.add(event)
     
     await db.commit()
     await db.refresh(report)
+
+    logger.info("Citizen report verified", extra={"report_id": str(report.public_id), "moderator_id": str(moderator.id)})
     
     return ReportResponse.model_validate(report)
 
@@ -549,8 +608,8 @@ async def reject_report(
         )
     
     report.status = ReportStatus.REJECTED
-    report.verified_by_id = moderator.id
-    report.verified_at = datetime.utcnow()
+    report.moderator_id = moderator.id
+    report.verified_at = datetime.now(timezone.utc)
     report.moderator_notes = data.notes
     report.rejection_reason = data.notes
     
@@ -558,14 +617,19 @@ async def reject_report(
     event = ReportEvent(
         report_id=report.id,
         event_type="rejected",
-        description=f"Report rejected: {data.notes}",
         actor_id=moderator.id,
-        metadata={"reason": data.notes},
+        actor_name=moderator.full_name,
+        old_value=ReportStatus.PENDING.value,
+        new_value=ReportStatus.REJECTED.value,
+        notes=data.notes,
+        metadata_json={"reason": data.notes},
     )
     db.add(event)
     
     await db.commit()
     await db.refresh(report)
+
+    logger.info("Citizen report rejected", extra={"report_id": str(report.public_id), "moderator_id": str(moderator.id)})
     
     return ReportResponse.model_validate(report)
 
@@ -591,20 +655,29 @@ async def dispatch_report(
             detail="Verified report not found",
         )
     
+    previous_status = report.status
     report.status = ReportStatus.DISPATCHED
+    report.dispatched_at = datetime.now(timezone.utc)
+    report.dispatch_notes = data.notes
+    report.response_team = data.response_team
     
     # Create event
     event = ReportEvent(
         report_id=report.id,
         event_type="dispatched",
-        description=f"Report dispatched by {moderator.full_name}",
         actor_id=moderator.id,
-        metadata=data.metadata,
+        actor_name=moderator.full_name,
+        old_value=previous_status.value,
+        new_value=ReportStatus.DISPATCHED.value,
+        notes=data.notes or f"Report dispatched by {moderator.full_name}",
+        metadata_json=data.metadata,
     )
     db.add(event)
     
     await db.commit()
     await db.refresh(report)
+
+    logger.info("Citizen report dispatched", extra={"report_id": str(report.public_id), "moderator_id": str(moderator.id)})
     
     return ReportResponse.model_validate(report)
 
@@ -630,20 +703,27 @@ async def resolve_report(
             detail="Report not found or cannot be resolved",
         )
     
+    previous_status = report.status
     report.status = ReportStatus.RESOLVED
-    report.resolved_at = datetime.utcnow()
+    report.resolved_at = datetime.now(timezone.utc)
+    report.resolution_notes = data.notes
     
     # Create event
     event = ReportEvent(
         report_id=report.id,
         event_type="resolved",
-        description=f"Report resolved by {moderator.full_name}",
         actor_id=moderator.id,
-        metadata=data.metadata,
+        actor_name=moderator.full_name,
+        old_value=previous_status.value,
+        new_value=ReportStatus.RESOLVED.value,
+        notes=data.notes or f"Report resolved by {moderator.full_name}",
+        metadata_json=data.metadata,
     )
     db.add(event)
     
     await db.commit()
     await db.refresh(report)
+
+    logger.info("Citizen report resolved", extra={"report_id": str(report.public_id), "moderator_id": str(moderator.id)})
     
     return ReportResponse.model_validate(report)

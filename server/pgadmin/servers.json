@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Flood Resilience PostgreSQL",
+      "Group": "FloodWeb",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "flood_resilience",
+      "Username": "postgres",
+      "SSLMode": "prefer"
+    }
+  }
+}

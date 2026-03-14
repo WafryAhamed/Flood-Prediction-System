@@ -52,6 +52,33 @@ export interface RealtimeEventEnvelope {
   timestamp: number;
 }
 
+export type EmergencyContactType = 'police' | 'ambulance' | 'fire' | 'disaster' | 'custom';
+
+export interface EmergencyContactPayload {
+  id: string;
+  label: string;
+  number: string;
+  type: EmergencyContactType;
+  active: boolean;
+}
+
+export type EmergencyContactCreatePayload = Omit<EmergencyContactPayload, 'id'>;
+export type EmergencyContactUpdatePayload = Partial<EmergencyContactCreatePayload>;
+
+export type MapMarkerType = 'shelter' | 'hospital' | 'report' | 'infrastructure';
+
+export interface MapMarkerPayload {
+  id: string;
+  label: string;
+  markerType: MapMarkerType;
+  position: [number, number];
+  detail: string;
+  visible: boolean;
+}
+
+export type MapMarkerCreatePayload = Omit<MapMarkerPayload, 'id'>;
+export type MapMarkerUpdatePayload = Partial<MapMarkerCreatePayload>;
+
 export async function fetchBootstrapState(): Promise<BackendBootstrapState> {
   return requestJson<BackendBootstrapState>('/bootstrap');
 }
@@ -67,6 +94,54 @@ export async function saveMaintenanceState(state: JsonRecord): Promise<JsonRecor
   return requestJson<JsonRecord>('/maintenance', {
     method: 'PUT',
     body: JSON.stringify(state),
+  });
+}
+
+export async function fetchEmergencyContacts(): Promise<EmergencyContactPayload[]> {
+  return requestJson<EmergencyContactPayload[]>('/emergency-contacts');
+}
+
+export async function createEmergencyContact(payload: EmergencyContactCreatePayload): Promise<EmergencyContactPayload> {
+  return requestJson<EmergencyContactPayload>('/emergency-contacts', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateEmergencyContact(contactId: string, payload: EmergencyContactUpdatePayload): Promise<EmergencyContactPayload> {
+  return requestJson<EmergencyContactPayload>(`/emergency-contacts/${encodeURIComponent(contactId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteEmergencyContact(contactId: string): Promise<JsonRecord> {
+  return requestJson<JsonRecord>(`/emergency-contacts/${encodeURIComponent(contactId)}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function fetchMapMarkers(): Promise<MapMarkerPayload[]> {
+  return requestJson<MapMarkerPayload[]>('/map-markers');
+}
+
+export async function createMapMarker(payload: MapMarkerCreatePayload): Promise<MapMarkerPayload> {
+  return requestJson<MapMarkerPayload>('/map-markers', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateMapMarker(markerId: string, payload: MapMarkerUpdatePayload): Promise<MapMarkerPayload> {
+  return requestJson<MapMarkerPayload>(`/map-markers/${encodeURIComponent(markerId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteMapMarker(markerId: string): Promise<JsonRecord> {
+  return requestJson<JsonRecord>(`/map-markers/${encodeURIComponent(markerId)}`, {
+    method: 'DELETE',
   });
 }
 

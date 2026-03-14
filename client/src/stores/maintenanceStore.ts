@@ -1,5 +1,15 @@
 import { create } from 'zustand';
-import { saveMaintenanceState } from '../services/integrationApi';
+import {
+  saveMaintenanceState,
+  fetchEmergencyContacts,
+  createEmergencyContact as apiCreateEmergencyContact,
+  updateEmergencyContact as apiUpdateEmergencyContact,
+  deleteEmergencyContact as apiDeleteEmergencyContact,
+  fetchMapMarkers,
+  createMapMarker as apiCreateMapMarker,
+  updateMapMarker as apiUpdateMapMarker,
+  deleteMapMarker as apiDeleteMapMarker,
+} from '../services/integrationApi';
 import type {
   EmergencyContact,
   AdminMapZone,
@@ -14,13 +24,6 @@ import type {
 } from '../types/admin';
 
 // ═══ Seed Data ═══
-
-const SEED_EMERGENCY_CONTACTS: EmergencyContact[] = [
-  { id: 'ec-1', label: 'Emergency Hotline', number: '112', type: 'police', active: true },
-  { id: 'ec-2', label: 'Police', number: '119', type: 'police', active: true },
-  { id: 'ec-3', label: 'Ambulance / Fire', number: '110', type: 'ambulance', active: true },
-  { id: 'ec-4', label: 'Disaster Management Centre', number: '117', type: 'disaster', active: true },
-];
 
 const SEED_MAP_ZONES: AdminMapZone[] = [
   {
@@ -47,15 +50,6 @@ const SEED_MAP_ZONES: AdminMapZone[] = [
     visible: true,
     polygon: [[8.34, 80.48], [8.37, 80.52], [8.39, 80.51], [8.38, 80.47], [8.35, 80.46], [8.34, 80.48]],
   },
-];
-
-const SEED_MAP_MARKERS: AdminMapMarker[] = [
-  { id: 'mm-1', label: 'Mihintale — Command Center', markerType: 'shelter', position: [8.3593, 80.5103], detail: 'Main coordination hub', visible: true },
-  { id: 'mm-2', label: 'Anuradhapura Hospital', markerType: 'hospital', position: [8.3114, 80.4037], detail: 'District General Hospital — 500 beds', visible: true },
-  { id: 'mm-3', label: 'Colombo Shelter', markerType: 'shelter', position: [6.9271, 79.8612], detail: 'Emergency Shelter — Capacity 2,000', visible: true },
-  { id: 'mm-4', label: 'Ratnapura Flood Report', markerType: 'report', position: [6.6828, 80.3964], detail: 'Water level rising — 1.8 m above normal', visible: true },
-  { id: 'mm-5', label: 'Kandy General Hospital', markerType: 'hospital', position: [7.2906, 80.6337], detail: 'Teaching Hospital — 1,200 beds', visible: true },
-  { id: 'mm-6', label: 'Dambulla Shelter', markerType: 'shelter', position: [7.8731, 80.6517], detail: 'Safe zone shelter — Capacity 800', visible: true },
 ];
 
 const SEED_CHATBOT_KNOWLEDGE: ChatbotKnowledgeEntry[] = [
@@ -147,6 +141,8 @@ const SEED_DASHBOARD_OVERRIDES: DashboardOverrides = {
 
 interface MaintenanceStore {
   hydrateFromBackend: (state: Record<string, unknown>) => void;
+  loadEmergencyContacts: () => Promise<void>;
+  loadMapMarkers: () => Promise<void>;
 
   // Emergency Contacts
   emergencyContacts: EmergencyContact[];
@@ -206,9 +202,7 @@ function genId(prefix: string): string {
 
 function pickPersistableState(state: MaintenanceStore) {
   return {
-    emergencyContacts: state.emergencyContacts,
     mapZones: state.mapZones,
-    mapMarkers: state.mapMarkers,
     chatbotKnowledge: state.chatbotKnowledge,
     users: state.users,
     systemSettings: state.systemSettings,
@@ -221,11 +215,14 @@ function pickPersistableState(state: MaintenanceStore) {
 
 export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
   hydrateFromBackend: (incoming) => {
-    const source = incoming as Partial<ReturnType<typeof pickPersistableState>>;
+    const source = incoming as Partial<ReturnType<typeof pickPersistableState>> & {
+      emergencyContacts?: EmergencyContact[];
+      mapMarkers?: AdminMapMarker[];
+    };
     set((state) => ({
-      emergencyContacts: source.emergencyContacts || state.emergencyContacts,
+      emergencyContacts: source.emergencyContacts ?? state.emergencyContacts,
       mapZones: source.mapZones || state.mapZones,
-      mapMarkers: source.mapMarkers || state.mapMarkers,
+      mapMarkers: source.mapMarkers ?? state.mapMarkers,
       chatbotKnowledge: source.chatbotKnowledge || state.chatbotKnowledge,
       users: source.users || state.users,
       systemSettings: source.systemSettings || state.systemSettings,
@@ -236,19 +233,73 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
     }));
   },
 
+  loadEmergencyContacts: async () => {
+    try {
+      const contacts = await fetchEmergencyContacts();
+      set({ emergencyContacts: contacts });
+    } catch (error) {
+      console.warn('Failed to load emergency contacts from backend:', error);
+    }
+  },
+
+  loadMapMarkers: async () => {
+    try {
+      const markers = await fetchMapMarkers();
+      set({ mapMarkers: markers });
+    } catch (error) {
+      console.warn('Failed to load map markers from backend:', error);
+    }
+  },
+
   // ── Emergency Contacts ──
-  emergencyContacts: SEED_EMERGENCY_CONTACTS,
+  emergencyContacts: [],
   addEmergencyContact: (contact) => {
-    set((s) => ({ emergencyContacts: [...s.emergencyContacts, { ...contact, id: genId('ec') }] }));
-    void saveMaintenanceState(pickPersistableState(get()));
+    const optimisticId = genId('ec-temp');
+    const optimisticContact: EmergencyContact = { ...contact, id: optimisticId };
+    set((s) => ({ emergencyContacts: [...s.emergencyContacts, optimisticContact] }));
+
+    void apiCreateEmergencyContact(contact)
+      .then((savedContact) => {
+        set((s) => ({
+          emergencyContacts: s.emergencyContacts.map((item) =>
+            item.id === optimisticId ? savedContact : item
+          ),
+        }));
+      })
+      .catch((error) => {
+        console.warn('Failed to create emergency contact in backend:', error);
+        set((s) => ({ emergencyContacts: s.emergencyContacts.filter((item) => item.id !== optimisticId) }));
+      });
   },
   updateEmergencyContact: (id, updates) => {
+    const previous = get().emergencyContacts.find((c) => c.id === id);
     set((s) => ({ emergencyContacts: s.emergencyContacts.map((c) => (c.id === id ? { ...c, ...updates } : c)) }));
-    void saveMaintenanceState(pickPersistableState(get()));
+
+    void apiUpdateEmergencyContact(id, updates)
+      .then((savedContact) => {
+        set((s) => ({
+          emergencyContacts: s.emergencyContacts.map((c) => (c.id === id ? savedContact : c)),
+        }));
+      })
+      .catch((error) => {
+        console.warn('Failed to update emergency contact in backend:', error);
+        if (previous) {
+          set((s) => ({
+            emergencyContacts: s.emergencyContacts.map((c) => (c.id === id ? previous : c)),
+          }));
+        }
+      });
   },
   removeEmergencyContact: (id) => {
+    const removed = get().emergencyContacts.find((c) => c.id === id);
     set((s) => ({ emergencyContacts: s.emergencyContacts.filter((c) => c.id !== id) }));
-    void saveMaintenanceState(pickPersistableState(get()));
+
+    void apiDeleteEmergencyContact(id).catch((error) => {
+      console.warn('Failed to delete emergency contact in backend:', error);
+      if (removed) {
+        set((s) => ({ emergencyContacts: [...s.emergencyContacts, removed] }));
+      }
+    });
   },
 
   // ── Map Management ──
@@ -257,18 +308,52 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
     set((s) => ({ mapZones: s.mapZones.map((z) => (z.id === id ? { ...z, ...updates } : z)) }));
     void saveMaintenanceState(pickPersistableState(get()));
   },
-  mapMarkers: SEED_MAP_MARKERS,
+  mapMarkers: [],
   updateMapMarker: (id, updates) => {
+    const previous = get().mapMarkers.find((m) => m.id === id);
     set((s) => ({ mapMarkers: s.mapMarkers.map((m) => (m.id === id ? { ...m, ...updates } : m)) }));
-    void saveMaintenanceState(pickPersistableState(get()));
+
+    void apiUpdateMapMarker(id, updates)
+      .then((savedMarker) => {
+        set((s) => ({
+          mapMarkers: s.mapMarkers.map((m) => (m.id === id ? savedMarker : m)),
+        }));
+      })
+      .catch((error) => {
+        console.warn('Failed to update map marker in backend:', error);
+        if (previous) {
+          set((s) => ({
+            mapMarkers: s.mapMarkers.map((m) => (m.id === id ? previous : m)),
+          }));
+        }
+      });
   },
   addMapMarker: (marker) => {
-    set((s) => ({ mapMarkers: [...s.mapMarkers, { ...marker, id: genId('mm') }] }));
-    void saveMaintenanceState(pickPersistableState(get()));
+    const optimisticId = genId('mm-temp');
+    const optimisticMarker: AdminMapMarker = { ...marker, id: optimisticId };
+    set((s) => ({ mapMarkers: [...s.mapMarkers, optimisticMarker] }));
+
+    void apiCreateMapMarker(marker)
+      .then((savedMarker) => {
+        set((s) => ({
+          mapMarkers: s.mapMarkers.map((m) => (m.id === optimisticId ? savedMarker : m)),
+        }));
+      })
+      .catch((error) => {
+        console.warn('Failed to create map marker in backend:', error);
+        set((s) => ({ mapMarkers: s.mapMarkers.filter((m) => m.id !== optimisticId) }));
+      });
   },
   removeMapMarker: (id) => {
+    const removed = get().mapMarkers.find((m) => m.id === id);
     set((s) => ({ mapMarkers: s.mapMarkers.filter((m) => m.id !== id) }));
-    void saveMaintenanceState(pickPersistableState(get()));
+
+    void apiDeleteMapMarker(id).catch((error) => {
+      console.warn('Failed to delete map marker in backend:', error);
+      if (removed) {
+        set((s) => ({ mapMarkers: [...s.mapMarkers, removed] }));
+      }
+    });
   },
 
   // ── Chatbot Knowledge ──
@@ -352,3 +437,6 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
     void saveMaintenanceState(pickPersistableState(get()));
   },
 }));
+
+void useMaintenanceStore.getState().loadEmergencyContacts();
+void useMaintenanceStore.getState().loadMapMarkers();

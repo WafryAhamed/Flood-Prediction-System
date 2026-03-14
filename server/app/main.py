@@ -4,6 +4,7 @@ Main FastAPI application entry point.
 Flood Resilience System - Sri Lanka
 Backend API for disaster management and citizen safety.
 """
+import asyncio
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
@@ -15,6 +16,7 @@ from fastapi.exceptions import RequestValidationError
 
 from app.core.config import settings
 from app.api.v1.router import api_router
+from app.db.session import check_db_connection, dispose_engine, init_db_extensions
 
 
 @asynccontextmanager
@@ -30,17 +32,24 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     print(f"Environment: {settings.app_env}")
     print(f"Debug mode: {settings.debug}")
     
-    # In production, you would initialize:
-    # - Database connection pool
-    # - Redis connection
-    # - Celery worker connections
-    # - Background task schedulers
+    # Initialize core infra dependencies
+    db_ok = False
+    for _ in range(10):
+        db_ok = await check_db_connection()
+        if db_ok:
+            break
+        await asyncio.sleep(1)
+
+    if not db_ok:
+        raise RuntimeError("Database connection failed during startup")
+
+    await init_db_extensions()
     
     yield
     
     # Shutdown
     print("Shutting down application...")
-    # Clean up resources here
+    await dispose_engine()
 
 
 def create_application() -> FastAPI:
@@ -142,20 +151,22 @@ Protected endpoints require a Bearer token in the Authorization header.
     
     # Health check endpoint (outside versioned API)
     @app.get("/health", tags=["Health"])
-    async def health_check() -> dict:
+    async def health_check() -> dict[str, object]:
         """
         Health check endpoint for load balancers and monitoring.
         
         Returns basic application status and version info.
         """
+        db_ok = await check_db_connection()
         return {
-            "status": "healthy",
+            "status": "healthy" if db_ok else "degraded",
             "version": settings.version,
             "environment": settings.app_env,
+            "database": "connected" if db_ok else "disconnected",
         }
     
     @app.get("/", tags=["Root"])
-    async def root() -> dict:
+    async def root() -> dict[str, object]:
         """Root endpoint with API information."""
         return {
             "name": settings.app_name,

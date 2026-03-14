@@ -1,6 +1,7 @@
 """
 Database connection and session management for PostgreSQL with PostGIS and pgvector.
 """
+import logging
 from typing import AsyncGenerator
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
@@ -12,6 +13,9 @@ from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass
 from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
+
+
+logger = logging.getLogger(__name__)
 
 
 # Create async engine
@@ -52,13 +56,24 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 async def init_db_extensions() -> None:
     """Initialize PostgreSQL extensions (PostGIS, pgvector)."""
-    async with engine.begin() as conn:
-        # Enable PostGIS
-        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis"))
-        # Enable pgvector
-        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-        # Enable UUID generation
-        await conn.execute(text('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'))
+    async with engine.connect() as conn:
+        statements = [
+            ("postgis", "CREATE EXTENSION IF NOT EXISTS postgis"),
+            ("vector", "CREATE EXTENSION IF NOT EXISTS vector"),
+            ("uuid-ossp", 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'),
+        ]
+
+        for extension_name, sql in statements:
+            try:
+                await conn.execute(text(sql))
+                await conn.commit()
+            except Exception as exc:
+                await conn.rollback()
+                logger.warning(
+                    "Extension initialization skipped for %s: %s",
+                    extension_name,
+                    exc,
+                )
 
 
 async def check_db_connection() -> bool:

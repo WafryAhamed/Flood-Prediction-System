@@ -2,11 +2,11 @@
 Citizen report schemas.
 """
 from datetime import datetime
-from typing import Optional, List
+from typing import Any, Optional, List
 from pydantic import Field
 from uuid import UUID
 
-from app.schemas.base import BaseSchema, IDSchema, GeoPointSchema
+from app.schemas.base import BaseSchema, IDSchema
 from app.models.reports import ReportType, ReportStatus, UrgencyLevel, MediaType
 
 
@@ -61,7 +61,9 @@ class ReportCreate(ReportBase):
     latitude: Optional[float] = Field(default=None, ge=-90, le=90)
     longitude: Optional[float] = Field(default=None, ge=-180, le=180)
     location_description: Optional[str] = Field(default=None, max_length=500)
+    district_id: Optional[UUID] = None
     district_code: Optional[str] = None
+    urgency: Optional[UrgencyLevel] = None
     reporter_name: Optional[str] = Field(default=None, max_length=255)
     reporter_phone: Optional[str] = Field(default=None, max_length=50)
     is_anonymous: bool = False
@@ -87,6 +89,20 @@ class ReportModerationAction(BaseSchema):
     notes: Optional[str] = Field(default=None, max_length=2000)
     urgency: Optional[UrgencyLevel] = None
     response_team: Optional[str] = None  # For dispatch action
+
+
+class ReportModerationRequest(BaseSchema):
+    """Moderation notes for verify/reject endpoints."""
+
+    notes: Optional[str] = Field(default=None, max_length=2000)
+
+
+class ReportStatusUpdateRequest(BaseSchema):
+    """Status update payload for dispatch/resolve endpoints."""
+
+    notes: Optional[str] = Field(default=None, max_length=2000)
+    response_team: Optional[str] = Field(default=None, max_length=255)
+    metadata: Optional[dict[str, Any]] = None
 
 
 class ReportResponse(ReportBase, IDSchema):
@@ -220,7 +236,5 @@ class ReportDashboardStats(BaseSchema):
 # ---------------------------------------------------------------------------
 ReportCreateRequest = ReportCreate
 ReportUpdateRequest = ReportUpdate
-ReportModerationRequest = ReportModerationAction
-ReportStatusUpdateRequest = ReportUpdate
 ReportFilterParams = ReportFilter
 ReportStatsResponse = ReportDashboardStats
