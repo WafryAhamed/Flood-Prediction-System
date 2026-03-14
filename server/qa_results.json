@@ -1,0 +1,30 @@
+{
+  "database_connectivity": {
+    "connection": "PASS",
+    "foreign_keys": 56,
+    "primary_keys": 61,
+    "consistency": "PASS"
+  },
+  "database_schema": {
+    "total_tables": 63,
+    "missing_tables": [],
+    "existing_reports": 6,
+    "status": "PASS"
+  },
+  "crud_operations": {
+    "report_crud": "FAIL: Create failed: {\"detail\":\"Not authenticated\"}"
+  },
+  "api_endpoints": {
+    "health": "PASS",
+    "chat": "FAIL: Chat failed: {\"detail\":\"Validation error\",\"errors\":[{\"field\":\"body.message\",\"message\":\"Field required\",\"type\":\"missing\"}]}"
+  },
+  "error_handling": {
+    "not_found": "PASS"
+  },
+  "real_time_events": {},
+  "security": {
+    "sql_injection": "PASS",
+    "protected_endpoints": "PASS"
+  },
+  "summary": {}
+}

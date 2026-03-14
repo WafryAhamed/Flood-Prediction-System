@@ -1,0 +1,41 @@
+{
+  "database": {
+    "status": "PASS",
+    "constraints": {
+      "CHECK": 498,
+      "FOREIGN KEY": 56,
+      "PRIMARY KEY": 61,
+      "UNIQUE": 15
+    },
+    "reports": 6,
+    "chat_messages": 2
+  },
+  "api_public": {
+    "health": "PASS",
+    "list_reports": "PASS",
+    "report_stats": "PASS",
+    "chat": "PASS",
+    "emergency_contacts": "PASS"
+  },
+  "api_public_errors": {
+    "invalid_latitude": "PASS",
+    "invalid_longitude": "PASS",
+    "not_found": "PASS",
+    "method_not_allowed": "PASS"
+  },
+  "feature_verification": {
+    "chat_logging": "PASS",
+    "soft_delete": "PASS",
+    "report_lifecycle": "PASS",
+    "emergency_contacts": "PASS",
+    "system_settings": "PASS"
+  },
+  "security": {
+    "auth_required": "PASS",
+    "sql_injection": "PASS"
+  },
+  "summary": {},
+  "data_consistency": {
+    "foreign_keys": 56
+  }
+}

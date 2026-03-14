@@ -45,7 +45,7 @@ async def list_districts(
     if not include_inactive:
         query = query.where(District.is_active == True)
     
-    query = query.order_by(District.name_en)
+    query = query.order_by(District.name)
     
     result = await db.execute(query)
     districts = result.scalars().all()
