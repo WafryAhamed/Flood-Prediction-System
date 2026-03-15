@@ -1,103 +1,146 @@
-# Flood Resilience System - Development Environment Setup Complete
+# Flood Resilience System - Development Environment Setup (Poetry Edition)
 
 ## Summary of Changes
 
-This document summarizes all improvements made to the development environment to ensure the Flood Resilience System runs reliably without errors.
+This document summarizes the complete refactoring of the development environment to use Poetry for Python dependency management and to ensure the Flood Resilience System runs reliably following modern industry standards.
 
-## ✅ What Has Been Fixed
+## ✅ Major Refactoring: Manual .venv → Poetry
+
+### Why Poetry?
+- **Modern Standard**: Industry-standard Python dependency manager
+- **Lock Files**: Ensures reproducible builds across environments
+- **Easy Dependency Management**: Simple `poetry add` and `poetry remove` commands
+- **Automatic Environment Isolation**: No manual venv activation needed
+- **Better Conflict Resolution**: Intelligent dependency resolution
+- **Production Ready**: Includes Gunicorn for production deployments
+
+### Before vs After
+
+| Aspect | Before | After |
+|--------|--------|-------|
+| Dependency Management | Manual pip + .venv | Poetry + pyproject.toml |
+| Virtual Environment | Manual activation `.venv\Scripts\Activate.ps1` | Automatic (Poetry handles it) |
+| Dependency Locking | requirements.txt (if used) | poetry.lock (always generated) |
+| Development Server | Uvicorn (manual startup) | Poetry + Uvicorn (automatic) |
+| Production Server | Not configured | Gunicorn + Uvicorn workers |
+| Python Version | Manual management | Declared in pyproject.toml |
+
+## ✅ What Has Been Refactored
 
 ### 1. Backend Startup Script (`run-backend.ps1`)
-**Before**: Basic script with minimal error handling  
-**After**: Production-grade startup with:
-- ✅ Virtual environment activation with validation
-- ✅ Dependency verification (FastAPI, Uvicorn, Pydantic)
-- ✅ Environment configuration validation
-- ✅ Database connectivity pre-flight checks
-- ✅ Application import verification
-- ✅ Comprehensive error messages with troubleshooting
-- ✅ Graceful exit handling
+**Before**: Required manual venv activation, basic error handling  
+**After**: Full Poetry integration with:
+- ✅ Automatic Poetry dependency installation (`poetry install`)
+- ✅ Poetry environment validation
+- ✅ No manual .venv activation needed
+- ✅ Runs server via `poetry run uvicorn ...`
+- ✅ Enhanced pre-flight checks using Poetry
+- ✅ Clear guidance if Poetry not installed
 
-**Improvements**:
-- Detects if dependencies are missing and guides installation
-- Tests database connection before server starts
-- Provides actionable error messages instead of cryptic failures
-- Logs all startup information clearly
+**Key Improvements**:
+```powershell
+# Before:
+& .\.venv\Scripts\Activate.ps1    # Manual activation
+uvicorn app.main:app --reload      # Direct call
 
-### 2. Frontend Startup Script (`run-frontend.ps1`)
-**Before**: Basic script, no dependency auto-installation  
-**After**: Smart startup with:
-- ✅ Automatic .env file creation if missing
-- ✅ Dependency auto-installation check
-- ✅ Node.js and npm validation
-- ✅ Configuration file verification
-- ✅ Pre-flight checks before dev server starts
-- ✅ Better error handling and recovery
+# After:
+poetry install                      # Automatic dependency management
+poetry run uvicorn app.main:app --reload  # Via Poetry
+```
 
-**Improvements**:
-- Automatically installs npm dependencies if node_modules missing
-- Creates .env file with sensible defaults if needed
-- Validates Vite, TypeScript, and Tailwind config files exist
-- Clearer status messages during startup
+### 2. Production Backend Script (`run-backend-prod.ps1`) - NEW!
+**New**: Complete production deployment configuration with:
+- ✅ Gunicorn + Uvicorn workers (industry standard)
+- ✅ 4 configurable worker processes
+- ✅ Poetry dependency management
+- ✅ Production-ready error handling
+- ✅ Detailed configuration documentation
+
+**Usage**:
+```powershell
+.\run-backend-prod.ps1
+# Runs: poetry run gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 4
+```
 
 ### 3. Main Launcher Script (`run-dev.ps1`)
-**Before**: Separate process launcher with basic checks  
-**After**: Robust orchestration system with:
-- ✅ Comprehensive system prerequisites check
-- ✅ Port availability verification
-- ✅ Environment file validation
-- ✅ Graceful cleanup on exit (trap handler)
-- ✅ Health checks after services start
-- ✅ Process monitoring to detect early failures
-- ✅ Cleanup signal handling for Ctrl+C
-- ✅ Clear status reporting
+**Before**: Checked for .venv folder  
+**After**: Advanced integration with Poetry and improved checks:
+- ✅ Checks for Poetry installation instead of .venv
+- ✅ Validates Poetry can access Python
+- ✅ Clearer setup instructions if Poetry missing
+- ✅ Same robust orchestration as before
 
-**Improvements**:
-- Better error messages guide users to solutions
-- Validates complete system before starting
-- Monitors processes and alerts if they fail unexpectedly
-- Cleans up gracefully on shutdown
-- Shows exactly what URLs to access
+### 4. Health Check System (`dev-check.ps1`)
+**Updated**: Now validates Poetry instead of .venv
+- ✅ Checks if Poetry is installed
+- ✅ Verifies Poetry can run Python (`poetry run python`)
+- ✅ All other checks remain comprehensive
 
-### 4. Frontend Configuration (`client/vite.config.ts`)
-**Before**: Minimal configuration  
-**After**: Production-ready dev configuration with:
-- ✅ API proxy for `/api` routes (solves CORS issues)
-- ✅ WebSocket support for real-time features
-- ✅ Proper environment variable loading
-- ✅ Port and host configuration
-- ✅ Change origin headers for API calls
+### 5. Python Configuration (`server/pyproject.toml`)
+**Major Update**: Converted from setuptools to Poetry format
+- ✅ Modern Poetry project structure
+- ✅ All dependencies organized by type
+- ✅ Includes Gunicorn for production
+- ✅ Development dependencies group
+- ✅ Lock file support (poetry.lock
 
-**Benefits**:
-- Frontend can talk to backend without CORS errors
-- Real-time features work seamlessly
-- Development exactly matches production API structure
+)
+- ✅ Tool configuration for code quality
 
-### 5. Health Check System (`dev-check.ps1`)
-**New**: Comprehensive quick-check utility that verifies:
-- ✅ Python virtual environment
-- ✅ Node.js and npm available
-- ✅ npm dependencies installed
-- ✅ Configuration files present
-- ✅ Required ports available
-- ✅ Python working correctly
+**Architecture**:
+```toml
+[tool.poetry]
+# Project metadata
 
-**Usage**: Run `.\dev-check.ps1` before starting system
+[tool.poetry.dependencies]
+# Production dependencies (auto-installed)
+python = "^3.12"
+fastapi, uvicorn, gunicorn, sqlalchemy, asyncpg, etc.
 
-### 6. Documentation (`DEVELOPMENT.md`)
-**New**: Comprehensive developer guide including:
-- ✅ Quick start instructions
-- ✅ System architecture overview
-- ✅ Environment configuration reference
-- ✅ Detailed troubleshooting guide
-- ✅ API integration examples
-- ✅ Common commands and workflows
-- ✅ Performance considerations
-- ✅ Port reference table
+[tool.poetry.group.dev.dependencies]
+# Development only (pytest, black, ruff, mypy, etc.)
 
-## ✅ System Status
-
-### Verification Results
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 ```
+
+## ✅ Dependency Management Architecture
+
+### Production Dependencies (Automatically Installed)
+```
+Core Framework:
+  • FastAPI 0.109+
+  • Uvicorn 0.27+ (development)
+  • Gunicorn 21+ (production)
+  
+Database:
+  • SQLAlchemy 2.0.25+
+  • asyncpg 0.29+ (async PostgreSQL driver)
+  • Alembic 1.13+ (migrations)
+  • GeoAlchemy2 0.14+ (geospatial)
+  • pgvector 0.2.4 (vector embeddings)
+
+Optional Services:
+  • Redis 5.0+
+  • Celery 5.3+
+```
+
+### Development Dependencies
+```
+Testing:
+  • pytest 7.4+
+  • pytest-asyncio 0.23+
+  • pytest-cov 4.1+
+
+Code Quality:
+  • black 24.1+ (formatter)
+  • ruff 0.1+ (linter)
+  • mypy 1.8+ (type checker)
+  • pre-commit 3.6+
+```
+
+All dependencies are pinned to specific versions via poetry.lock for reproducible builds.
 [OK] Python venv: Ready
 [OK] Node.js: v25.1.0 installed
 [OK] npm: 11.6.2 installed
@@ -121,26 +164,58 @@ This document summarizes all improvements made to the development environment to
 
 ## 🚀 How to Start Development
 
-### Quick Start (3 Steps)
+### Prerequisites (One-Time Setup)
+
+Ensure Poetry is installed:
+```powershell
+# Check if Poetry is already installed
+poetry --version
+
+# If not, install it
+pip install poetry
+
+# Verify installation
+poetry --version
+```
+
+### Quick Start (4 Steps)
 ```powershell
 # Step 1: Navigate to project root
 cd e:\floodweb
 
-# Step 2: Verify everything is ready (optional but recommended)
+# Step 2: Verify everything is ready
 .\dev-check.ps1
 
-# Step 3: Start the full system
+# Step 3: Install backend dependencies with Poetry
+cd server
+poetry install
+cd ..
+
+# Step 4: Start the full system
 .\run-dev.ps1
 ```
 
 ### What This Does
 ```
+.\run-dev.ps1
+  ├── Checks all prerequisites (including Poetry)
+  ├── Validates configuration
+  ├── Verifies ports available
+  ├── Starts Backend (FastAPI via Poetry)
+  │   ├── poetry install (if needed)
+  │   └── poetry run uvicorn app.main:app --reload
+  │       → Health check: http://127.0.0.1:8000/health
+  ├── Starts Frontend (React + Vite - standard npm)
+  │   └── npm run dev
+  │       → http://localhost:5173
+  └── Monitors both services
+```
 run-dev.ps1
-├── Checks all prerequisites
+├── Checks all prerequisites (including Poetry)
 ├── Validates configuration
 ├── Verifies ports available
-├── Starts Backend (FastAPI)
-│   └── Health check: http://127.0.0.1:8000/health
+├── Starts Backend (FastAPI via Poetry)
+│   └── health check: http://127.0.0.1:8000/health
 ├── Starts Frontend (React + Vite)
 │   └── HMR enabled
 └── Monitors both services
@@ -154,13 +229,23 @@ run-dev.ps1
 
 ## 🔧 Individual Service Startup
 
-### Backend Only
+### Backend Only (Development)
 ```powershell
 .\run-backend.ps1
 ```
 - FastAPI on http://127.0.0.1:8000
 - Auto-reload enabled
+- Poetry manages all dependencies
 - Swagger docs at `/api/v1/docs`
+
+### Backend Only (Production)
+```powershell
+.\run-backend-prod.ps1
+```
+- Gunicorn + Uvicorn Workers on http://0.0.0.0:8000
+- 4 worker processes (tune: -w [2*cores + 1])
+- Production-grade performance
+- Poetry manages all dependencies
 
 ### Frontend Only
 ```powershell
@@ -177,17 +262,18 @@ run-dev.ps1
 .\dev-check.ps1
 ```
 This verifies:
-- Python virtual environment
+- Poetry installation
 - Node.js/npm availability
 - npm dependencies
 - Configuration files
 - Port availability
-- Python functionality
+- Python via Poetry
 
 ### Manual Backend Test
 ```powershell
 cd server
-python -c "from app.main import app; print('OK')"
+poetry install      # First time
+poetry run python -c "from app.main import app; print('OK')"
 ```
 
 ### Manual Frontend Test
@@ -227,6 +313,7 @@ VITE_RAIN_API=https://api.rainviewer.com
 │                      CLIENT                          │
 │            React 18 + TypeScript + Vite             │
 │                   localhost:5173                     │
+│  - npm for dependency management                    │
 │  - Tailwind CSS styling                             │
 │  - Zustand state management                         │
 │  - Leaflet maps                                     │
@@ -237,8 +324,11 @@ VITE_RAIN_API=https://api.rainviewer.com
                  │                                     │
 ┌────────────────▼────────────────────────────────────┐
 │                      SERVER                          │
-│          FastAPI + Python 3.12 + Async              │
+│     FastAPI + Python 3.12 + Poetry Management       │
 │                  127.0.0.1:8000                     │
+│  - Poetry manages all dependencies                  │
+│  - Development: poetry run uvicorn ...              │
+│  - Production: poetry run gunicorn ...              │
 │  - RESTful API endpoints                            │
 │  - JWT authentication                               │
 │  - OpenAPI/Swagger documentation                   │
@@ -271,12 +361,26 @@ taskkill /PID <PID> /F
 
 ### Backend won't start
 ```powershell
-# Verify venv
-.\run-backend.ps1
+# Verify Poetry is installed and working
+poetry --version
+
+# Reinstall Poetry dependencies
+cd server
+poetry install
 
 # Check database connection
-cd server
-python -c "import asyncio; from app.db.session import check_db_connection; print(asyncio.run(check_db_connection()))"
+poetry run python -c "import asyncio; from app.db.session import check_db_connection; print(asyncio.run(check_db_connection()))"
+```
+
+### Poetry command not found
+```powershell
+# Poetry may need to be added to PATH
+pip install --upgrade poetry
+
+# Close and reopen PowerShell for PATH to update
+
+# Verify installation
+poetry --version
 ```
 
 ### Frontend won't start

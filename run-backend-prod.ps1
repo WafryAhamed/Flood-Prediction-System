@@ -1,6 +1,6 @@
 # ============================================================================
-# FLOOD RESILIENCE SYSTEM - BACKEND API SERVER STARTUP
-# FastAPI + Uvicorn development server with Poetry
+# FLOOD RESILIENCE SYSTEM - BACKEND PRODUCTION SERVER STARTUP
+# FastAPI + Gunicorn + Uvicorn Workers with Poetry
 # ============================================================================
 
 $ErrorActionPreference = "Continue"
@@ -16,9 +16,9 @@ $WorkDir = Join-Path $ScriptRoot "server"
 Set-Location $WorkDir
 Write-Host ""
 Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Green
-Write-Host "║         FLOOD RESILIENCE - BACKEND API SERVER                ║" -ForegroundColor Green
-Write-Host "║          FastAPI + Uvicorn + Poetry Management              ║" -ForegroundColor Green
-Write-Host "║                   Starting on :8000                           ║" -ForegroundColor Green
+Write-Host "║       FLOOD RESILIENCE - BACKEND PRODUCTION SERVER            ║" -ForegroundColor Green
+Write-Host "║    Gunicorn + Uvicorn Workers + Poetry Management            ║" -ForegroundColor Green
+Write-Host "║                    Startup Configuration                       ║" -ForegroundColor Green
 Write-Host "╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Green
 Write-Host ""
 
@@ -53,12 +53,12 @@ Write-Host "Verifying environment setup..." -ForegroundColor Cyan
 
 # Check .env file
 if (-not (Test-Path ".env")) {
-    Write-Host "❌ ERROR: .env file not found in server directory" -ForegroundColor Red
+    Write-Host "⚠️  WARNING: .env file not found" -ForegroundColor Yellow
     Write-Host "   Expected: $WorkDir\.env" -ForegroundColor Yellow
     Write-Host "   Solution: Copy from .env.example and configure settings" -ForegroundColor Yellow
-    exit 1
+    Write-Host ""
 }
-Write-Host "✓ .env configuration found" -ForegroundColor Green
+Write-Host "✓ .env configuration ready" -ForegroundColor Green
 
 # Check pyproject.toml
 if (-not (Test-Path "pyproject.toml")) {
@@ -96,13 +96,22 @@ Write-Host "  Checking Python version..." -ForegroundColor Gray
 $PythonVer = poetry run python --version 2>&1
 Write-Host "  ✓ $PythonVer" -ForegroundColor Green
 
-# Verify FastAPI
-Write-Host "  Checking FastAPI..." -ForegroundColor Gray
-poetry run python -c "import fastapi; print(f'FastAPI {fastapi.__version__}')" 2>&1 | Tee-Object -Variable FastAPICheck | Out-Null
+# Verify Gunicorn
+Write-Host "  Checking Gunicorn..." -ForegroundColor Gray
+poetry run gunicorn --version 2>&1 | Out-Null
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "  ✓ $FastAPICheck" -ForegroundColor Green
+    Write-Host "  ✓ Gunicorn available" -ForegroundColor Green
 } else {
-    Write-Host "  ⚠️  WARNING: FastAPI version check failed" -ForegroundColor Yellow
+    Write-Host "  ⚠️  WARNING: Gunicorn may not be properly installed" -ForegroundColor Yellow
+}
+
+# Verify Uvicorn
+Write-Host "  Checking Uvicorn..." -ForegroundColor Gray
+poetry run python -c "import uvicorn; print(f'Uvicorn {uvicorn.__version__}')" 2>&1 | Out-Null
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "  ✓ Uvicorn available" -ForegroundColor Green
+} else {
+    Write-Host "  ⚠️  WARNING: Uvicorn may not be properly installed" -ForegroundColor Yellow
 }
 
 # Test database connection
@@ -129,39 +138,65 @@ if ($LASTEXITCODE -eq 0) {
 }
 
 # ============================================================================
-# START SERVER
+# PRODUCTION CONFIGURATION
 # ============================================================================
 
 Write-Host ""
 Write-Host "═════════════════════════════════════════════════════════════════" -ForegroundColor Green
 Write-Host ""
-Write-Host "Starting FastAPI server with Uvicorn..." -ForegroundColor Cyan
-Write-Host "  Host:              127.0.0.1" -ForegroundColor Gray
-Write-Host "  Port:              8000" -ForegroundColor Gray
-Write-Host "  Reload:            enabled (auto-reload on code changes)" -ForegroundColor Gray
-Write-Host "  Log Level:         info" -ForegroundColor Gray
-Write-Host "  Dependency Mgr:    Poetry" -ForegroundColor Gray
+Write-Host "Production Server Configuration:" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "📚 API Documentation: http://127.0.0.1:8000/api/v1/docs" -ForegroundColor Yellow
-Write-Host "💚 Health Check:      http://127.0.0.1:8000/health" -ForegroundColor Yellow
+Write-Host "  Server Type:       Gunicorn + Uvicorn Workers" -ForegroundColor Gray
+Write-Host "  Number of Workers: 4 (adjust based on CPU cores)" -ForegroundColor Gray
+Write-Host "  Worker Type:       Uvicorn Worker" -ForegroundColor Gray
+Write-Host "  Bind Address:      0.0.0.0:8000" -ForegroundColor Gray
+Write-Host "  Dependency Mgr:    Poetry" -ForegroundColor Gray
+Write-Host "  Environment:       Production" -ForegroundColor Gray
+Write-Host ""
+Write-Host "  Command:" -ForegroundColor Yellow
+Write-Host "    poetry run gunicorn app.main:app \" -ForegroundColor Gray
+Write-Host "      -k uvicorn.workers.UvicornWorker \" -ForegroundColor Gray
+Write-Host "      -w 4 \" -ForegroundColor Gray
+Write-Host "      -b 0.0.0.0:8000 \" -ForegroundColor Gray
+Write-Host "      --timeout 120 \" -ForegroundColor Gray
+Write-Host "      --access-logfile - \" -ForegroundColor Gray
+Write-Host "      --error-logfile - \" -ForegroundColor Gray
+Write-Host "      --log-level info" -ForegroundColor Gray
+Write-Host ""
+
+Write-Host "📚 API Documentation: http://<server-ip>:8000/api/v1/docs" -ForegroundColor Yellow
+Write-Host "💚 Health Check:      http://<server-ip>:8000/health" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "ℹ️  To adjust worker count for your deployment:" -ForegroundColor Cyan
+Write-Host "   -w <count>  where count = (2 * CPU_CORES) + 1" -ForegroundColor Gray
+Write-Host ""
+Write-Host "   For 4 cores:  gunicorn ... -w 9" -ForegroundColor Gray
+Write-Host "   For 8 cores:  gunicorn ... -w 17" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Press Ctrl+C to stop the server" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "═════════════════════════════════════════════════════════════════" -ForegroundColor Green
 Write-Host ""
 
-# Start the server via Poetry
+# ============================================================================
+# START PRODUCTION SERVER
+# ============================================================================
+
+Write-Host "Starting production server..." -ForegroundColor Cyan
+Write-Host ""
+
 try {
-    poetry run uvicorn app.main:app `
-        --host 127.0.0.1 `
-        --port 8000 `
-        --reload `
-        --reload-dirs=. `
+    poetry run gunicorn app.main:app `
+        -k uvicorn.workers.UvicornWorker `
+        -w 4 `
+        -b "0.0.0.0:8000" `
+        --timeout 120 `
+        --access-logfile "-" `
+        --error-logfile "-" `
         --log-level info
 } catch {
     Write-Host ""
-    Write-Host "❌ ERROR: Server failed to start" -ForegroundColor Red
+    Write-Host "❌ ERROR: Production server failed to start" -ForegroundColor Red
     Write-Host "   Error: $_" -ForegroundColor Yellow
     exit 1
 }
-

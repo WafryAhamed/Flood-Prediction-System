@@ -1,5 +1,20 @@
 # Quick Reference - Starting Flood Resilience System
 
+## Prerequisites (One-Time Setup)
+
+**Install Poetry** (if not already installed):
+```powershell
+# Via pip
+pip install poetry
+
+# Or visit: https://python-poetry.org/docs/#installation
+```
+
+Then verify it's installed:
+```powershell
+poetry --version
+```
+
 ## TL;DR - Start Everything in 1 Command
 ```powershell
 .\run-dev.ps1
@@ -8,13 +23,20 @@ Then go to: http://localhost:5173
 
 ---
 
-## Before First Run (One Time Setup)
+## Before First Run (Initial Setup)
 ```powershell
-# Check everything is ready
+# Check system readiness
 .\dev-check.ps1
 
-# If there are issues, see ENVIRONMENT_SETUP.md for fixes
+# Install backend dependencies with Poetry
+cd server
+poetry install
+
+# Return to root
+cd ..
 ```
+
+If `poetry install` is slow on first run, that's normal - it's installing all dependencies.
 
 ---
 
@@ -24,19 +46,29 @@ Then go to: http://localhost:5173
 ```powershell
 .\run-dev.ps1
 ```
-- Starts backend on http://127.0.0.1:8000
+- Starts backend on http://127.0.0.1:8000 (managed by Poetry)
 - Starts frontend on http://localhost:5173
 - Both in separate windows with monitoring
 
-### 2. Backend Only
+### 2. Backend Only (Development)
 ```powershell
 .\run-backend.ps1
 ```
 - FastAPI server on http://127.0.0.1:8000
 - Auto-reload enabled
 - API docs: http://127.0.0.1:8000/api/v1/docs
+- Managed by Poetry
 
-### 3. Frontend Only
+### 3. Backend Only (Production)
+```powershell
+.\run-backend-prod.ps1
+```
+- Gunicorn + Uvicorn Workers on http://0.0.0.0:8000
+- 4 worker processes (tune for your needs)
+- Production-grade performance
+- Managed by Poetry
+
+### 4. Frontend Only
 ```powershell
 .\run-frontend.ps1
 ```
@@ -73,8 +105,36 @@ Then go to: http://localhost:5173
 ### Database Schema Changes
 ```powershell
 cd server
-alembic revision --autogenerate -m "description"
-alembic upgrade head
+poetry run alembic revision --autogenerate -m "description"
+poetry run alembic upgrade head
+```
+
+---
+
+## Manual Poetry Commands
+
+If you need to run backend commands directly:
+
+```powershell
+cd server
+
+# Install/update dependencies
+poetry install
+
+# Run any Python module
+poetry run python script_name.py
+
+# Run migrations
+poetry run alembic upgrade head
+
+# Run tests
+poetry run pytest tests/
+
+# Start development server
+poetry run uvicorn app.main:app --reload
+
+# Start production server
+poetry run gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 4
 ```
 
 ---

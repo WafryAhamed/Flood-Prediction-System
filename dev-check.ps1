@@ -45,10 +45,12 @@ Write-Host ""
 
 Set-Location e:\floodweb
 
-# Python environment
+# Python and Poetry
 Write-Host "Python and Backend Setup:" -ForegroundColor Cyan
-$PythonVenv = Test-Path ".venv\Scripts\Activate.ps1"
-Write-Status "Python venv" $PythonVenv
+$Poetry = (Get-Command poetry -ErrorAction SilentlyContinue) -ne $null
+Write-Status "Poetry" $Poetry
+$Python = (Get-Command python -ErrorAction SilentlyContinue) -ne $null
+Write-Status "Python" $Python
 
 # Node environment
 Write-Host ""
@@ -84,20 +86,23 @@ Write-Status "Port 5173 (Frontend)" $Port5173
 Write-Host ""
 Write-Host "Database:" -ForegroundColor Cyan
 try {
-    & .\.venv\Scripts\Activate.ps1 | Out-Null
     Push-Location server
-    python --version | Out-Null
-    Write-Status "Python available" $true
+    poetry run python --version 2>&1 | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Status "Poetry Python access" $true
+    } else {
+        Write-Status "Poetry Python access" $false
+    }
     Pop-Location
 } catch {
-    Write-Status "Database check" $false "Cannot test"
+    Write-Status "Poetry check" $false "Cannot test"
 }
 
 # Summary
 Write-Host ""
 Write-Host "Summary:" -ForegroundColor Cyan
 
-$AllGood = $PythonVenv -and $Node -and $Npm -and $Port8000 -and $Port5173
+$AllGood = $Poetry -and $Node -and $Npm -and $Port8000 -and $Port5173
 if ($AllGood) {
     Write-Host "[OK] System is ready for development!" -ForegroundColor Green
     Write-Host ""

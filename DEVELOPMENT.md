@@ -3,16 +3,28 @@
 ## Quick Start
 
 ### Prerequisites
-- **Python 3.12+** with virtual environment
+- **Python 3.12+** (will be managed by Poetry)
+- **Poetry** (for Python dependency management)
 - **Node.js 20+** with npm
 - **PostgreSQL 18+** running locally with database `flood_resilience`
 - **Windows PowerShell** (version 5.1 or higher)
+
+### Install Poetry (One-Time)
+```powershell
+pip install poetry
+# Or visit: https://python-poetry.org/docs/#installation
+```
 
 ### Fastest Way to Start
 
 ```powershell
 # Check system readiness
 .\dev-check.ps1
+
+# Install backend dependencies with Poetry
+cd server
+poetry install
+cd ..
 
 # Start everything (backend + frontend)
 .\run-dev.ps1
@@ -33,7 +45,7 @@ Then access:
                    │ HTTP/JSON (Fetch API)
                    ↓
 ┌─────────────────────────────────────────────────┐
-│  Backend (FastAPI + Python 3.12)               │
+│  Backend (FastAPI + Python 3.12 + Poetry)      │
 │  http://127.0.0.1:8000                         │
 └──────────────────┬──────────────────────────────┘
                    │ Async/Await (asyncpg)
@@ -46,22 +58,33 @@ Then access:
 
 ## Startup Options
 
-### Option 1: Full System (Recommended)
+### Option 1: Full System (Recommended - Development)
 ```powershell
 .\run-dev.ps1
 ```
-Starts backend and frontend in separate windows with health checks and monitoring.
+Starts backend (with Poetry/Uvicorn) and frontend in separate windows with health checks and monitoring.
 
-### Option 2: Backend Only
+### Option 2: Backend Only (Development)
 ```powershell
 .\run-backend.ps1
 ```
-Starts FastAPI development server on http://127.0.0.1:8000
+Starts FastAPI development server on http://127.0.0.1:8000 via Poetry
 - Auto-reload enabled (watches for code changes)
 - OpenAPI documentation at http://127.0.0.1:8000/api/v1/docs
 - Health check at http://127.0.0.1:8000/health
+- Dependency management: Poetry
 
-### Option 3: Frontend Only
+### Option 3: Backend Only (Production)
+```powershell
+.\run-backend-prod.ps1
+```
+Starts production server with Gunicorn + Uvicorn Workers on http://0.0.0.0:8000
+- 4 worker processes (tune with `-w` flag based on CPU cores)
+- High-performance multi-threading
+- Production-grade error handling
+- Dependency management: Poetry
+
+### Option 4: Frontend Only
 ```powershell
 .\run-frontend.ps1
 ```
@@ -109,12 +132,13 @@ VITE_RAIN_API=https://api.rainviewer.com
 2. Run migrations:
    ```powershell
    cd server
-   alembic upgrade head
+   poetry install  # First time
+   poetry run alembic upgrade head
    ```
 
 3. Seed sample data:
    ```powershell
-   python scripts/seed_db.py
+   poetry run python scripts/seed_db.py
    ```
 
 ### Database Verification
@@ -138,12 +162,34 @@ SetEnv PORT 8001  # Backend
 SetEnv FRONTEND_PORT 5174  # Frontend
 ```
 
-### Virtual Environment Issues
+### Poetry/Dependency Issues
 ```powershell
-# Recreate virtual environment
-python -m venv .venv
-& .\.venv\Scripts\Activate.ps1
-pip install -e server/
+# Reinstall all dependencies
+cd server
+rm poetry.lock  # Remove lock file if corrupted
+poetry install  # Fresh install
+
+# Update to latest compatible versions
+poetry update
+
+# Check Poetry status
+poetry show  # List all dependencies
+poetry check  # Verify pyproject.toml
+
+# Reinstall without cache
+poetry install --no-cache
+```
+
+### Backend Not Found After Poetry Install
+```powershell
+cd server
+
+# Verify Poetry can see dependencies
+poetry show fastapi
+
+# Reinstall and try again
+poetry install --no-root
+poetry run python -c "from app.main import app"  # Test import
 ```
 
 ### npm Dependency Issues
@@ -289,27 +335,35 @@ The system gracefully handles unavailable optional services:
 # Start full system
 .\run-dev.ps1
 
-# Start backend alone
+# Start backend (development)
 .\run-backend.ps1
+
+# Start backend (production)
+.\run-backend-prod.ps1
 
 # Start frontend alone
 .\run-frontend.ps1
 
-# Database migration
+# Backend database migration with Poetry
 cd server
-alembic upgrade head
+poetry run alembic upgrade head
 
-# Run verification
-python verify_system.py
+# Backend verification with Poetry
+poetry run python verify_system.py
 
-# Backend tests
-cd server
-pytest tests/
+# Backend tests with Poetry
+poetry run pytest tests/ -v
+poetry run pytest tests/ --cov=app
 
-# View backend logs (from another terminal)
-cd server
-& .\..\\.venv\Scripts\Activate.ps1
-uvicorn app.main:app --log-level debug
+# Seed database with Poetry
+poetry run python scripts/seed_db.py
+
+# Directly run Poetry commands
+poetry install            # Install/update dependencies
+poetry update             # Update to latest versions
+poetry add <package>      # Add new package
+poetry show               # List dependencies
+poetry check              # Verify configuration
 ```
 
 ## Documentation

@@ -125,13 +125,15 @@ Write-Header "SYSTEM PREREQUISITES CHECK"
 
 Set-Location $ScriptRoot
 
-# Check Python environment
-Write-Host "Checking Python virtual environment..." -ForegroundColor Cyan
-if (-not (Test-Path ".venv\Scripts\Activate.ps1")) {
-    Write-Status "Python venv" $false "Not found"
-    $StartupErrors += "Python virtual environment not found. Run: python -m venv .venv"
+# Check Poetry installation
+Write-Host "Checking Poetry (Python environment manager)..." -ForegroundColor Cyan
+$PoetryExists = (Get-Command poetry -ErrorAction SilentlyContinue) -ne $null
+if (-not $PoetryExists) {
+    Write-Status "Poetry" $false "Not found"
+    $StartupErrors += "Poetry not found. Install from https://python-poetry.org/docs/#installation or run: pip install poetry"
 } else {
-    Write-Status "Python venv" $true "Ready"
+    $PoetryVer = poetry --version 2>&1
+    Write-Status "Poetry" $true $PoetryVer
 }
 
 # Check Node.js
