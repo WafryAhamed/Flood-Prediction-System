@@ -49,14 +49,24 @@ e:\floodweb\run-backend.ps1
 e:\floodweb\run-frontend.ps1
 ```
 
-### Option 3: Manual Commands (Advanced)
+### Option 3: Manual Commands (Advanced with Poetry)
 
-**Backend:**
+**Backend (Development):**
 ```powershell
-cd e:\floodweb
-.\.venv\Scripts\Activate.ps1
-cd server
-uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+cd e:\floodweb\server
+poetry run uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+**Backend (Production on Windows):**
+```powershell
+cd e:\floodweb\server
+poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4 --loop uvloop
+```
+
+**Backend (Production on Linux):**
+```bash
+cd /path/to/floodweb/server
+poetry run gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 4 -b 0.0.0.0:8000
 ```
 
 **Frontend:**
@@ -104,15 +114,29 @@ Start-Service postgresql-x64-18
 Get-Service postgresql-x64-18 | Select-Object Status
 ```
 
-### Python Virtual Environment Issues
+### Python Virtual Environment with Poetry
+
+The project uses **Poetry** for Python dependency management (not manual venv):
 
 ```powershell
-# Recreate the venv if needed
-cd e:\floodweb
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r server\requirements.txt
+# Install Poetry (one-time setup)
+pip install poetry
+
+# In the server directory, install dependencies
+cd e:\floodweb\server
+poetry install
+
+# Run commands through Poetry (no manual activation needed)
+poetry run uvicorn app.main:app --reload
+poetry run pytest tests/ -v
+poetry run alembic upgrade head
 ```
+
+**Why Poetry?** It automatically:
+- Creates and manages a Python virtual environment
+- Locks dependency versions for reproducible builds
+- Handles complex dependency resolution
+- Works seamlessly with startup scripts
 
 ### Node Modules Missing
 

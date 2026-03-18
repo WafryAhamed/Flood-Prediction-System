@@ -102,7 +102,8 @@ poetry run gunicorn --version 2>&1 | Out-Null
 if ($LASTEXITCODE -eq 0) {
     Write-Host "  ✓ Gunicorn available" -ForegroundColor Green
 } else {
-    Write-Host "  ⚠️  WARNING: Gunicorn may not be properly installed" -ForegroundColor Yellow
+    Write-Host "  ⚠️  NOTE: Gunicorn works on Linux/Mac only (requires Unix sockets)" -ForegroundColor Yellow
+    Write-Host "     This Windows deployment will use Uvicorn with multiple workers" -ForegroundColor Gray
 }
 
 # Verify Uvicorn
@@ -146,23 +147,44 @@ Write-Host "══════════════════════�
 Write-Host ""
 Write-Host "Production Server Configuration:" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  Server Type:       Gunicorn + Uvicorn Workers" -ForegroundColor Gray
-Write-Host "  Number of Workers: 4 (adjust based on CPU cores)" -ForegroundColor Gray
-Write-Host "  Worker Type:       Uvicorn Worker" -ForegroundColor Gray
-Write-Host "  Bind Address:      0.0.0.0:8000" -ForegroundColor Gray
-Write-Host "  Dependency Mgr:    Poetry" -ForegroundColor Gray
-Write-Host "  Environment:       Production" -ForegroundColor Gray
-Write-Host ""
-Write-Host "  Command:" -ForegroundColor Yellow
-Write-Host "    poetry run gunicorn app.main:app \" -ForegroundColor Gray
-Write-Host "      -k uvicorn.workers.UvicornWorker \" -ForegroundColor Gray
-Write-Host "      -w 4 \" -ForegroundColor Gray
-Write-Host "      -b 0.0.0.0:8000 \" -ForegroundColor Gray
-Write-Host "      --timeout 120 \" -ForegroundColor Gray
-Write-Host "      --access-logfile - \" -ForegroundColor Gray
-Write-Host "      --error-logfile - \" -ForegroundColor Gray
-Write-Host "      --log-level info" -ForegroundColor Gray
-Write-Host ""
+
+# Check if running on Windows
+$IsWindows = $PSVersionTable.Platform -eq "Win32NT" -or $PSVersionTable.OS -like "*Windows*"
+
+if ($IsWindows) {
+    Write-Host "  ⚠️  WINDOWS DETECTED" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "  Server Type:       Uvicorn (Windows-native)" -ForegroundColor Gray
+    Write-Host "  Number of Workers: 4 (can be adjusted)" -ForegroundColor Gray
+    Write-Host "  Bind Address:      0.0.0.0:8000" -ForegroundColor Gray
+    Write-Host "  Dependency Mgr:    Poetry" -ForegroundColor Gray
+    Write-Host "  Environment:       Production" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "  ℹ️  Note: On Windows, Gunicorn is not available (requires Unix sockets)." -ForegroundColor Cyan
+    Write-Host "     Use Uvicorn directly or deploy to Linux for Gunicorn support." -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  Command:" -ForegroundColor Yellow
+    Write-Host "    poetry run uvicorn app.main:app \" -ForegroundColor Gray
+    Write-Host "      --host 0.0.0.0 \" -ForegroundColor Gray
+    Write-Host "      --port 8000 \" -ForegroundColor Gray
+    Write-Host "      --workers 4 \" -ForegroundColor Gray
+    Write-Host "      --loop uvloop" -ForegroundColor Gray
+    Write-Host ""
+} else {
+    Write-Host "  Server Type:       Gunicorn + Uvicorn Workers" -ForegroundColor Gray
+    Write-Host "  Number of Workers: 4 (adjust based on CPU cores)" -ForegroundColor Gray
+    Write-Host "  Worker Type:       Uvicorn Worker" -ForegroundColor Gray
+    Write-Host "  Bind Address:      0.0.0.0:8000" -ForegroundColor Gray
+    Write-Host "  Dependency Mgr:    Poetry" -ForegroundColor Gray
+    Write-Host "  Environment:       Production" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "  Command:" -ForegroundColor Yellow
+    Write-Host "    poetry run gunicorn app.main:app \" -ForegroundColor Gray
+    Write-Host "      -k uvicorn.workers.UvicornWorker \" -ForegroundColor Gray
+    Write-Host "      -w 4 \" -ForegroundColor Gray
+    Write-Host "      -b 0.0.0.0:8000" -ForegroundColor Gray
+    Write-Host ""
+}
 
 Write-Host "📚 API Documentation: http://<server-ip>:8000/api/v1/docs" -ForegroundColor Yellow
 Write-Host "💚 Health Check:      http://<server-ip>:8000/health" -ForegroundColor Yellow
@@ -170,8 +192,8 @@ Write-Host ""
 Write-Host "ℹ️  To adjust worker count for your deployment:" -ForegroundColor Cyan
 Write-Host "   -w <count>  where count = (2 * CPU_CORES) + 1" -ForegroundColor Gray
 Write-Host ""
-Write-Host "   For 4 cores:  gunicorn ... -w 9" -ForegroundColor Gray
-Write-Host "   For 8 cores:  gunicorn ... -w 17" -ForegroundColor Gray
+Write-Host "   For 4 cores:  -w 9" -ForegroundColor Gray
+Write-Host "   For 8 cores:  -w 17" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Press Ctrl+C to stop the server" -ForegroundColor Yellow
 Write-Host ""
@@ -186,14 +208,24 @@ Write-Host "Starting production server..." -ForegroundColor Cyan
 Write-Host ""
 
 try {
-    poetry run gunicorn app.main:app `
-        -k uvicorn.workers.UvicornWorker `
-        -w 4 `
-        -b "0.0.0.0:8000" `
-        --timeout 120 `
-        --access-logfile "-" `
-        --error-logfile "-" `
-        --log-level info
+    if ($IsWindows) {
+        # Windows: Use Uvicorn with multiple workers
+        poetry run uvicorn app.main:app `
+            --host 0.0.0.0 `
+            --port 8000 `
+            --workers 4 `
+            --loop uvloop
+    } else {
+        # Linux/Mac: Use Gunicorn with Uvicorn workers
+        poetry run gunicorn app.main:app `
+            -k uvicorn.workers.UvicornWorker `
+            -w 4 `
+            -b "0.0.0.0:8000" `
+            --timeout 120 `
+            --access-logfile "-" `
+            --error-logfile "-" `
+            --log-level info
+    }
 } catch {
     Write-Host ""
     Write-Host "❌ ERROR: Production server failed to start" -ForegroundColor Red
