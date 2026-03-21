@@ -13,12 +13,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
-from slowapi.errors import RateLimitExceeded
-from slowapi.middleware import SlowAPIMiddleware
-from slowapi import _rate_limit_exceeded_handler
 
 from app.core.config import settings
-from app.core.rate_limit import limiter
+from app.core.security_middleware import HTTPSRedirectMiddleware, SecurityAuditMiddleware
 from app.api.v1.router import api_router
 from app.db.session import check_db_connection, dispose_engine, init_db_extensions
 
@@ -45,7 +42,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await asyncio.sleep(1)
 
     if not db_ok:
-        raise RuntimeError("Database connection failed during startup")
+        # In development, log warning but continue; in production, fail
+        if settings.is_production:
+            raise RuntimeError("Database connection failed during startup")
+        else:
+            print("WARNING: Database connection failed during startup - continuing in dev mode")
 
     try:
         await init_db_extensions()
@@ -97,7 +98,11 @@ Protected endpoints require a Bearer token in the Authorization header.
         lifespan=lifespan,
     )
 
-    app.state.limiter = limiter
+    # Add security middleware
+    # HTTPS redirect must be first (outermost)
+    if settings.is_production:
+        app.add_middleware(HTTPSRedirectMiddleware)
+    app.add_middleware(SecurityAuditMiddleware)
     
     # Configure CORS
     app.add_middleware(
@@ -111,10 +116,6 @@ Protected endpoints require a Bearer token in the Authorization header.
     
     # Add GZip compression for responses > 1KB
     app.add_middleware(GZipMiddleware, minimum_size=1000)
-
-    # Rate limiting middleware/handler
-    app.add_middleware(SlowAPIMiddleware)
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
     @app.middleware("http")
     async def security_headers_middleware(request: Request, call_next):

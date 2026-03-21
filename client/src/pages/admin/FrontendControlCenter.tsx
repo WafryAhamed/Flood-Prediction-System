@@ -52,21 +52,21 @@ export function FrontendControlCenter() {
       </div>
 
       {/* Tab Bar */}
-      <div className="flex flex-wrap gap-1 bg-gray-800 p-1 rounded-xl border border-gray-700">
+      <div className="flex flex-wrap gap-1 bg-gray-800 p-1 rounded-xl border border-gray-700 overflow-x-auto md:overflow-visible">
         {TAB_CONFIG.map((tab) => {
           const Icon = tab.icon;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase rounded-lg transition-colors ${
+              className={`flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 text-xs font-bold uppercase rounded-lg transition-colors whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-400 hover:bg-gray-700 hover:text-white'
               }`}
             >
               <Icon size={14} />
-              {tab.label}
+              <span className="hidden md:inline">{tab.label}</span>
             </button>
           );
         })}
@@ -179,13 +179,13 @@ function PageVisibilityPanel() {
 
       <div className="space-y-2">
         {(Object.entries(PAGE_LABELS) as [keyof PageVisibilityConfig, string][]).map(([key, label]) => (
-          <div key={key} className="flex items-center justify-between p-3 bg-gray-900 border border-gray-700 rounded-lg">
-            <span className="text-sm font-semibold text-white">{label}</span>
-            <button onClick={() => setPageVisibility(key, !pages[key])}>
+          <div key={key} className="flex items-center justify-between p-2 md:p-3 bg-gray-900 border border-gray-700 rounded-lg gap-2">
+            <span className="text-xs md:text-sm font-semibold text-white truncate">{label}</span>
+            <button onClick={() => setPageVisibility(key, !pages[key])} className="flex-shrink-0">
               {pages[key] ? (
-                <ToggleRight size={28} className="text-green-500" />
+                <ToggleRight size={24} className="text-green-500 md:w-7 md:h-7" />
               ) : (
-                <ToggleLeft size={28} className="text-gray-600" />
+                <ToggleLeft size={24} className="text-gray-600 md:w-7 md:h-7" />
               )}
             </button>
           </div>

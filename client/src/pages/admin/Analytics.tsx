@@ -69,12 +69,12 @@ export function Analytics() {
   ], [historyData, reports, latestReport, broadcastFeed]);
 
   return <div className="space-y-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h2 className="text-4xl font-bold uppercase tracking-tight text-white mb-2">
+          <h2 className="text-2xl md:text-4xl font-bold uppercase tracking-tight text-white mb-2">
             Research & Policy Lab
           </h2>
-          <p className="text-sm font-semibold text-gray-400">
+          <p className="text-xs md:text-sm font-semibold text-gray-400">
             DATA EXPLORER • CLIMATE MODELING
           </p>
         </div>

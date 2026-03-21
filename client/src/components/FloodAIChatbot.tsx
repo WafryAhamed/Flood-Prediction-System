@@ -131,7 +131,13 @@ export function FloodAIChatbot() {
 
   /* Focus input when panel opens ----------------------------------- */
   useEffect(() => {
-    if (isOpen) setTimeout(() => inputRef.current?.focus(), 200);
+    let focusTimeout: ReturnType<typeof setTimeout> | null = null;
+    if (isOpen) {
+      focusTimeout = setTimeout(() => inputRef.current?.focus(), 200);
+    }
+    return () => {
+      if (focusTimeout) clearTimeout(focusTimeout);
+    };
   }, [isOpen]);
 
   const callBackendAssistant = useCallback(async (userText: string): Promise<string | null> => {

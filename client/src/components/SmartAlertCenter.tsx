@@ -32,6 +32,7 @@ export function SmartAlertCenter({ alerts: initialAlerts = [], onAlertDismiss }:
   const [showAlerts, setShowAlerts] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [playbackTimer, setPlaybackTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
   const [preferences, setPreferences] = useState<NotificationPreference[]>([
@@ -164,10 +165,18 @@ export function SmartAlertCenter({ alerts: initialAlerts = [], onAlertDismiss }:
     onAlertDismiss?.(id);
   };
 
+  // Cleanup playback timer on unmount or when timer changes
+  useEffect(() => {
+    return () => {
+      if (playbackTimer) clearTimeout(playbackTimer);
+    };
+  }, [playbackTimer]);
+
   const playVoiceAlert = () => {
     setIsPlaying(true);
     // Simulate voice playback
-    setTimeout(() => setIsPlaying(false), 3000);
+    const timer = setTimeout(() => setIsPlaying(false), 3000);
+    setPlaybackTimer(timer);
 
     // In real app: use Web Speech API or Web Audio API
     const criticalAlerts = alerts.filter((a) => a.type === 'critical' && !a.read);

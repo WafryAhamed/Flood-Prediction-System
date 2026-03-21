@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import { Navigation } from './components/Navigation';
@@ -25,7 +25,7 @@ import { SafetyProfile } from './pages/SafetyProfile';
 import { AdminLogin } from './pages/admin/AdminLogin';
 import { AdminRouteGuard } from './components/admin/AdminRouteGuard';
 import { AdminLayout } from './pages/admin/AdminLayout';
-import { SituationRoom } from './pages/admin/SituationRoom';
+import { AdminCommandCenter } from './pages/admin/AdminCommandCenter';
 import { ModelControl } from './pages/admin/ModelControl';
 import { ReportModeration } from './pages/admin/ReportModeration';
 import { DistrictControl } from './pages/admin/DistrictControl';
@@ -79,7 +79,7 @@ function AppContent() {
         {/* Admin Routes - Protected */}
         <Route path="/admin" element={<AdminRouteGuard />}>
           <Route element={<AdminLayout />}>
-            <Route index element={<SituationRoom />} />
+            <Route index element={<AdminCommandCenter />} />
           <Route path="model-control" element={<ModelControl />} />
           <Route path="reports" element={<ReportModeration />} />
           <Route path="districts" element={<DistrictControl />} />
@@ -127,7 +127,9 @@ function AdminBannerBridge() {
 
 /** Routes gated by admin page-visibility toggles */
 function VisibilityRoutes() {
-  const pv = useAdminControlStore((s) => s.frontendSettings.pageVisibility);
+  const frontendSettings = useAdminControlStore((s) => s.frontendSettings);
+  // Memoize to prevent infinite selector evaluations
+  const pv = useMemo(() => frontendSettings.pageVisibility, [frontendSettings]);
   return (
     <Routes>
       {pv.dashboard && <Route path="/" element={<EmergencyDashboard />} />}

@@ -87,9 +87,13 @@ export function AIAssistant() {
   }, [messages, isLoading, scrollToBottom]);
 
   useEffect(() => {
+    let focusTimeout: ReturnType<typeof setTimeout> | null = null;
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 200);
+      focusTimeout = setTimeout(() => inputRef.current?.focus(), 200);
     }
+    return () => {
+      if (focusTimeout) clearTimeout(focusTimeout);
+    };
   }, [isOpen]);
 
   const sendMessage = useCallback(async (text: string) => {

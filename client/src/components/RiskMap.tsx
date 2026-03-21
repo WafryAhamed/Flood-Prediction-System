@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Polygon, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import { Icon, LatLngBoundsExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -94,10 +94,24 @@ function UserLocationMarker() {
 
 export function RiskMap() {
   const { weather, radarTileUrl, error } = useWeatherData();
-  const mapZones = useMaintenanceStore((s) => s.mapZones.filter((z) => z.visible && z.polygon && z.polygon.length > 2));
-  const mapMarkers = useMaintenanceStore((s) => s.mapMarkers.filter((m) => m.visible));
-  const verifiedReports = useReportStore((s) =>
-    s.reports.filter((r) => r.status === 'verified' || r.status === 'response_dispatched')
+  const mapZones = useMaintenanceStore((s) => s.mapZones);
+  const mapMarkers = useMaintenanceStore((s) => s.mapMarkers);
+  const reports = useReportStore((s) => s.reports);
+
+  // Memoize filtered arrays to prevent infinite re-renders
+  const visibleZones = useMemo(
+    () => mapZones.filter((z) => z.visible && z.polygon && z.polygon.length > 2),
+    [mapZones]
+  );
+
+  const visibleMarkers = useMemo(
+    () => mapMarkers.filter((m) => m.visible),
+    [mapMarkers]
+  );
+
+  const verifiedReports = useMemo(
+    () => reports.filter((r) => r.status === 'verified' || r.status === 'response_dispatched'),
+    [reports]
   );
 
   return (
@@ -123,7 +137,7 @@ export function RiskMap() {
         )}
 
         {/* Dynamic risk zones */}
-        {mapZones.map((zone) => {
+        {visibleZones.map((zone) => {
           const style = ZONE_STYLES[zone.zoneType] || ZONE_STYLES.critical;
           return (
           <Polygon
@@ -140,7 +154,7 @@ export function RiskMap() {
         })}
 
         {/* Dynamic POI Markers */}
-        {mapMarkers.map((m) => (
+        {visibleMarkers.map((m) => (
           <Marker key={m.id} position={m.position} icon={getMarkerIcon(m.markerType)}>
             <Popup>
               <div className="font-black uppercase text-sm">{m.label}</div>

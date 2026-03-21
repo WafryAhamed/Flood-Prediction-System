@@ -9,6 +9,7 @@ import re
 
 from app.schemas.base import BaseSchema, TimestampSchema, IDSchema
 from app.models.auth import UserRole, UserStatus
+from app.core.password_policy import validate_password as validate_pwd_policy
 
 
 # ============================================================================
@@ -68,20 +69,19 @@ class UserRegisterRequest(BaseSchema):
     """User registration request."""
     
     email: EmailStr
-    password: str = Field(min_length=8, max_length=128)
+    password: str = Field(min_length=12, max_length=128, description="Strong password required: 12+ chars, 1+ uppercase, 1+ lowercase, 1+ digit, 1+ special char (@$!%*?&)")
     full_name: str = Field(min_length=1, max_length=255)
     phone: Optional[str] = Field(default=None, max_length=20)
     preferred_language: str = Field(default="en", pattern="^(en|si|ta)$")
     
     @field_validator("password")
     @classmethod
-    def validate_password(cls, v: str) -> str:
-        if not re.search(r"[A-Z]", v):
-            raise ValueError("Password must contain at least one uppercase letter")
-        if not re.search(r"[a-z]", v):
-            raise ValueError("Password must contain at least one lowercase letter")
-        if not re.search(r"\d", v):
-            raise ValueError("Password must contain at least one digit")
+    def validate_password(cls, v: str, info) -> str:
+        """Validate password meets security requirements."""
+        email = info.data.get("email", "")
+        is_valid, error_msg = validate_pwd_policy(v, email)
+        if not is_valid:
+            raise ValueError(error_msg)
         return v
 
 

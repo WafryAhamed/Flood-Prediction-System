@@ -39,8 +39,14 @@ export function CommunityReports() {
   const [submitToast, setSubmitToast] = useState(false);
   const addReport = useReportStore((s) => s.addReport);
   const allReports = useReportStore((s) => s.reports);
-  const mapMarkers = useMaintenanceStore((s) => s.mapMarkers.filter((marker) => marker.visible));
+  const allMapMarkers = useMaintenanceStore((s) => s.mapMarkers);
   const [, setTick] = useState(0);
+
+  // Memoize filtered markers to prevent infinite Zustand updates
+  const mapMarkers = useMemo(
+    () => allMapMarkers.filter((marker) => marker.visible),
+    [allMapMarkers]
+  );
 
   const locationOptions = useMemo(() => {
     const fromMarkers = mapMarkers.slice(0, 8).map((marker) => ({
@@ -84,6 +90,12 @@ export function CommunityReports() {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    if (!submitToast) return;
+    const timer = setTimeout(() => setSubmitToast(false), 5000);
+    return () => clearTimeout(timer);
+  }, [submitToast]);
+
   const handleSubmitReport = useCallback(() => {
     if (!reportType) return;
     const loc = locationOptions[Math.floor(Math.random() * locationOptions.length)] || locationOptions[0];
@@ -98,7 +110,6 @@ export function CommunityReports() {
     setReportType('');
     setDescription('');
     setSubmitToast(true);
-    setTimeout(() => setSubmitToast(false), 5000);
   }, [reportType, description, addReport, locationOptions]);
 
   const formatTimeAgo = (ts: number) => {

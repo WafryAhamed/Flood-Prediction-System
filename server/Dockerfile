@@ -1,34 +1,13 @@
-# Multi-stage Dockerfile for Flood Resilience System backend
-# Build stage
-FROM python:3.12-slim as builder
+# Dockerfile for Flood Resilience System using uv + Granian
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 WORKDIR /app
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Copy dependency files
+COPY pyproject.toml uv.lock ./
 
-# Copy requirements and install Python packages
-COPY pyproject.toml README.md ./
-RUN pip install --no-cache-dir --user -e .
-
-
-# Final stage
-FROM python:3.12-slim
-
-WORKDIR /app
-
-# Install runtime dependencies only
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 \
-    gdal-bin \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy Python packages from builder
-COPY --from=builder /root/.local /root/.local
-ENV PATH=/root/.local/bin:$PATH
+# Install dependencies (frozen = use uv.lock as-is, no-dev = production only)
+RUN uv sync --frozen --no-dev
 
 # Copy application code
 COPY . .
@@ -37,6 +16,18 @@ COPY . .
 RUN useradd -m -u 1000 appuser && \
     mkdir -p /app/logs /app/uploads && \
     chown -R appuser:appuser /app
+
+USER appuser
+
+EXPOSE 8000
+
+# Production server: Granian with 4 workers
+CMD ["uv", "run", "granian", \
+     "--interface", "asgi", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--workers", "4", \
+     "app.main:app"]
 
 USER appuser
 

@@ -13,68 +13,8 @@ export function AdminLayout() {
   const isActive = (path: string) => location.pathname === path;
   const navItems = [{
     path: '/admin',
-    label: 'Situation Room',
+    label: 'Command Center',
     icon: LayoutDashboard
-  }, {
-    path: '/admin/model-control',
-    label: 'Model Ops',
-    icon: Activity
-  }, {
-    path: '/admin/reports',
-    label: 'Intel Hub',
-    icon: MessageSquare
-  }, {
-    path: '/admin/districts',
-    label: 'District Cmd',
-    icon: Map
-  }, {
-    path: '/admin/facilities',
-    label: 'Evac Ops',
-    icon: Building2
-  }, {
-    path: '/admin/infrastructure',
-    label: 'Infra Monitor',
-    icon: ShieldAlert
-  }, {
-    path: '/admin/agriculture',
-    label: 'Agri Console',
-    icon: Sprout
-  }, {
-    path: '/admin/recovery',
-    label: 'Recovery',
-    icon: RefreshCw
-  }, {
-    path: '/admin/broadcast',
-    label: 'Comms',
-    icon: Radio
-  }, {
-    path: '/admin/data',
-    label: 'Data',
-    icon: Database
-  }, {
-    path: '/admin/audit',
-    label: 'Audit',
-    icon: FileText
-  }, {
-    path: '/admin/analytics',
-    label: 'Research',
-    icon: BarChart3
-  }, {
-    path: '/admin/frontend',
-    label: 'Frontend Ctrl',
-    icon: Monitor
-  }, {
-    path: '/admin/maintenance',
-    label: 'Maintenance',
-    icon: Wrench
-  }, {
-    path: '/admin/users',
-    label: 'Users',
-    icon: Users
-  }, {
-    path: '/admin/chatbot',
-    label: 'Chatbot Ctrl',
-    icon: Bot
   }];
   return <div className="min-h-screen bg-bg-dark text-gray-200 font-sans admin-theme flex flex-col">
       {/* Top Bar */}

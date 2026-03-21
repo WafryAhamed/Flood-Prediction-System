@@ -13,12 +13,14 @@ export function AppLoader({ onFinished }: { onFinished: () => void }) {
       { at: 95, text: 'Almost ready...' },
     ];
 
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
     const interval = setInterval(() => {
       setProgress(prev => {
         const next = prev + Math.random() * 15 + 5;
         if (next >= 100) {
           clearInterval(interval);
-          setTimeout(onFinished, 300);
+          timeoutId = setTimeout(onFinished, 300);
           return 100;
         }
         const step = steps.find(s => prev < s.at && next >= s.at);
@@ -27,7 +29,10 @@ export function AppLoader({ onFinished }: { onFinished: () => void }) {
       });
     }, 200);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [onFinished]);
 
   return (
