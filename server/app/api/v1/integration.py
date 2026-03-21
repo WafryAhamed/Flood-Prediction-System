@@ -20,6 +20,8 @@ from app.db.session import get_db
 from app.models.alerts import EmergencyContact
 from app.models.audit import SystemSetting
 from app.services.integration_state import integration_state_service
+from app.core.config import settings
+from app.core.rate_limit import limiter
 
 router = APIRouter(prefix="/integration", tags=["Integration"])
 
@@ -423,7 +425,8 @@ async def delete_integration_map_marker(
 
 
 @router.post("/reports", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_report(payload: ReportCreateRequest) -> dict[str, Any]:
+@limiter.limit(f"{settings.rate_limit_report_requests_per_minute}/minute")
+async def create_report(request: Request, payload: ReportCreateRequest) -> dict[str, Any]:
     return await integration_state_service.create_report(payload.model_dump())
 
 
@@ -445,7 +448,8 @@ async def get_weather_snapshot(
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(payload: ChatRequest) -> ChatResponse:
+@limiter.limit(f"{settings.rate_limit_chat_requests_per_minute}/minute")
+async def chat(request: Request, payload: ChatRequest) -> ChatResponse:
     result = await integration_state_service.chat(
         message=payload.message,
         history=[item.model_dump() for item in payload.history],

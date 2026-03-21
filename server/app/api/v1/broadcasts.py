@@ -37,6 +37,7 @@ from app.schemas.alerts import (
     DeviceTokenRegisterRequest,
 )
 from app.schemas.base import PaginatedResponse, MessageResponse
+from app.api.v1.websocket import alert_manager
 
 
 router = APIRouter(prefix="/broadcasts", tags=["Broadcasts & Alerts"])
@@ -303,6 +304,18 @@ async def publish_broadcast(
     
     await db.commit()
     await db.refresh(broadcast)
+    
+    # Broadcast via WebSocket to all connected clients
+    await alert_manager.broadcast({
+        "type": "new_alert",
+        "data": {
+            "id": str(broadcast.id),
+            "title": broadcast.title,
+            "message": broadcast.message,
+            "severity": broadcast.priority.value if broadcast.priority else "MEDIUM",
+            "created_at": broadcast.active_from.isoformat() if broadcast.active_from else datetime.now(timezone.utc).isoformat(),
+        }
+    })
     
     # In production, trigger async task to deliver notifications
     # await celery_app.send_task("deliver_broadcast", args=[str(broadcast.id)])

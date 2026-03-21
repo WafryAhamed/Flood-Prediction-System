@@ -13,8 +13,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi import _rate_limit_exceeded_handler
 
 from app.core.config import settings
+from app.core.rate_limit import limiter
 from app.api.v1.router import api_router
 from app.db.session import check_db_connection, dispose_engine, init_db_extensions
 
@@ -43,7 +47,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if not db_ok:
         raise RuntimeError("Database connection failed during startup")
 
-    await init_db_extensions()
+    try:
+        await init_db_extensions()
+    except Exception as e:
+        print(f"Warning: Database extension initialization failed: {e}")
+        print("Continuing startup without extensions...")
     
     yield
     
@@ -78,9 +86,9 @@ Most endpoints support both authenticated and public access.
 Protected endpoints require a Bearer token in the Authorization header.
 
 ### Rate Limiting
-- Public endpoints: 100 requests/minute
-- Authenticated endpoints: 500 requests/minute
-- Admin endpoints: 1000 requests/minute
+- Auth endpoints: configurable via RATE_LIMIT_AUTH_REQUESTS_PER_MINUTE
+- Chat endpoints: configurable via RATE_LIMIT_CHAT_REQUESTS_PER_MINUTE
+- Report creation endpoints: configurable via RATE_LIMIT_REPORT_REQUESTS_PER_MINUTE
         """,
         version=settings.version,
         openapi_url=f"{settings.api_v1_prefix}/openapi.json" if settings.debug else None,
@@ -88,6 +96,8 @@ Protected endpoints require a Bearer token in the Authorization header.
         redoc_url=f"{settings.api_v1_prefix}/redoc" if settings.debug else None,
         lifespan=lifespan,
     )
+
+    app.state.limiter = limiter
     
     # Configure CORS
     app.add_middleware(
@@ -101,6 +111,34 @@ Protected endpoints require a Bearer token in the Authorization header.
     
     # Add GZip compression for responses > 1KB
     app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+    # Rate limiting middleware/handler
+    app.add_middleware(SlowAPIMiddleware)
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    @app.middleware("http")
+    async def security_headers_middleware(request: Request, call_next):
+        """Set secure response headers for all API responses."""
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["X-XSS-Protection"] = "0"
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self' http: https: ws: wss:; "
+            "font-src 'self' data:; "
+            "object-src 'none'; "
+            "frame-ancestors 'none'; "
+            "base-uri 'self';"
+        )
+        if settings.is_production:
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        return response
     
     # Custom exception handlers
     @app.exception_handler(RequestValidationError)

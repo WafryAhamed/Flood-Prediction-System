@@ -41,7 +41,8 @@ def run_migrations_offline() -> None:
         $ alembic upgrade head
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    # Use DATABASE_URL_SYNC from settings (reads from environment variables, not hardcoded)
+    url = settings.database_url_sync or settings.database_url
     context.configure(
         url=url,
         target_metadata=target_metadata,

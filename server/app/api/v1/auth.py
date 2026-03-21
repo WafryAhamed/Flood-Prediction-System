@@ -26,13 +26,17 @@ from app.schemas.auth import (
     ChangePasswordRequest,
 )
 from app.schemas.base import MessageResponse
+from app.core.config import settings
+from app.core.rate_limit import limiter
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit(f"{settings.rate_limit_auth_requests_per_minute}/minute")
 async def register(
+    request: Request,
     data: UserRegisterRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
@@ -52,6 +56,7 @@ async def register(
 
 
 @router.post("/login", response_model=LoginResponse)
+@limiter.limit(f"{settings.rate_limit_auth_requests_per_minute}/minute")
 async def login(
     data: LoginRequest,
     request: Request,
@@ -80,7 +85,9 @@ async def login(
 
 
 @router.post("/refresh", response_model=TokenResponse)
+@limiter.limit("10/minute")
 async def refresh_token(
+    request: Request,
     data: TokenRefreshRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
@@ -98,7 +105,9 @@ async def refresh_token(
 
 
 @router.post("/logout", response_model=MessageResponse)
+@limiter.limit("30/minute")
 async def logout(
+    request: Request,
     current_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
@@ -133,7 +142,9 @@ async def update_current_user_profile(
 
 
 @router.post("/me/change-password", response_model=MessageResponse)
+@limiter.limit(f"{settings.rate_limit_auth_requests_per_minute}/minute")
 async def change_password(
+    request: Request,
     data: ChangePasswordRequest,
     current_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],

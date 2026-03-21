@@ -3,11 +3,12 @@ Citizen report schemas.
 """
 from datetime import datetime
 from typing import Any, Optional, List
-from pydantic import Field
+from pydantic import Field, field_validator
 from uuid import UUID
 
 from app.schemas.base import BaseSchema, IDSchema
 from app.models.reports import ReportType, ReportStatus, UrgencyLevel, MediaType
+from app.core.sanitize import sanitize_text
 
 
 # ============================================================================
@@ -69,6 +70,14 @@ class ReportCreate(ReportBase):
     is_anonymous: bool = False
     people_affected: Optional[int] = Field(default=None, ge=0)
     media_ids: List[UUID] = []  # Pre-uploaded media IDs
+    
+    @field_validator("title", "description", "location_description", "reporter_name", mode="before")
+    @classmethod
+    def sanitize_text_fields(cls, v: Optional[str]) -> Optional[str]:
+        """Sanitize free-text fields to prevent XSS attacks."""
+        if v is None:
+            return None
+        return sanitize_text(v)
 
 
 class ReportUpdate(BaseSchema):

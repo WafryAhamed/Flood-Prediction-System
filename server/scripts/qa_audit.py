@@ -13,6 +13,7 @@ Tests:
 
 import asyncio
 import json
+import os
 from datetime import datetime
 from typing import Any
 from uuid import uuid4
@@ -25,7 +26,10 @@ from sqlalchemy.orm import sessionmaker
 # Test configuration
 BASE_URL = "http://127.0.0.1:8000"
 API_V1_PREFIX = "/api/v1"
-DATABASE_URL = "postgresql+asyncpg://postgres:2001@localhost:5432/flood_resilience"
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://postgres@localhost:5432/flood_resilience",
+)
 
 # Test results storage
 test_results = {

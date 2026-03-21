@@ -4,7 +4,7 @@ Security utilities for password hashing and JWT handling.
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Any
 import uuid
-from passlib.context import CryptContext
+import bcrypt
 from jose import jwt, JWTError
 from pydantic import ValidationError
 
@@ -12,18 +12,22 @@ from app.core.config import settings
 from app.schemas.auth import TokenPayload
 
 
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
 def hash_password(password: str) -> str:
     """Hash a password using bcrypt."""
-    return pwd_context.hash(password)
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+    return hashed.decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against its hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    """Verify a password against its bcrypt hash."""
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode("utf-8"),
+            hashed_password.encode("utf-8")
+        )
+    except Exception:
+        return False
 
 
 def create_access_token(

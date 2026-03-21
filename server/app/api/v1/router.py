@@ -53,5 +53,8 @@ _include_module_routers(
 # Weather
 _include_module_routers("app.api.v1.weather", ["router"])
 
+# WebSocket endpoints
+_include_module_routers("app.api.v1.websocket", ["router"])
+
 # Frontend Integration
 api_router.include_router(integration_router)

@@ -1,24 +1,43 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'Admin@2026';
+// IMPORTANT: Password validation must be done via backend API, not client-side hardcoding
+// See: /api/v1/auth/login endpoint for proper credential validation
+// This is a demo component - production admin access should use the standard /auth/login flow
 
 export function AdminLogin() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      localStorage.setItem('admin_authenticated', 'true');
-      navigate('/admin', { replace: true });
-    } else {
-      setError('Invalid username or password.');
+    try {
+      // Call backend auth endpoint for secure credential validation
+      const response = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Store token and mark as authenticated
+        localStorage.setItem('admin_authenticated', 'true');
+        localStorage.setItem('auth_token', data?.tokens?.access_token ?? '');
+        navigate('/admin', { replace: true });
+      } else {
+        setError('Invalid email or password.');
+      }
+    } catch {
+      setError('Authentication service unavailable. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -39,16 +58,16 @@ export function AdminLogin() {
         )}
 
         <div className="mb-4">
-          <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-            Username
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            Email
           </label>
           <input
-            id="username"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-            autoComplete="username"
+            autoComplete="email"
             required
           />
         </div>
@@ -70,9 +89,10 @@ export function AdminLogin() {
 
         <button
           type="submit"
-          className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+          disabled={isLoading}
+          className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg transition-colors"
         >
-          Login
+          {isLoading ? 'Logging in...' : 'Login'}
         </button>
       </form>
     </div>

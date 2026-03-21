@@ -28,7 +28,7 @@ async def ensure_database_exists() -> None:
     raw_url = (
         os.getenv("DATABASE_URL_SYNC")
         or os.getenv("DATABASE_URL")
-        or "postgresql://postgres:2001@localhost:5432/flood_resilience"
+        or "postgresql://postgres@localhost:5432/flood_resilience"
     )
 
     host, port, user, password, target_db = _parse_db_url(raw_url)

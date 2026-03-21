@@ -7,6 +7,7 @@ Tests all system components with proper authentication and correct API schemas.
 
 import asyncio
 import json
+import os
 from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
@@ -15,7 +16,10 @@ import httpx
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import create_async_engine
 
-DATABASE_URL = "postgresql+asyncpg://postgres:2001@localhost:5432/flood_resilience"
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://postgres@localhost:5432/flood_resilience",
+)
 BASE_URL = "http://127.0.0.1:8000"
 API_V1_PREFIX = "/api/v1"
 

@@ -59,7 +59,6 @@ async def init_db_extensions() -> None:
     async with engine.connect() as conn:
         statements = [
             ("postgis", "CREATE EXTENSION IF NOT EXISTS postgis"),
-            ("vector", "CREATE EXTENSION IF NOT EXISTS vector"),
             ("uuid-ossp", 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'),
         ]
 
@@ -74,6 +73,17 @@ async def init_db_extensions() -> None:
                     extension_name,
                     exc,
                 )
+        
+        # Optional: Try pgvector but don't fail if unavailable
+        try:
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            await conn.commit()
+        except Exception as exc:
+            await conn.rollback()
+            logger.warning(
+                "pgvector extension not available (optional): %s",
+                exc,
+            )
 
 
 async def check_db_connection() -> bool:

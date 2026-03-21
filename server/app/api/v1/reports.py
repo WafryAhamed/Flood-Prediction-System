@@ -7,7 +7,7 @@ from typing import Annotated, Any
 from uuid import UUID
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -36,6 +36,8 @@ from app.schemas.reports import (
 )
 from app.schemas.base import PaginatedResponse, MessageResponse
 from app.core.security import generate_report_id
+from app.core.config import settings
+from app.core.rate_limit import limiter
 
 
 router = APIRouter(prefix="/reports", tags=["Citizen Reports"])
@@ -306,7 +308,9 @@ async def get_report(
 
 
 @router.post("", response_model=ReportResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit(f"{settings.rate_limit_report_requests_per_minute}/minute")
 async def create_report(
+    request: Request,
     data: ReportCreateRequest,
     current_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],

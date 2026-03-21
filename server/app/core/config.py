@@ -88,6 +88,7 @@ class Settings(BaseSettings):
     # =========================================================================
     rate_limit_enabled: bool = True
     rate_limit_requests_per_minute: int = 60
+    rate_limit_auth_requests_per_minute: int = 5
     rate_limit_chat_requests_per_minute: int = 10
     rate_limit_report_requests_per_minute: int = 5
 
@@ -120,7 +121,7 @@ class Settings(BaseSettings):
     # SEED DATA
     # =========================================================================
     seed_admin_email: str = "admin@floodresilience.lk"
-    seed_admin_password: str = "AdminPass123!"
+    seed_admin_password: str = "change-me-in-env"
     seed_admin_name: str = "System Administrator"
 
     @property
