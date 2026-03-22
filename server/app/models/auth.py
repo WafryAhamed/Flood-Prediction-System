@@ -169,6 +169,7 @@ class RefreshToken(BaseModel):
     __table_args__ = (
         Index("ix_refresh_tokens_token", "token"),
         Index("ix_refresh_tokens_user_id", "user_id"),
+        Index("ix_refresh_tokens_jti", "jti"),
     )
 
     user_id: Mapped[uuid.UUID] = mapped_column(
@@ -177,6 +178,7 @@ class RefreshToken(BaseModel):
         nullable=False,
     )
     token: Mapped[str] = mapped_column(String(500), unique=True, nullable=False)
+    jti: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     is_revoked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)

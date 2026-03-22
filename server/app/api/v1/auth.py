@@ -76,7 +76,9 @@ async def login(
     tokens = await auth_service.create_tokens(user)
     
     # Create admin session for admin users
-    if user.role.value in ["super_admin", "admin", "moderator", "operator", "analyst"]:
+    admin_roles = {"super_admin", "admin", "moderator", "operator", "analyst"}
+    user_role_names = {role.name for role in user.roles}
+    if user_role_names & admin_roles:  # Check if any user role intersects with admin_roles
         ip_address = await get_client_ip(request)
         user_agent = await get_user_agent(request)
         await auth_service.create_admin_session(user, ip_address, user_agent)

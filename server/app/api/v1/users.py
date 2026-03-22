@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.api.deps import AdminUser, SuperAdminUser
 from app.services.auth_service import AuthService
-from app.models.auth import User, UserRole
+from app.models.auth import User, UserRole, Role, UserStatus
 from app.schemas.auth import (
     UserResponse,
     UserListResponse,
@@ -37,9 +37,9 @@ async def list_users(
     is_verified: bool | None = Query(None, description="Filter by verified status"),
 ):
     """List all users with pagination and filtering (admin only)."""
-    # Build query
-    query = select(User).where(User.deleted_at.is_(None))
-    count_query = select(func.count(User.id)).where(User.deleted_at.is_(None))
+    # Build query - exclude deleted users
+    query = select(User).where(User.status != UserStatus.DELETED)
+    count_query = select(func.count(User.id)).where(User.status != UserStatus.DELETED)
     
     # Apply filters
     if search:
@@ -51,12 +51,18 @@ async def list_users(
         count_query = count_query.where(search_filter)
     
     if role:
-        query = query.where(User.role == role)
-        count_query = count_query.where(User.role == role)
+        # Filter by role name through the many-to-many relationship
+        query = query.join(Role).where(Role.name == role)
+        count_query = count_query.join(Role).where(Role.name == role)
     
     if is_active is not None:
-        query = query.where(User.is_active == is_active)
-        count_query = count_query.where(User.is_active == is_active)
+        # is_active maps to status: ACTIVE=True, others=False
+        if is_active:
+            query = query.where(User.status == UserStatus.ACTIVE)
+            count_query = count_query.where(User.status == UserStatus.ACTIVE)
+        else:
+            query = query.where(User.status != UserStatus.ACTIVE)
+            count_query = count_query.where(User.status != UserStatus.ACTIVE)
     
     if is_verified is not None:
         query = query.where(User.is_verified == is_verified)
@@ -172,7 +178,19 @@ async def update_user_role(
             detail="Cannot change your own role",
         )
     
-    user.role = data.role
+    # Get the role by name
+    role_result = await db.execute(select(Role).where(Role.name == data.role))
+    role = role_result.scalar_one_or_none()
+    
+    if role is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Role '{data.role}' not found",
+        )
+    
+    # Clear existing roles and assign new role
+    user.roles.clear()
+    user.roles.append(role)
     await db.commit()
     await db.refresh(user)
     
@@ -195,7 +213,7 @@ async def activate_user(
             detail="User not found",
         )
     
-    user.is_active = True
+    user.status = UserStatus.ACTIVE
     await db.commit()
     await db.refresh(user)
     
@@ -225,7 +243,7 @@ async def deactivate_user(
             detail="Cannot deactivate your own account",
         )
     
-    user.is_active = False
+    user.status = UserStatus.SUSPENDED
     await db.commit()
     await db.refresh(user)
     

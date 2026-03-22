@@ -4,6 +4,7 @@ Security utilities for password hashing and JWT handling.
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Any
 import uuid
+import hashlib
 import bcrypt
 from jose import jwt, JWTError
 from pydantic import ValidationError
@@ -17,6 +18,16 @@ def hash_password(password: str) -> str:
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
     return hashed.decode("utf-8")
+
+
+def hash_token(token: str) -> str:
+    """Hash a token using SHA256 (handles long tokens like refresh tokens)."""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def verify_token_hash(token: str, stored_hash: str) -> bool:
+    """Verify a token against its SHA256 hash."""
+    return hash_token(token) == stored_hash
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:

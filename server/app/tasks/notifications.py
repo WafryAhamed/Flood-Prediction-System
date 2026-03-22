@@ -68,11 +68,12 @@ async def _deliver_broadcast_async(broadcast_id: str) -> dict:
         target_district_ids = [t.district_id for t in broadcast.targets if t.district_id]
         target_zone_ids = [t.zone_id for t in broadcast.targets if t.zone_id]
         
-        # Find users in targeted areas
-        user_query = select(User).where(User.is_active == True)
+        # Find active users in targeted areas
+        from app.models.auth import UserStatus
+        user_query = select(User).where(User.status == UserStatus.ACTIVE)
         
         if target_district_ids:
-            user_query = user_query.where(User.home_district_id.in_(target_district_ids))
+            user_query = user_query.where(User.district_id.in_(target_district_ids))
         
         user_result = await db.execute(user_query)
         users = user_result.scalars().all()

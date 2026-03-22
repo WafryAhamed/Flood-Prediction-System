@@ -17,6 +17,8 @@ from app.core.security import (
     create_refresh_token,
     validate_refresh_token,
     generate_public_id,
+    hash_token,
+    verify_token_hash,
 )
 from app.models.auth import User, Role, RefreshToken, AdminSession, UserRole, UserStatus
 from app.schemas.auth import (
@@ -40,7 +42,7 @@ class AuthService:
             select(User).where(
                 and_(
                     User.email == email.lower(),
-                    User.is_deleted == False,
+                    User.status != UserStatus.DELETED,
                 )
             )
         )
@@ -52,7 +54,7 @@ class AuthService:
             select(User).where(
                 and_(
                     User.id == user_id,
-                    User.is_deleted == False,
+                    User.status != UserStatus.DELETED,
                 )
             )
         )
@@ -64,7 +66,7 @@ class AuthService:
             select(User).where(
                 and_(
                     User.public_id == public_id,
-                    User.is_deleted == False,
+                    User.status != UserStatus.DELETED,
                 )
             )
         )
@@ -177,11 +179,14 @@ class AuthService:
     
     async def create_tokens(self, user: User) -> TokenResponse:
         """Create access and refresh tokens for a user."""
+        # Get the user's primary role (first role in the list)
+        role_name = user.roles[0].name if user.roles else "user"
+        
         # Create access token
         access_token = create_access_token(
             subject=str(user.id),
             email=user.email,
-            role=user.role.value,
+            role=role_name,
         )
         
         # Create refresh token
@@ -189,10 +194,10 @@ class AuthService:
             subject=str(user.id),
         )
         
-        # Store refresh token
+        # Store refresh token (hash it for security)
         token_record = RefreshToken(
             user_id=user.id,
-            token_hash=hash_password(refresh_token),  # Hash for security
+            token=hash_token(refresh_token),  # Hash for security (SHA256)
             jti=jti,
             expires_at=expires_at,
         )
@@ -233,6 +238,10 @@ class AuthService:
         token_record = result.scalar_one_or_none()
         
         if token_record is None:
+            return None
+        
+        # Verify the token hash matches (ensures token integrity)
+        if not verify_token_hash(refresh_token, token_record.token):
             return None
         
         # Get the user
@@ -304,9 +313,7 @@ class AuthService:
     
     async def soft_delete_user(self, user: User) -> None:
         """Soft delete a user."""
-        user.is_deleted = True
-        user.deleted_at = datetime.now(timezone.utc)
-        user.status = UserStatus.INACTIVE
+        user.status = UserStatus.DELETED
         
         # Revoke all tokens
         await self.revoke_all_user_tokens(user.id)

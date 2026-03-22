@@ -7,6 +7,11 @@ import {
   Settings,
   AlertTriangle,
   Activity,
+  Sprout,
+  Wrench,
+  MapPin,
+  BookOpen,
+  History,
 } from 'lucide-react';
 import { useAdminCentralStore } from '../../stores/adminCentralStore';
 
@@ -17,8 +22,13 @@ const ReportsTab = React.lazy(() => import('./tabs/ReportsTab'));
 const ResourcesTab = React.lazy(() => import('./tabs/ResourcesTab'));
 const WeatherTab = React.lazy(() => import('./tabs/WeatherTab'));
 const SettingsTab = React.lazy(() => import('./tabs/SettingsTab'));
+const AgricultureTab = React.lazy(() => import('./tabs/AgricultureTab'));
+const RecoveryTab = React.lazy(() => import('./tabs/RecoveryTab'));
+const RoutesTab = React.lazy(() => import('./tabs/RoutesTab'));
+const EducationTab = React.lazy(() => import('./tabs/EducationTab'));
+const HistoryTab = React.lazy(() => import('./tabs/HistoryTab'));
 
-type TabId = 'situation' | 'users' | 'reports' | 'resources' | 'weather' | 'settings';
+type TabId = 'situation' | 'users' | 'reports' | 'resources' | 'weather' | 'settings' | 'agriculture' | 'recovery' | 'routes' | 'education' | 'history';
 
 interface TabConfig {
   id: TabId;
@@ -33,6 +43,11 @@ const TABS: TabConfig[] = [
   { id: 'reports', label: 'Reports', icon: MessageSquare, badge: true },
   { id: 'resources', label: 'Resources', icon: Building2 },
   { id: 'weather', label: 'Weather', icon: AlertTriangle },
+  { id: 'agriculture', label: 'Agriculture', icon: Sprout },
+  { id: 'recovery', label: 'Recovery', icon: Wrench },
+  { id: 'routes', label: 'Routes', icon: MapPin },
+  { id: 'education', label: 'Education', icon: BookOpen },
+  { id: 'history', label: 'History', icon: History },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
@@ -82,6 +97,16 @@ export function AdminCommandCenter() {
         return <ResourcesTab />;
       case 'weather':
         return <WeatherTab />;
+      case 'agriculture':
+        return <AgricultureTab />;
+      case 'recovery':
+        return <RecoveryTab />;
+      case 'routes':
+        return <RoutesTab />;
+      case 'education':
+        return <EducationTab />;
+      case 'history':
+        return <HistoryTab />;
       case 'settings':
         return <SettingsTab />;
       default:
