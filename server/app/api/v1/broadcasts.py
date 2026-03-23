@@ -38,6 +38,7 @@ from app.schemas.alerts import (
 )
 from app.schemas.base import PaginatedResponse, MessageResponse
 from app.api.v1.websocket import alert_manager
+from app.services.integration_state import integration_state_service
 
 
 router = APIRouter(prefix="/broadcasts", tags=["Broadcasts & Alerts"])
@@ -316,6 +317,10 @@ async def publish_broadcast(
             "created_at": broadcast.active_from.isoformat() if broadcast.active_from else datetime.now(timezone.utc).isoformat(),
         }
     })
+    
+    # Publish SSE event to update admin control store on all connected clients
+    fresh_admin = await integration_state_service.get_bootstrap()
+    await integration_state_service.publish_event("adminControl.updated", fresh_admin["adminControl"])
     
     # In production, trigger async task to deliver notifications
     # await celery_app.send_task("deliver_broadcast", args=[str(broadcast.id)])
