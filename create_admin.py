@@ -7,7 +7,7 @@ import sys
 import os
 
 # Add server directory to path
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "server"))
 
 from app.db.session import async_session_factory
 from app.models.auth import User, UserStatus, UserRole, Role

@@ -265,6 +265,9 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
             item.id === optimisticId ? savedContact : item
           ),
         }));
+        // CRITICAL FIX #1: Re-sync all contacts from backend to ensure consistency
+        // This prevents ID mismatches between optimistic and actual server IDs
+        void get().loadEmergencyContacts();
       })
       .catch((error) => {
         console.warn('Failed to create emergency contact in backend:', error);
@@ -280,6 +283,8 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
         set((s) => ({
           emergencyContacts: s.emergencyContacts.map((c) => (c.id === id ? savedContact : c)),
         }));
+        // CRITICAL FIX #1: Reload to ensure state consistency with server
+        void get().loadEmergencyContacts();
       })
       .catch((error) => {
         console.warn('Failed to update emergency contact in backend:', error);
@@ -294,10 +299,15 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
     const removed = get().emergencyContacts.find((c) => c.id === id);
     set((s) => ({ emergencyContacts: s.emergencyContacts.filter((c) => c.id !== id) }));
 
-    void apiDeleteEmergencyContact(id).catch((error) => {
-      console.warn('Failed to delete emergency contact in backend:', error);
-      if (removed) {
-        set((s) => ({ emergencyContacts: [...s.emergencyContacts, removed] }));
+    void apiDeleteEmergencyContact(id)
+      .then(() => {
+        // CRITICAL FIX #1: Reload to ensure state consistency with server
+        void get().loadEmergencyContacts();
+      })
+      .catch((error) => {
+        console.warn('Failed to delete emergency contact in backend:', error);
+        if (removed) {
+          set((s) => ({ emergencyContacts: [...s.emergencyContacts, removed] }));
       }
     });
   },

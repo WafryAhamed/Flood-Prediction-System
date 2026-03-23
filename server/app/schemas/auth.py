@@ -3,7 +3,7 @@ Authentication and authorization schemas.
 """
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 from uuid import UUID
 import re
 
@@ -113,20 +113,46 @@ class UserResponse(UserBase, IDSchema):
     """User response schema."""
     
     public_id: str
-    role: UserRole
+    role: Optional[UserRole] = None
     status: UserStatus
     is_verified: bool
     trust_score: float
     avatar_url: Optional[str] = None
     last_login_at: Optional[datetime] = None
     created_at: datetime
+    
+    @model_validator(mode='before')
+    @classmethod
+    def extract_role_from_orm(cls, data):
+        """Extract first role from ORM roles relationship."""
+        # If this is an ORM object, convert it to a dict with role extracted from roles
+        if not isinstance(data, dict) and hasattr(data, 'roles'):
+            roles = getattr(data, 'roles', [])
+            first_role_name = roles[0].name if roles else None
+            # Convert ORM to dict
+            return {
+                'id': str(data.id),
+                'email': data.email,
+                'full_name': data.full_name,
+                'phone': data.phone,
+                'public_id': data.public_id,
+                'role': first_role_name,
+                'status': data.status,
+                'is_verified': data.is_verified,
+                'trust_score': data.trust_score,
+                'avatar_url': getattr(data, 'avatar_url', None),
+                'last_login_at': data.last_login_at,
+                'created_at': data.created_at,
+                'preferred_language': getattr(data, 'preferred_language', 'en'),
+            }
+        return data
 
 
 class UserDetailResponse(UserResponse):
     """Detailed user response for admin."""
     
     is_mfa_enabled: bool
-    login_count: int
+    last_active_at: Optional[datetime] = None
     updated_at: datetime
 
 

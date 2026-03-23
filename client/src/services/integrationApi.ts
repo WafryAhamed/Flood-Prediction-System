@@ -1,12 +1,13 @@
 type JsonRecord = Record<string, unknown>;
 
-const env = (import.meta as ImportMeta & { env: Record<string, string | undefined> }).env;
-const rawBackendUrl = (env.VITE_BACKEND_URL || '').trim();
-const backendBase = rawBackendUrl ? rawBackendUrl.replace(/\/+$/, '') : '';
+// Use Vite proxy for all API calls. The proxy is configured in vite.config.ts
+// This ensures consistent routing and simplifies CORS handling.
 const integrationPrefix = '/api/v1/integration';
 
 function buildUrl(path: string): string {
-  return `${backendBase}${integrationPrefix}${path}`;
+  // Always use relative URLs to leverage Vite's proxy in dev mode
+  // In production (built assets), these are absolute to the same origin
+  return `${integrationPrefix}${path}`;
 }
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {

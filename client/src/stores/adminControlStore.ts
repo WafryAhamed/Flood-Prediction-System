@@ -192,6 +192,22 @@ function pickPersistableState(state: AdminControlStore) {
   };
 }
 
+/**
+ * CRITICAL FIX #4: Debounced persistence to prevent concurrent saves
+ * Multiple rapid mutations would normally trigger multiple concurrent API calls
+ * This debounces them to a single call after 500ms of inactivity
+ */
+let persistenceTimeout: NodeJS.Timeout | null = null;
+const debouncedSave = (state: ReturnType<typeof pickPersistableState>) => {
+  if (persistenceTimeout) {
+    clearTimeout(persistenceTimeout);
+  }
+  persistenceTimeout = setTimeout(() => {
+    void saveAdminControlState(state);
+    persistenceTimeout = null;
+  }, 500);
+};
+
 export const useAdminControlStore = create<AdminControlStore>((set, get) => ({
   hydrateFromBackend: (incoming) => {
     const source = incoming as Partial<ReturnType<typeof pickPersistableState>>;
@@ -218,19 +234,19 @@ export const useAdminControlStore = create<AdminControlStore>((set, get) => ({
     set((s) => ({
       broadcastFeed: [{ ...item, id: `bf-${nextBroadcastId++}` }, ...s.broadcastFeed],
     }));
-    void saveAdminControlState(pickPersistableState(get()));
+    debouncedSave(pickPersistableState(get()));
   },
   removeBroadcastItem: (id) => {
     set((s) => ({
       broadcastFeed: s.broadcastFeed.filter((b) => b.id !== id),
     }));
-    void saveAdminControlState(pickPersistableState(get()));
+    debouncedSave(pickPersistableState(get()));
   },
   toggleBroadcastItem: (id) => {
     set((s) => ({
       broadcastFeed: s.broadcastFeed.map((b) => b.id === id ? { ...b, active: !b.active } : b),
     }));
-    void saveAdminControlState(pickPersistableState(get()));
+    debouncedSave(pickPersistableState(get()));
   },
 
   // ── Dashboard Resources ──
@@ -239,7 +255,7 @@ export const useAdminControlStore = create<AdminControlStore>((set, get) => ({
     set((s) => ({
       dashboardResources: s.dashboardResources.map((r) => r.id === id ? { ...r, ...updates } : r),
     }));
-    void saveAdminControlState(pickPersistableState(get()));
+    debouncedSave(pickPersistableState(get()));
   },
 
   // ── Agriculture ──
@@ -248,21 +264,21 @@ export const useAdminControlStore = create<AdminControlStore>((set, get) => ({
     set((s) => ({
       agricultureAdvisories: s.agricultureAdvisories.map((a) => a.id === id ? { ...a, ...updates } : a),
     }));
-    void saveAdminControlState(pickPersistableState(get()));
+    debouncedSave(pickPersistableState(get()));
   },
   agricultureActions: SEED_AGRI_ACTIONS,
   updateAction: (id, text) => {
     set((s) => ({
       agricultureActions: s.agricultureActions.map((a) => a.id === id ? { ...a, text } : a),
     }));
-    void saveAdminControlState(pickPersistableState(get()));
+    debouncedSave(pickPersistableState(get()));
   },
   agricultureZones: SEED_AGRI_ZONES,
   updateZone: (id, updates) => {
     set((s) => ({
       agricultureZones: s.agricultureZones.map((z) => z.id === id ? { ...z, ...updates } : z),
     }));
-    void saveAdminControlState(pickPersistableState(get()));
+    debouncedSave(pickPersistableState(get()));
   },
 
   // ── Recovery ──
@@ -271,21 +287,21 @@ export const useAdminControlStore = create<AdminControlStore>((set, get) => ({
     set((s) => ({
       recoveryProgress: s.recoveryProgress.map((p) => p.id === id ? { ...p, percent: Math.max(0, Math.min(100, percent)) } : p),
     }));
-    void saveAdminControlState(pickPersistableState(get()));
+    debouncedSave(pickPersistableState(get()));
   },
   recoveryNeeds: SEED_RECOVERY_NEEDS,
   updateRecoveryNeed: (id, updates) => {
     set((s) => ({
       recoveryNeeds: s.recoveryNeeds.map((n) => n.id === id ? { ...n, ...updates } : n),
     }));
-    void saveAdminControlState(pickPersistableState(get()));
+    debouncedSave(pickPersistableState(get()));
   },
   recoveryUpdates: SEED_RECOVERY_UPDATES,
   addRecoveryUpdate: (item) => {
     set((s) => ({
       recoveryUpdates: [{ ...item, id: `ru-${nextRecoveryUpdateId++}` }, ...s.recoveryUpdates],
     }));
-    void saveAdminControlState(pickPersistableState(get()));
+    debouncedSave(pickPersistableState(get()));
   },
   recoveryResources: SEED_RECOVERY_RESOURCES,
 
@@ -295,21 +311,21 @@ export const useAdminControlStore = create<AdminControlStore>((set, get) => ({
     set((s) => ({
       learnGuides: s.learnGuides.map((g) => g.id === id ? { ...g, ...updates } : g),
     }));
-    void saveAdminControlState(pickPersistableState(get()));
+    debouncedSave(pickPersistableState(get()));
   },
   learnTips: SEED_LEARN_TIPS,
   updateLearnTips: (id, tips) => {
     set((s) => ({
       learnTips: s.learnTips.map((t) => t.id === id ? { ...t, tips } : t),
     }));
-    void saveAdminControlState(pickPersistableState(get()));
+    debouncedSave(pickPersistableState(get()));
   },
   featuredWisdom: SEED_WISDOM,
   updateFeaturedWisdom: (updates) => {
     set((s) => ({
       featuredWisdom: { ...s.featuredWisdom, ...updates },
     }));
-    void saveAdminControlState(pickPersistableState(get()));
+    debouncedSave(pickPersistableState(get()));
   },
 
   // ── Frontend Settings ──
@@ -318,7 +334,7 @@ export const useAdminControlStore = create<AdminControlStore>((set, get) => ({
     set((s) => ({
       frontendSettings: { ...s.frontendSettings, ...updates },
     }));
-    void saveAdminControlState(pickPersistableState(get()));
+    debouncedSave(pickPersistableState(get()));
   },
   setPageVisibility: (page, visible) => {
     set((s) => ({
@@ -327,12 +343,12 @@ export const useAdminControlStore = create<AdminControlStore>((set, get) => ({
         pageVisibility: { ...s.frontendSettings.pageVisibility, [page]: visible },
       },
     }));
-    void saveAdminControlState(pickPersistableState(get()));
+    debouncedSave(pickPersistableState(get()));
   },
   setSiteFloodMode: (mode) => {
     set((s) => ({
       frontendSettings: { ...s.frontendSettings, siteFloodMode: mode },
     }));
-    void saveAdminControlState(pickPersistableState(get()));
+    debouncedSave(pickPersistableState(get()));
   },
 }));

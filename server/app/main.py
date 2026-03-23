@@ -105,6 +105,9 @@ Protected endpoints require a Bearer token in the Authorization header.
     app.add_middleware(SecurityAuditMiddleware)
     
     # Configure CORS
+    # Allow frontend to call backend APIs and subscribe to SSE
+    # In development: allows localhost:5173 to call localhost:8000
+    # In production: configure CORS_ORIGINS env var with actual frontend domain
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -112,6 +115,7 @@ Protected endpoints require a Bearer token in the Authorization header.
         allow_methods=["*"],
         allow_headers=["*"],
         expose_headers=["X-Total-Count", "X-Page", "X-Page-Size"],
+        max_age=3600,  # Cache CORS preflight for 1 hour
     )
     
     # Add GZip compression for responses > 1KB

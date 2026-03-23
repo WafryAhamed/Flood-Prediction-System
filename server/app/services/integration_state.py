@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from datetime import datetime, timezone
 from typing import Any, Literal, cast
 from uuid import uuid4
@@ -23,6 +24,8 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.core.config import settings
 from app.db.session import async_session_factory
+
+logger = logging.getLogger(__name__)
 
 JsonDict = dict[str, Any]
 
@@ -186,7 +189,11 @@ class IntegrationStateService:
                     self._subscribers.discard(queue)
 
     async def publish_event(self, event_name: str, payload: Any) -> None:
-        """Public wrapper for broadcasting realtime events from integration routes."""
+        """
+        Public wrapper for broadcasting realtime events from integration routes.
+        Logs event publication for debugging.
+        """
+        logger.debug(f'[SSE] Publishing event: {event_name} to {len(self._subscribers)} subscribers')
         await self._publish(event_name, payload)
 
     @staticmethod
@@ -285,6 +292,8 @@ class IntegrationStateService:
         queue: asyncio.Queue[JsonDict] = asyncio.Queue(maxsize=32)
         async with self._lock:
             self._subscribers.add(queue)
+            num_subscribers = len(self._subscribers)
+        logger.info(f'[SSE] Client connected. Total subscribers: {num_subscribers}')
         queue.put_nowait({
             "event": "connected",
             "payload": {"ok": True},
@@ -295,6 +304,8 @@ class IntegrationStateService:
     async def unsubscribe(self, queue: asyncio.Queue[JsonDict]) -> None:
         async with self._lock:
             self._subscribers.discard(queue)
+            num_subscribers = len(self._subscribers)
+        logger.info(f'[SSE] Client disconnected. Remaining subscribers: {num_subscribers}')
 
     async def get_bootstrap(self) -> JsonDict:
         await self._ensure_loaded()
@@ -373,6 +384,9 @@ class IntegrationStateService:
                     longitude=float(report.get("longitude") or 80.0),
                     location_description=str(report.get("location_name") or ""),
                     is_anonymous=True,
+                    # CRITICAL FIX #5: Preserve reporter_id if available, None for anonymous users
+                    # Will be populated when auth system is integrated
+                    reporter_id=None,
                     submitted_at=datetime.fromtimestamp(
                         int(report.get("timestamp") or self._now_ms()) / 1000, tz=timezone.utc
                     ),

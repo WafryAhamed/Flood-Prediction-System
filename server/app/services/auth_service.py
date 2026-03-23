@@ -44,7 +44,7 @@ class AuthService:
                     User.email == email.lower(),
                     User.status != UserStatus.DELETED,
                 )
-            )
+            ).options(selectinload(User.roles))
         )
         return result.scalar_one_or_none()
     
@@ -99,9 +99,9 @@ class AuthService:
             phone=data.phone,
             preferred_language=data.preferred_language,
             public_id=generate_public_id("USR"),
-            role=role,
             status=UserStatus.ACTIVE,
             trust_score=0.5,  # Default trust score
+            # BUG FIX #3: Removed invalid role= assignment (User.roles is many-to-many)
         )
         
         self.db.add(user)
@@ -118,10 +118,10 @@ class AuthService:
             full_name=data.full_name,
             phone=data.phone,
             public_id=generate_public_id("ADM" if data.role in [UserRole.ADMIN, UserRole.SUPER_ADMIN] else "USR"),
-            role=data.role,
             status=UserStatus.ACTIVE,
             is_verified=data.is_verified,
             trust_score=0.8 if data.role in [UserRole.ADMIN, UserRole.SUPER_ADMIN] else 0.5,
+            # BUG FIX #3: Removed invalid role= assignment (User.roles is many-to-many)
         )
         
         self.db.add(user)
@@ -205,7 +205,7 @@ class AuthService:
         
         # Update user login stats
         user.last_login_at = datetime.now(timezone.utc)
-        user.login_count += 1
+        # BUG FIX: Removed login_count (doesn't exist in User model)
         
         await self.db.commit()
         
@@ -298,11 +298,9 @@ class AuthService:
         """Create an admin session record."""
         session = AdminSession(
             user_id=user.id,
+            started_at=datetime.now(timezone.utc),
             ip_address=ip_address,
             user_agent=user_agent,
-            expires_at=datetime.now(timezone.utc) + timedelta(
-                minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-            ),
         )
         
         self.db.add(session)

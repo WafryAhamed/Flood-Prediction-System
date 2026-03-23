@@ -7,13 +7,25 @@ export default defineConfig({
   server: {
     port: 5173,
     host: 'localhost',
-    // Proxy API requests to backend during development
+    // Proxy all API requests to backend during development
+    // This ensures CORS doesn't block local testing
+    // In production, built assets are served from the same origin as the backend
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
-        // Allow WebSocket connections for real-time features
+        // Allow WebSocket and SSE connections
         ws: true,
+        // Passthrough SSE headers for event streaming
+        proxyRes: (proxyRes) => {
+          // Ensure SSE headers are passed through
+          if (proxyRes.headers['content-type']?.includes('event-stream')) {
+            proxyRes.headers['cache-control'] = 'no-cache';
+            proxyRes.headers['connection'] = 'keep-alive';
+            proxyRes.headers['x-accel-buffering'] = 'no';
+          }
+        },
+        // Rewrite path as-is
         rewrite: (path) => path,
       },
       '/health': {

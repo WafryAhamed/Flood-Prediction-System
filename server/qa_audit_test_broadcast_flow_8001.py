@@ -35,13 +35,13 @@ async def test_broadcast_flow():
             json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD}
         )
         if login_response.status_code != 200:
-            print(f"❌ FAILED: Login returned {login_response.status_code}")
+            print(f"[FAILED] Login returned {login_response.status_code}")
             print(f"   Response: {login_response.text}")
             return
         
         token_data = login_response.json()
-        access_token = token_data.get("access_token")
-        print(f"✅ PASSED: Admin logged in successfully")
+        access_token = token_data.get("tokens", {}).get("access_token")
+        print(f"[PASSED] Admin logged in successfully")
         print(f"   Token: {access_token[:20]}...")
         print(f"   User: {token_data.get('user', {}).get('email')}")
         print()
@@ -52,13 +52,15 @@ async def test_broadcast_flow():
         
         broadcast_payload = {
             "title": "QA TEST BROADCAST - AUTO-CREATED",
-            "description": "This is an automated QA test to verify broadcast creation flow",
-            "broadcast_type": "emergency",
+            "message": "This is an automated QA test to verify broadcast creation flow. Testing admin to database to user page synchronization.",
+            "broadcast_type": "alert",
             "priority": "critical",
-            "message": "Testing admin → database → user page synchronization",
-            "target_audience": "everyone",
-            "language": "en",
-            "is_active": True
+            "active_from": "2026-03-23T16:50:00Z",
+            "active_to": "2026-03-24T16:50:00Z",
+            "channels": ["sms", "web_push", "email"],
+            "action_required": "Move to higher ground immediately",
+            "target_districts": ["colombo"],
+            "requires_approval": False
         }
         
         print("Creating broadcast with payload:")

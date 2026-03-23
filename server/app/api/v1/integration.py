@@ -371,7 +371,8 @@ async def create_integration_map_marker(
     marker: dict[str, Any] = {
         "id": f"mm-{uuid4().hex[:8]}",
         **payload_data,
-        "position": [payload.position[0], payload.position[1]],
+        # CRITICAL FIX #3: Use payload.position directly instead of reconstructing
+        # Ensures consistent data type (list in JSON) for all markers
     }
     markers.append(marker)
     await _save_map_markers(db, markers)
@@ -398,7 +399,9 @@ async def update_integration_map_marker(
     if payload.position is not None:
         if not (-90 <= payload.position[0] <= 90 and -180 <= payload.position[1] <= 180):
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid marker coordinates")
-        marker["position"] = [payload.position[0], payload.position[1]]
+        # CRITICAL FIX #3: Use payload.position directly (list from Pydantic model_dump)
+        # Ensures consistent serialization instead of reconstructing
+        marker["position"] = payload.position
 
     markers[marker_index] = marker
     await _save_map_markers(db, markers)
