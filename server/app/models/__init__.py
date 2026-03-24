@@ -114,6 +114,12 @@ from app.models.extras import (
     UserSafetyProfile,
 )
 
+# Admin Settings
+from app.models.admin_settings import (
+    PageVisibility,
+    SystemSettingsConfig,
+)
+
 # Audit models
 from app.models.audit import (
     AuditLog,
@@ -233,4 +239,7 @@ __all__ = [
     "FloodHistory",
     "SimulationScenario",
     "UserSafetyProfile",
+    # Admin Settings
+    "PageVisibility",
+    "SystemSettingsConfig",
 ]

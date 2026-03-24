@@ -20,6 +20,8 @@ from app.schemas.auth import (
     AdminUpdateUserRequest,
 )
 from app.schemas.base import PaginatedResponse, MessageResponse
+from app.services.audit_service import audit_service
+from app.models.audit import AuditAction
 
 
 router = APIRouter(prefix="/users", tags=["User Management"])
@@ -217,6 +219,13 @@ async def activate_user(
     await db.commit()
     await db.refresh(user)
     
+    await audit_service.log_admin_action(
+        AuditAction.UPDATE, "user", _admin,
+        resource_id=str(user_id),
+        description=f"Activated user: {user.email}",
+        db=db,
+    )
+    
     return user
 
 
@@ -246,6 +255,13 @@ async def deactivate_user(
     user.status = UserStatus.SUSPENDED
     await db.commit()
     await db.refresh(user)
+    
+    await audit_service.log_admin_action(
+        AuditAction.UPDATE, "user", _admin,
+        resource_id=str(user_id),
+        description=f"Suspended user: {user.email}",
+        db=db,
+    )
     
     return user
 
@@ -297,6 +313,13 @@ async def delete_user(
         )
     
     await auth_service.soft_delete_user(user)
+    
+    await audit_service.log_admin_action(
+        AuditAction.DELETE, "user", _admin,
+        resource_id=str(user_id),
+        description=f"Deleted user: {user.email}",
+        db=db,
+    )
     
     return MessageResponse(
         message=f"User {user.email} has been deleted",

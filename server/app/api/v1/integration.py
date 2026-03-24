@@ -19,7 +19,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.models.alerts import EmergencyContact
 from app.models.audit import SystemSetting
+from app.models.auth import User
+from app.api.deps import AdminUser, CurrentUser
 from app.services.integration_state import integration_state_service
+from app.services.audit_service import audit_service
+from app.models.audit import AuditAction
 from app.core.config import settings
 from app.core.rate_limit import limiter
 
@@ -220,13 +224,23 @@ async def get_bootstrap_state() -> BootstrapResponse:
 
 
 @router.put("/admin-control", response_model=dict)
-async def save_admin_control(state: dict[str, Any]) -> dict[str, Any]:
-    return await integration_state_service.set_admin_control(state)
+async def save_admin_control(state: dict[str, Any], _admin: AdminUser) -> dict[str, Any]:
+    result = await integration_state_service.set_admin_control(state)
+    await audit_service.log_admin_action(
+        AuditAction.UPDATE, "admin_control", _admin,
+        description="Admin control settings updated",
+    )
+    return result
 
 
 @router.put("/maintenance", response_model=dict)
-async def save_maintenance(state: dict[str, Any]) -> dict[str, Any]:
-    return await integration_state_service.set_maintenance(state)
+async def save_maintenance(state: dict[str, Any], _admin: AdminUser) -> dict[str, Any]:
+    result = await integration_state_service.set_maintenance(state)
+    await audit_service.log_admin_action(
+        AuditAction.UPDATE, "maintenance", _admin,
+        description="Maintenance settings updated",
+    )
+    return result
 
 
 @router.get("/emergency-contacts", response_model=list[IntegrationEmergencyContact])
@@ -243,6 +257,7 @@ async def list_integration_emergency_contacts(
 )
 async def create_integration_emergency_contact(
     payload: IntegrationEmergencyContactCreateRequest,
+    _admin: AdminUser,
     db: AsyncSession = Depends(get_db),
 ) -> IntegrationEmergencyContact:
     normalized_type = _normalize_emergency_contact_type(payload.type)
@@ -281,6 +296,11 @@ async def create_integration_emergency_contact(
         "maintenance.updated",
         {"emergencyContacts": [item.model_dump() for item in contacts]},
     )
+    await audit_service.log_admin_action(
+        AuditAction.CREATE, "emergency_contact", _admin,
+        resource_id=str(contact.id),
+        description=f"Created emergency contact: {payload.label}",
+    )
     return _map_emergency_contact_row(contact)
 
 
@@ -288,6 +308,7 @@ async def create_integration_emergency_contact(
 async def update_integration_emergency_contact(
     contact_id: UUID,
     payload: IntegrationEmergencyContactUpdateRequest,
+    _admin: AdminUser,
     db: AsyncSession = Depends(get_db),
 ) -> IntegrationEmergencyContact:
     result = await db.execute(select(EmergencyContact).where(EmergencyContact.id == contact_id))
@@ -319,6 +340,7 @@ async def update_integration_emergency_contact(
 @router.delete("/emergency-contacts/{contact_id}", response_model=dict)
 async def delete_integration_emergency_contact(
     contact_id: UUID,
+    _admin: AdminUser,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, bool]:
     result = await db.execute(select(EmergencyContact).where(EmergencyContact.id == contact_id))
@@ -334,6 +356,11 @@ async def delete_integration_emergency_contact(
         "maintenance.updated",
         {"emergencyContacts": [item.model_dump() for item in contacts]},
     )
+    await audit_service.log_admin_action(
+        AuditAction.DELETE, "emergency_contact", _admin,
+        resource_id=str(contact_id),
+        description=f"Deleted emergency contact: {contact.name}",
+    )
     return {"success": True}
 
 
@@ -348,6 +375,7 @@ async def list_integration_map_markers(
 @router.post("/map-markers", response_model=IntegrationMapMarker, status_code=status.HTTP_201_CREATED)
 async def create_integration_map_marker(
     payload: IntegrationMapMarkerCreateRequest,
+    _admin: AdminUser,
     db: AsyncSession = Depends(get_db),
 ) -> IntegrationMapMarker:
     markers = await _get_map_markers(db)
@@ -379,6 +407,13 @@ async def create_integration_map_marker(
     await db.commit()
 
     await integration_state_service.publish_event("maintenance.updated", {"mapMarkers": markers})
+    
+    await audit_service.log_admin_action(
+        AuditAction.CREATE, "map_marker", _admin,
+        resource_id=marker["id"],
+        description=f"Created map marker: {payload.label}",
+    )
+    
     return IntegrationMapMarker.model_validate(marker)
 
 
@@ -386,6 +421,7 @@ async def create_integration_map_marker(
 async def update_integration_map_marker(
     marker_id: str,
     payload: IntegrationMapMarkerUpdateRequest,
+    _admin: AdminUser,
     db: AsyncSession = Depends(get_db),
 ) -> IntegrationMapMarker:
     markers = await _get_map_markers(db)
@@ -408,12 +444,20 @@ async def update_integration_map_marker(
     await db.commit()
 
     await integration_state_service.publish_event("maintenance.updated", {"mapMarkers": markers})
+    
+    await audit_service.log_admin_action(
+        AuditAction.UPDATE, "map_marker", _admin,
+        resource_id=marker_id,
+        description=f"Updated map marker: {payload.label if payload.label is not None else marker.get('label')}",
+    )
+    
     return IntegrationMapMarker.model_validate(marker)
 
 
 @router.delete("/map-markers/{marker_id}", response_model=dict)
 async def delete_integration_map_marker(
     marker_id: str,
+    _admin: AdminUser,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, bool]:
     markers = await _get_map_markers(db)
@@ -424,6 +468,13 @@ async def delete_integration_map_marker(
     await _save_map_markers(db, updated)
     await db.commit()
     await integration_state_service.publish_event("maintenance.updated", {"mapMarkers": updated})
+    
+    await audit_service.log_admin_action(
+        AuditAction.DELETE, "map_marker", _admin,
+        resource_id=marker_id,
+        description=f"Deleted map marker: {marker_id}",
+    )
+    
     return {"success": True}
 
 
@@ -434,10 +485,15 @@ async def create_report(request: Request, payload: ReportCreateRequest) -> dict[
 
 
 @router.post("/reports/{report_id}/action", response_model=dict)
-async def apply_report_action(report_id: str, payload: ReportActionRequest) -> dict[str, Any]:
+async def apply_report_action(report_id: str, payload: ReportActionRequest, _admin: AdminUser) -> dict[str, Any]:
     updated = await integration_state_service.apply_report_action(report_id, payload.action)
     if updated is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
+    await audit_service.log_admin_action(
+        AuditAction.UPDATE, "report", _admin,
+        resource_id=report_id,
+        description=f"Report action: {payload.action}",
+    )
     return updated
 
 

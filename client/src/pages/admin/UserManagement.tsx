@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Users, Search, Shield, Ban, Trash2, CheckCircle, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useMaintenanceStore } from '../../stores/maintenanceStore';
 import { useReportStore } from '../../stores/reportStore';
@@ -8,6 +8,7 @@ function formatDate(ts: number): string {
 }
 
 function formatTimeAgo(ts: number): string {
+  if (!ts) return 'Never';
   const mins = Math.floor((Date.now() - ts) / 60000);
   if (mins < 1) return 'Just now';
   if (mins < 60) return `${mins}m ago`;
@@ -19,6 +20,7 @@ type StatusFilter = 'all' | 'active' | 'suspended' | 'deleted';
 
 export function UserManagement() {
   const users = useMaintenanceStore((s) => s.users);
+  const loadUsers = useMaintenanceStore((s) => s.loadUsers);
   const suspendUser = useMaintenanceStore((s) => s.suspendUser);
   const activateUser = useMaintenanceStore((s) => s.activateUser);
   const deleteUser = useMaintenanceStore((s) => s.deleteUser);
@@ -31,6 +33,11 @@ export function UserManagement() {
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ userId: string; action: string } | null>(null);
   const [errorDismiss, setErrorDismiss] = useState(false);
+
+  // Load backend users on mount
+  useEffect(() => {
+    void loadUsers();
+  }, [loadUsers]);
 
   const filteredUsers = useMemo(() => {
     let result = users;

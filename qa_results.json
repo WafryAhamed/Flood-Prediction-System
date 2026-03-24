@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-03-25T00:31:49.501942",
+  "database": {
+    "connectivity": "PASS",
+    "version": "PostgreSQL 18.1 on x86_64-windows, compiled by msvc-19.44.35",
+    "overall": "FAIL",
+    "error": "'NoneType' object has no attribute 'get'"
+  },
+  "api": {
+    "health": "SKIPPED - backend not running",
+    "auth_endpoint": "SKIPPED",
+    "admin_endpoint": "SKIPPED",
+    "overall": "PASS"
+  }
+}

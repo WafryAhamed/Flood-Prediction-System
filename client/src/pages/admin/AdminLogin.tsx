@@ -27,12 +27,27 @@ export function AdminLogin() {
 
       if (response.ok) {
         const data = await response.json();
+        const accessToken = data?.tokens?.access_token ?? '';
         // Store token and mark as authenticated
         localStorage.setItem('admin_authenticated', 'true');
-        localStorage.setItem('auth_token', data?.tokens?.access_token ?? '');
+        localStorage.setItem('auth_token', accessToken);
+
+        // Extract and store role from JWT payload for permission-aware UI
+        try {
+          const payload = JSON.parse(atob(accessToken.split('.')[1]));
+          if (payload.role) {
+            localStorage.setItem('admin_role', payload.role);
+          }
+        } catch {
+          // Token decode failed — role won't be stored but login still succeeds
+        }
+
         navigate('/admin', { replace: true });
-      } else {
+      } else if (response.status === 401 || response.status === 403) {
         setError('Invalid email or password.');
+      } else {
+        const errorData = await response.text();
+        setError(errorData || 'Login failed. Please try again.');
       }
     } catch {
       setError('Authentication service unavailable. Please try again.');

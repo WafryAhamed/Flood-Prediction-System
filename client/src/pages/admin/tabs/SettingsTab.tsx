@@ -1,28 +1,26 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { Settings, Eye, EyeOff, Sliders, Phone } from 'lucide-react';
-import { useAdminCentralStore } from '../../../stores/adminCentralStore';
+import { useSettingsStore } from '../../../stores/settingsStore';
+import { useVisibilityStore } from '../../../stores/visibilityStore';
+import { useContactsStore } from '../../../stores/contactsStore';
+import {
+  syncDatabaseAction,
+  generateReportAction,
+  clearCacheAction,
+  resetSystemAction,
+  SystemSettingsPayload
+} from '../../../services/integrationApi';
 
 export default function SettingsTab() {
-  const emergencyContacts = useAdminCentralStore((s) => s.emergencyContacts);
+  const { contacts, loadContacts } = useContactsStore();
+  const { visibility, loadVisibility, toggleVisibility } = useVisibilityStore();
+  const { settings, loadSettings, updateSetting } = useSettingsStore();
 
-  const [pageVisibility, setPageVisibility] = useState({
-    whatIfLab: true,
-    learnHub: true,
-    historicalTimeline: true,
-    recoveryTracker: true,
-    evacuationPlanner: true,
-    communityReports: true,
-    agricultureAdvisor: true,
-    safetyProfile: true,
-  });
-
-  const [systemSettings, setSystemSettings] = useState({
-    darkMode: true,
-    soundAlerts: true,
-    pushNotifications: true,
-    dataCollection: false,
-    anonymousReporting: true,
-  });
+  useEffect(() => {
+    loadContacts();
+    loadVisibility();
+    loadSettings();
+  }, []);
 
   const pageOptions = [
     { key: 'whatIfLab', label: 'What-If Lab (Simulation)' },
@@ -35,22 +33,38 @@ export default function SettingsTab() {
     { key: 'safetyProfile', label: 'Safety Profile Management' },
   ];
 
-  const handlePageToggle = (key: keyof typeof pageVisibility) => {
-    setPageVisibility((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+  const handlePageToggle = (key: string) => {
+    const current = visibility[key] ?? true;
+    toggleVisibility(key, !current);
   };
 
-  const handleSettingToggle = (key: keyof typeof systemSettings) => {
-    setSystemSettings((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+  const handleSettingToggle = (key: keyof SystemSettingsPayload) => {
+    if (!settings) return;
+    updateSetting(key, !settings[key]);
   };
 
-  const visibleCount = Object.values(pageVisibility).filter(Boolean).length;
-  const activeSettingsCount = Object.values(systemSettings).filter(Boolean).length;
+  const visibleCount = Object.values(visibility).filter(Boolean).length || 0;
+  const activeSettingsCount = settings ? Object.values(settings).filter(v => v === true).length : 0;
+  
+  const handleMaintenance = async (action: 'sync' | 'report' | 'cache' | 'reset') => {
+    try {
+      if (action === 'sync') await syncDatabaseAction();
+      if (action === 'report') await generateReportAction();
+      if (action === 'cache') await clearCacheAction();
+      if (action === 'reset') {
+        const confirmed = window.confirm("Are you sure you want to reset all system defaults? This cannot be undone.");
+        if (confirmed) {
+          await resetSystemAction();
+          loadVisibility();
+          loadSettings();
+        }
+      } else {
+        alert(`${action.charAt(0).toUpperCase() + action.slice(1)} completed successfully!`);
+      }
+    } catch (err) {
+      alert(`Failed to perform ${action} action.`);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -73,13 +87,13 @@ export default function SettingsTab() {
               <label className="flex items-center gap-3 cursor-pointer flex-1">
                 <input
                   type="checkbox"
-                  checked={pageVisibility[page.key as keyof typeof pageVisibility]}
-                  onChange={() => handlePageToggle(page.key as keyof typeof pageVisibility)}
+                  checked={visibility[page.key] ?? true}
+                  onChange={() => handlePageToggle(page.key)}
                   className="w-4 h-4 rounded accent-blue-500"
                 />
                 <span className="text-sm font-medium text-gray-300">{page.label}</span>
               </label>
-              {pageVisibility[page.key as keyof typeof pageVisibility] ? (
+              {visibility[page.key] !== false ? (
                 <Eye size={16} className="text-green-400" />
               ) : (
                 <EyeOff size={16} className="text-gray-500" />
@@ -95,10 +109,10 @@ export default function SettingsTab() {
           <Sliders size={18} /> System Settings
         </h3>
         <p className="text-xs text-gray-400 mb-6">
-          Configure system-wide behavior and user preferences. {activeSettingsCount} of{' '}
-          {Object.keys(systemSettings).length} features enabled.
+          Configure system-wide behavior and user preferences. {activeSettingsCount} of 5 features enabled.
         </p>
 
+        {settings && (
         <div className="space-y-3">
           <div className="flex items-center justify-between p-4 bg-gray-900 border border-gray-700 rounded-lg">
             <div>
@@ -108,8 +122,8 @@ export default function SettingsTab() {
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                checked={systemSettings.darkMode}
-                onChange={() => handleSettingToggle('darkMode')}
+                checked={settings.dark_mode}
+                onChange={() => handleSettingToggle('dark_mode')}
                 className="w-4 h-4 rounded accent-blue-500"
               />
             </label>
@@ -123,8 +137,8 @@ export default function SettingsTab() {
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                checked={systemSettings.soundAlerts}
-                onChange={() => handleSettingToggle('soundAlerts')}
+                checked={settings.sound_alerts}
+                onChange={() => handleSettingToggle('sound_alerts')}
                 className="w-4 h-4 rounded accent-blue-500"
               />
             </label>
@@ -138,8 +152,8 @@ export default function SettingsTab() {
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                checked={systemSettings.pushNotifications}
-                onChange={() => handleSettingToggle('pushNotifications')}
+                checked={settings.push_notifications}
+                onChange={() => handleSettingToggle('push_notifications')}
                 className="w-4 h-4 rounded accent-blue-500"
               />
             </label>
@@ -153,8 +167,8 @@ export default function SettingsTab() {
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                checked={systemSettings.dataCollection}
-                onChange={() => handleSettingToggle('dataCollection')}
+                checked={settings.data_collection}
+                onChange={() => handleSettingToggle('data_collection')}
                 className="w-4 h-4 rounded accent-blue-500"
               />
             </label>
@@ -168,13 +182,14 @@ export default function SettingsTab() {
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                checked={systemSettings.anonymousReporting}
-                onChange={() => handleSettingToggle('anonymousReporting')}
+                checked={settings.anonymous_reporting}
+                onChange={() => handleSettingToggle('anonymous_reporting')}
                 className="w-4 h-4 rounded accent-blue-500"
               />
             </label>
           </div>
         </div>
+        )}
       </div>
 
       {/* Emergency Contact Speed Dial */}
@@ -183,27 +198,24 @@ export default function SettingsTab() {
           <Phone size={18} /> Emergency Contacts
         </h3>
         <p className="text-xs text-gray-400 mb-6">
-          These contacts appear in the emergency quick dial for all users. {emergencyContacts.length}{' '}
+          These contacts appear in the emergency quick dial for all users. {contacts.length}{' '}
           contacts configured.
         </p>
 
-        {emergencyContacts.length > 0 ? (
+        {contacts.length > 0 ? (
           <div className="space-y-3">
-            {emergencyContacts.map((contact) => (
+            {contacts.map((contact) => (
               <div
                 key={contact.id}
                 className="flex items-center justify-between p-4 bg-gray-900 border border-gray-700 rounded-lg"
               >
                 <div className="flex-1">
                   <p className="text-sm font-medium text-white">{contact.label}</p>
-                  <p className="text-xs text-gray-400">{contact.phone_number}</p>
+                  <p className="text-xs text-gray-400">{contact.number}</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Type: {contact.contact_type} • {contact.active ? '🟢 Active' : '🔴 Inactive'}
+                    Type: {contact.type} • {contact.active ? '🟢 Active' : '🔴 Inactive'}
                   </p>
                 </div>
-                <span className="text-xs font-bold text-blue-400 px-3 py-1 bg-blue-500/10 rounded-full">
-                  #{contact.display_order}
-                </span>
               </div>
             ))}
           </div>
@@ -222,16 +234,16 @@ export default function SettingsTab() {
         <p className="text-xs text-gray-400 mb-6">Advanced administration tasks</p>
 
         <div className="space-y-3">
-          <button className="w-full px-4 py-3 bg-gray-900 hover:bg-gray-850 border border-gray-700 text-gray-300 font-medium text-sm rounded-lg transition-colors">
+          <button onClick={() => handleMaintenance('sync')} className="w-full px-4 py-3 bg-gray-900 hover:bg-gray-850 border border-gray-700 text-gray-300 font-medium text-sm rounded-lg transition-colors">
             🔄 Sync Database
           </button>
-          <button className="w-full px-4 py-3 bg-gray-900 hover:bg-gray-850 border border-gray-700 text-gray-300 font-medium text-sm rounded-lg transition-colors">
+          <button onClick={() => handleMaintenance('report')} className="w-full px-4 py-3 bg-gray-900 hover:bg-gray-850 border border-gray-700 text-gray-300 font-medium text-sm rounded-lg transition-colors">
             📊 Generate System Report
           </button>
-          <button className="w-full px-4 py-3 bg-gray-900 hover:bg-gray-850 border border-gray-700 text-gray-300 font-medium text-sm rounded-lg transition-colors">
+          <button onClick={() => handleMaintenance('cache')} className="w-full px-4 py-3 bg-gray-900 hover:bg-gray-850 border border-gray-700 text-gray-300 font-medium text-sm rounded-lg transition-colors">
             🗑️ Clear Cache
           </button>
-          <button className="w-full px-4 py-3 bg-red-900/30 hover:bg-red-900/50 border border-red-700/50 text-red-400 font-medium text-sm rounded-lg transition-colors">
+          <button onClick={() => handleMaintenance('reset')} className="w-full px-4 py-3 bg-red-900/30 hover:bg-red-900/50 border border-red-700/50 text-red-400 font-medium text-sm rounded-lg transition-colors">
             ⚠️ Reset System to Defaults
           </button>
         </div>

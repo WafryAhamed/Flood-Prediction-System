@@ -44,7 +44,7 @@ class MapMarkerUpdateRequest(BaseModel):
 
 @router.get("", response_model=list[MapMarkerResponse])
 async def list_map_markers(
-    _admin: Annotated[dict, Depends(AdminUser)],
+    _admin: AdminUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[MapMarkerResponse]:
     """List all map markers."""
@@ -56,7 +56,7 @@ async def list_map_markers(
 @router.get("/{marker_id}", response_model=MapMarkerResponse)
 async def get_map_marker(
     marker_id: str,
-    _admin: Annotated[dict, Depends(AdminUser)],
+    _admin: AdminUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> MapMarkerResponse:
     """Get map marker by ID."""
@@ -71,7 +71,7 @@ async def get_map_marker(
 @router.post("", response_model=MapMarkerResponse, status_code=status.HTTP_201_CREATED)
 async def create_map_marker(
     payload: MapMarkerCreateRequest,
-    _admin: Annotated[dict, Depends(AdminUser)],
+    _admin: AdminUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> MapMarkerResponse:
     """Create map marker."""
@@ -94,7 +94,7 @@ async def create_map_marker(
 async def update_map_marker(
     marker_id: str,
     payload: MapMarkerUpdateRequest,
-    _admin: Annotated[dict, Depends(AdminUser)],
+    _admin: AdminUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> MapMarkerResponse:
     """Update map marker."""
@@ -117,7 +117,7 @@ async def update_map_marker(
 @router.delete("/{marker_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_map_marker(
     marker_id: str,
-    _admin: Annotated[dict, Depends(AdminUser)],
+    _admin: AdminUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> None:
     """Delete map marker."""

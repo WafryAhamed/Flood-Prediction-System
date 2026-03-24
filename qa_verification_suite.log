@@ -1,0 +1,103 @@
+2026-03-25 00:28:58,083 | INFO | 
+====================================================================================================
+2026-03-25 00:28:58,093 | INFO | FLOOD RESILIENCE PLATFORM - QA VERIFICATION SUITE
+2026-03-25 00:28:58,094 | INFO | ====================================================================================================
+2026-03-25 00:28:58,094 | INFO | Start Time: 2026-03-25T00:28:58.094182
+2026-03-25 00:28:58,094 | INFO | Backend: http://localhost:8001
+2026-03-25 00:28:58,094 | INFO | ====================================================================================================
+
+2026-03-25 00:28:58,095 | INFO | [DATABASE VERIFICATION]
+2026-03-25 00:28:58,095 | INFO | ⚠️ [DB_SETUP       ] Database Connectivity                         |  0.000s | 'NoneType' object has no attribute 'cursor'
+2026-03-25 00:28:58,108 | ERROR | ❌ Cannot proceed without database - aborting tests
+2026-03-25 00:29:11,539 | INFO | ✅ Database connected: flood_resilience
+2026-03-25 00:29:11,540 | INFO | 
+====================================================================================================
+2026-03-25 00:29:11,540 | INFO | FLOOD RESILIENCE PLATFORM - QA VERIFICATION SUITE
+2026-03-25 00:29:11,540 | INFO | ====================================================================================================
+2026-03-25 00:29:11,541 | INFO | Start Time: 2026-03-25T00:29:11.541497
+2026-03-25 00:29:11,541 | INFO | Backend: http://localhost:8001
+2026-03-25 00:29:11,542 | INFO | ====================================================================================================
+
+2026-03-25 00:29:11,542 | INFO | [DATABASE VERIFICATION]
+2026-03-25 00:29:11,548 | INFO | ✅ [DB_SETUP       ] Database Connectivity                         |  0.006s | PostgreSQL responsive
+2026-03-25 00:29:27,103 | INFO | ✅ Database connected: flood_resilience
+2026-03-25 00:29:27,103 | INFO | 
+====================================================================================================
+2026-03-25 00:29:27,103 | INFO | FLOOD RESILIENCE PLATFORM - QA VERIFICATION SUITE
+2026-03-25 00:29:27,103 | INFO | ====================================================================================================
+2026-03-25 00:29:27,103 | INFO | Start Time: 2026-03-25T00:29:27.103227
+2026-03-25 00:29:27,103 | INFO | Backend: http://localhost:8001
+2026-03-25 00:29:27,103 | INFO | ====================================================================================================
+
+2026-03-25 00:29:27,103 | INFO | [DATABASE VERIFICATION]
+2026-03-25 00:29:27,117 | INFO | ✅ [DB_SETUP       ] Database Connectivity                         |  0.014s | PostgreSQL responsive
+2026-03-25 00:29:27,206 | INFO | ✅ [DB_SCHEMA      ] Critical Tables Structure                     |  0.089s | Verified 7 tables
+2026-03-25 00:29:27,213 | INFO | ✅ [DATA_INTEGRITY ] Page Visibility Records                       |  0.007s | Found 8 page visibility settings
+2026-03-25 00:29:27,216 | INFO | ✅ [DATA_INTEGRITY ] System Settings Data                          |  0.002s | All system settings present
+2026-03-25 00:29:27,221 | INFO | ✅ [DATA_INTEGRITY ] Emergency Contacts Integrity                  |  0.004s | Found 7 emergency contacts
+2026-03-25 00:29:27,228 | INFO | ✅ [DATA_INTEGRITY ] User-Role Relationships                       |  0.007s | Verified 4 users and 1 roles
+2026-03-25 00:29:27,228 | INFO | 
+[API VERIFICATION]
+2026-03-25 00:29:31,307 | WARNING | Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /health
+2026-03-25 00:29:36,341 | WARNING | Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /health
+2026-03-25 00:29:40,385 | INFO | ⏭️ [API_HEALTH     ] Backend Health Check                          | 13.156s | Backend not running on port 8001
+2026-03-25 00:29:44,466 | WARNING | Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /api/v1/auth/login
+2026-03-25 00:29:49,530 | WARNING | Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /api/v1/auth/login
+2026-03-25 00:29:53,597 | INFO | ⏭️ [API_ENDPOINTS  ] Auth Endpoint Availability                    | 13.192s | Backend not running
+2026-03-25 00:29:57,659 | WARNING | Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /api/v1/admin/page-visibility
+2026-03-25 00:30:02,709 | WARNING | Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /api/v1/admin/page-visibility
+2026-03-25 00:30:10,872 | WARNING | Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /api/v1/admin/settings
+2026-03-25 00:30:15,955 | WARNING | Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /api/v1/admin/settings
+2026-03-25 00:30:24,055 | WARNING | Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /api/v1/integration/emergency-contacts
+2026-03-25 00:30:29,117 | WARNING | Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /api/v1/integration/emergency-contacts
+2026-03-25 00:30:30,615 | INFO | ✅ Database connected: flood_resilience
+2026-03-25 00:30:30,615 | INFO | 
+====================================================================================================
+2026-03-25 00:30:30,615 | INFO | FLOOD RESILIENCE PLATFORM - QA VERIFICATION SUITE
+2026-03-25 00:30:30,615 | INFO | ====================================================================================================
+2026-03-25 00:30:30,615 | INFO | Start Time: 2026-03-25T00:30:30.615753
+2026-03-25 00:30:30,615 | INFO | Backend: http://localhost:8001
+2026-03-25 00:30:30,615 | INFO | ====================================================================================================
+
+2026-03-25 00:30:30,615 | INFO | [DATABASE VERIFICATION]
+2026-03-25 00:30:30,615 | INFO | ✅ [DB_SETUP       ] Database Connectivity                         |  0.000s | PostgreSQL responsive
+2026-03-25 00:30:30,688 | INFO | ✅ [DB_SCHEMA      ] Critical Tables Structure                     |  0.072s | Verified 7 tables
+2026-03-25 00:30:30,688 | INFO | ✅ [DATA_INTEGRITY ] Page Visibility Records                       |  0.000s | Found 8 page visibility settings
+2026-03-25 00:30:30,699 | INFO | ✅ [DATA_INTEGRITY ] System Settings Data                          |  0.011s | All system settings present
+2026-03-25 00:30:30,702 | INFO | ✅ [DATA_INTEGRITY ] Emergency Contacts Integrity                  |  0.003s | Found 7 emergency contacts
+2026-03-25 00:30:30,709 | INFO | ✅ [DATA_INTEGRITY ] User-Role Relationships                       |  0.007s | Verified 4 users and 1 roles
+2026-03-25 00:30:30,710 | INFO | 
+[API VERIFICATION]
+2026-03-25 00:30:34,781 | WARNING | Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /health
+2026-03-25 00:30:39,863 | WARNING | Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /health
+2026-03-25 00:30:43,911 | INFO | ⏭️ [API_HEALTH     ] Backend Health Check                          | 13.202s | Backend not running on port 8001
+2026-03-25 00:30:47,988 | WARNING | Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /api/v1/auth/login
+2026-03-25 00:30:53,057 | WARNING | Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /api/v1/auth/login
+2026-03-25 00:30:57,157 | INFO | ⏭️ [API_ENDPOINTS  ] Auth Endpoint Availability                    | 13.244s | Backend not running
+2026-03-25 00:31:01,222 | WARNING | Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /api/v1/admin/page-visibility
+2026-03-25 00:31:06,292 | WARNING | Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /api/v1/admin/page-visibility
+2026-03-25 00:31:14,453 | WARNING | Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /api/v1/admin/settings
+2026-03-25 00:31:19,536 | WARNING | Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /api/v1/admin/settings
+2026-03-25 00:31:27,682 | WARNING | Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /api/v1/integration/emergency-contacts
+2026-03-25 00:31:32,764 | WARNING | Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=8001): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it")': /api/v1/integration/emergency-contacts
+2026-03-25 00:31:36,845 | INFO | ⏭️ [API_ENDPOINTS  ] Admin API Endpoints                           | 39.688s | Tested 3 endpoints
+2026-03-25 00:31:36,845 | INFO | 
+[DATA CONSISTENCY VERIFICATION]
+2026-03-25 00:31:36,845 | INFO | ✅ [DB_CONSISTENCY ] Referential Integrity                         |  0.000s | Checking orphaned relationships
+2026-03-25 00:31:36,862 | INFO | ✅ [DB_CONSISTENCY ] Data Type Consistency                         |  0.002s | Checked boolean field consistency
+2026-03-25 00:31:36,862 | INFO | 
+====================================================================================================
+2026-03-25 00:31:36,862 | INFO | TEST SUMMARY
+2026-03-25 00:31:36,864 | INFO | ====================================================================================================
+2026-03-25 00:31:36,864 | INFO | Total Tests:  11
+2026-03-25 00:31:36,864 | INFO | ✅ Passed:    8
+2026-03-25 00:31:36,864 | INFO | ❌ Failed:    0
+2026-03-25 00:31:36,866 | INFO | ⚠️ Errors:    0
+2026-03-25 00:31:36,866 | INFO | ⏭️ Skipped:   3
+2026-03-25 00:31:36,866 | INFO | ====================================================================================================
+2026-03-25 00:31:36,868 | INFO | ✅ VERIFICATION PASSED - System is healthy
+2026-03-25 00:31:36,870 | INFO | 
+✅ Reports generated:
+2026-03-25 00:31:36,870 | INFO |    - qa_verification_report.json
+2026-03-25 00:31:36,870 | INFO |    - qa_verification_report.md
+2026-03-25 00:31:36,870 | INFO |    - qa_verification_suite.log

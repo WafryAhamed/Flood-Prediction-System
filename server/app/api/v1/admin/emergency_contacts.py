@@ -42,7 +42,7 @@ class EmergencyContactUpdateRequest(BaseModel):
 
 @router.get("", response_model=list[EmergencyContactResponse])
 async def list_emergency_contacts(
-    _admin: Annotated[dict, Depends(AdminUser)],
+    _admin: AdminUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[EmergencyContactResponse]:
     """List all emergency contacts."""
@@ -54,7 +54,7 @@ async def list_emergency_contacts(
 @router.get("/{contact_id}", response_model=EmergencyContactResponse)
 async def get_emergency_contact(
     contact_id: UUID,
-    _admin: Annotated[dict, Depends(AdminUser)],
+    _admin: AdminUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> EmergencyContactResponse:
     """Get emergency contact by ID."""
@@ -69,7 +69,7 @@ async def get_emergency_contact(
 @router.post("", response_model=EmergencyContactResponse, status_code=status.HTTP_201_CREATED)
 async def create_emergency_contact(
     payload: EmergencyContactCreateRequest,
-    _admin: Annotated[dict, Depends(AdminUser)],
+    _admin: AdminUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> EmergencyContactResponse:
     """Create emergency contact."""
@@ -90,7 +90,7 @@ async def create_emergency_contact(
 async def update_emergency_contact(
     contact_id: UUID,
     payload: EmergencyContactUpdateRequest,
-    _admin: Annotated[dict, Depends(AdminUser)],
+    _admin: AdminUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> EmergencyContactResponse:
     """Update emergency contact."""
@@ -111,7 +111,7 @@ async def update_emergency_contact(
 @router.delete("/{contact_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_emergency_contact(
     contact_id: UUID,
-    _admin: Annotated[dict, Depends(AdminUser)],
+    _admin: AdminUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> None:
     """Delete emergency contact."""

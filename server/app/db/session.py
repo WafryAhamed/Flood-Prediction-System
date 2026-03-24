@@ -25,6 +25,7 @@ engine = create_async_engine(
     pool_size=settings.database_pool_size,
     max_overflow=settings.database_max_overflow,
     pool_pre_ping=True,
+    pool_recycle=1800,  # Recycle connections after 30 minutes to prevent stale connections
 )
 
 # Session factory

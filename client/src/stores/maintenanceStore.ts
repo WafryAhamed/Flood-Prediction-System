@@ -12,6 +12,7 @@ import {
   activateUser as apiActivateUser,
   suspendUserApi as apiSuspendUser,
   deleteUserApi as apiDeleteUser,
+  fetchUsers as apiFetchUsers,
 } from '../services/integrationApi';
 import type {
   EmergencyContact,
@@ -27,19 +28,6 @@ import type {
 } from '../types/admin';
 
 // ═══ Default Configuration ═══
-
-const DEFAULT_PAGE_VISIBILITY: PageVisibilityConfig = {
-  dashboard: true,
-  riskMap: true,
-  communityReports: true,
-  evacuation: true,
-  history: true,
-  whatIf: true,
-  agriculture: true,
-  recovery: true,
-  learnHub: true,
-  safetyProfile: true,
-};
 
 const SEED_EVACUATION: EvacuationRoute[] = [];
 
@@ -61,6 +49,7 @@ interface MaintenanceStore {
   hydrateFromBackend: (state: Record<string, unknown>) => void;
   loadEmergencyContacts: () => Promise<void>;
   loadMapMarkers: () => Promise<void>;
+  loadUsers: () => Promise<void>;
 
   // Emergency Contacts
   emergencyContacts: EmergencyContact[];
@@ -168,6 +157,26 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
       set({ mapMarkers: markers });
     } catch (error) {
       console.warn('Failed to load map markers from backend:', error);
+    }
+  },
+
+  loadUsers: async () => {
+    try {
+      const response = await apiFetchUsers(1, 100);
+      const mapped = response.items.map((u) => ({
+        id: u.id,
+        userId: u.public_id || u.id,
+        name: u.full_name,
+        district: u.district_id || 'Unassigned',
+        trustScore: u.trust_score,
+        reportCount: u.report_count,
+        status: u.status === 'pending' ? ('active' as const) : u.status,
+        joinedAt: new Date(u.created_at).getTime(),
+        lastActive: u.last_login_at ? new Date(u.last_login_at).getTime() : new Date(u.updated_at).getTime(),
+      }));
+      set({ users: mapped });
+    } catch (error) {
+      console.warn('Failed to load users from backend:', error);
     }
   },
 
@@ -308,15 +317,10 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
   suspendUser: async (id) => {
     set({ userActionLoading: id, userActionError: null });
     try {
-      // Call backend API to suspend user
-      const response = await apiSuspendUser(id);
-      // Update local state with response from backend
-      set((s) => ({ 
-        users: s.users.map((u) => (u.id === id ? { ...u, status: 'suspended' as const } : u)),
-        userActionLoading: null,
-      }));
-      // Save updated state
-      void saveMaintenanceState(pickPersistableState(get()));
+      await apiSuspendUser(id);
+      // Reload users from backend to get authoritative state
+      await get().loadUsers();
+      set({ userActionLoading: null });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Failed to suspend user';
       set({ userActionError: errorMsg, userActionLoading: null });
@@ -326,15 +330,10 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
   activateUser: async (id) => {
     set({ userActionLoading: id, userActionError: null });
     try {
-      // Call backend API to activate user
-      const response = await apiActivateUser(id);
-      // Update local state with response from backend
-      set((s) => ({ 
-        users: s.users.map((u) => (u.id === id ? { ...u, status: 'active' as const } : u)),
-        userActionLoading: null,
-      }));
-      // Save updated state
-      void saveMaintenanceState(pickPersistableState(get()));
+      await apiActivateUser(id);
+      // Reload users from backend to get authoritative state
+      await get().loadUsers();
+      set({ userActionLoading: null });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Failed to activate user';
       set({ userActionError: errorMsg, userActionLoading: null });
@@ -344,15 +343,10 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
   deleteUser: async (id) => {
     set({ userActionLoading: id, userActionError: null });
     try {
-      // Call backend API to delete user
-      const response = await apiDeleteUser(id);
-      // Update local state with response from backend
-      set((s) => ({ 
-        users: s.users.map((u) => (u.id === id ? { ...u, status: 'deleted' as const } : u)),
-        userActionLoading: null,
-      }));
-      // Save updated state
-      void saveMaintenanceState(pickPersistableState(get()));
+      await apiDeleteUser(id);
+      // Reload users from backend to get authoritative state
+      await get().loadUsers();
+      set({ userActionLoading: null });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Failed to delete user';
       set({ userActionError: errorMsg, userActionLoading: null });

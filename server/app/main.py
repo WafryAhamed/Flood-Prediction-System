@@ -208,6 +208,32 @@ Protected endpoints require a Bearer token in the Authorization header.
             "database": "connected" if db_ok else "disconnected",
         }
     
+    @app.get("/health/live", tags=["Health"])
+    async def health_live() -> dict[str, str]:
+        """Liveness probe — returns 200 if the process is running."""
+        return {"status": "alive"}
+    
+    @app.get("/health/ready", tags=["Health"])
+    async def health_ready() -> dict[str, object]:
+        """Readiness probe — checks DB connection for production readiness."""
+        db_ok = await check_db_connection()
+        if not db_ok:
+            return JSONResponse(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                content={"status": "not_ready", "database": "disconnected"},
+            )
+        return {"status": "ready", "database": "connected"}
+    
+    @app.get("/health/db", tags=["Health"])
+    async def health_db() -> dict[str, object]:
+        """Database health check with connection details."""
+        db_ok = await check_db_connection()
+        return {
+            "connected": db_ok,
+            "pool_size": settings.database_pool_size,
+            "max_overflow": settings.database_max_overflow,
+        }
+    
     @app.get("/", tags=["Root"])
     async def root() -> dict[str, object]:
         """Root endpoint with API information."""

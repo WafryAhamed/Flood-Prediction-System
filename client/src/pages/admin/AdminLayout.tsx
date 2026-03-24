@@ -10,12 +10,26 @@ export function AdminLayout() {
     localStorage.removeItem('admin_authenticated');
     navigate('/admin/login', { replace: true });
   };
-  const isActive = (path: string) => location.pathname === path;
-  const navItems = [{
-    path: '/admin',
-    label: 'Command Center',
-    icon: LayoutDashboard
-  }];
+  const isActive = (path: string) => {
+    if (path === '/admin') return location.pathname === '/admin';
+    return location.pathname.startsWith(path);
+  };
+  const navItems = [
+    { path: '/admin', label: 'Command Center', icon: LayoutDashboard },
+    { path: '/admin/situation-room', label: 'Situation Room', icon: Activity },
+    { path: '/admin/model-control', label: 'Model Control', icon: ShieldAlert },
+    { path: '/admin/reports', label: 'Reports', icon: FileText },
+    { path: '/admin/districts', label: 'Districts', icon: Map },
+    { path: '/admin/facilities', label: 'Facilities', icon: Building2 },
+    { path: '/admin/infrastructure', label: 'Infrastructure', icon: Activity },
+    { path: '/admin/agriculture', label: 'Agriculture', icon: Sprout },
+    { path: '/admin/recovery', label: 'Recovery', icon: RefreshCw },
+    { path: '/admin/broadcast', label: 'Broadcast', icon: Radio },
+    { path: '/admin/data', label: 'Data Upload', icon: Database },
+    { path: '/admin/audit', label: 'Audit Logs', icon: BarChart3 },
+    { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+    { path: '/admin/maintenance', label: 'Maintenance', icon: Wrench },
+  ];
   return <div className="min-h-screen bg-bg-dark text-gray-200 font-sans admin-theme flex flex-col">
       {/* Top Bar */}
       <header className="bg-bg-sidebar h-16 flex items-center justify-between px-8 border-b border-gray-700 z-20">

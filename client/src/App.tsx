@@ -41,6 +41,7 @@ import { FrontendControlCenter } from './pages/admin/FrontendControlCenter';
 import { SystemMaintenance } from './pages/admin/SystemMaintenance';
 import { UserManagement } from './pages/admin/UserManagement';
 import { ChatbotControl } from './pages/admin/ChatbotControl';
+import { SituationRoom } from './pages/admin/SituationRoom';
 import { useAdminControlStore } from './stores/adminControlStore';
 import { usePlatformRealtimeSync } from './hooks/usePlatformRealtimeSync';
 
@@ -80,21 +81,22 @@ function AppContent() {
         <Route path="/admin" element={<AdminRouteGuard />}>
           <Route element={<AdminLayout />}>
             <Route index element={<AdminCommandCenter />} />
-          <Route path="model-control" element={<ModelControl />} />
-          <Route path="reports" element={<ReportModeration />} />
-          <Route path="districts" element={<DistrictControl />} />
-          <Route path="facilities" element={<FacilityManagement />} />
-          <Route path="infrastructure" element={<InfrastructureMonitor />} />
-          <Route path="agriculture" element={<AgricultureConsole />} />
-          <Route path="recovery" element={<RecoveryCommand />} />
-          <Route path="broadcast" element={<AlertBroadcast />} />
-          <Route path="data" element={<DataUpload />} />
-          <Route path="audit" element={<AuditLogs />} />
-          <Route path="analytics" element={<Analytics />} />
-          <Route path="frontend" element={<FrontendControlCenter />} />
-          <Route path="maintenance" element={<SystemMaintenance />} />
-          <Route path="users" element={<UserManagement />} />
-          <Route path="chatbot" element={<ChatbotControl />} />
+            <Route path="situation-room" element={<SituationRoom />} />
+            <Route path="model-control" element={<ModelControl />} />
+            <Route path="reports" element={<ReportModeration />} />
+            <Route path="districts" element={<DistrictControl />} />
+            <Route path="facilities" element={<FacilityManagement />} />
+            <Route path="infrastructure" element={<InfrastructureMonitor />} />
+            <Route path="agriculture" element={<AgricultureConsole />} />
+            <Route path="recovery" element={<RecoveryCommand />} />
+            <Route path="broadcast" element={<AlertBroadcast />} />
+            <Route path="data" element={<DataUpload />} />
+            <Route path="audit" element={<AuditLogs />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="frontend" element={<FrontendControlCenter />} />
+            <Route path="maintenance" element={<SystemMaintenance />} />
+            <Route path="users" element={<UserManagement />} />
+            <Route path="chatbot" element={<ChatbotControl />} />
           </Route>
         </Route>
 

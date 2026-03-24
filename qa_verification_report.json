@@ -1,0 +1,217 @@
+{
+  "timestamp": "2026-03-25T00:31:36.868251",
+  "backend_url": "http://localhost:8001",
+  "summary": {
+    "total": 11,
+    "passed": 8,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 3
+  },
+  "results": [
+    {
+      "test_name": "Database Connectivity",
+      "category": "DB_SETUP",
+      "status": "PASSED",
+      "duration": 0.0,
+      "message": "PostgreSQL responsive",
+      "details": {
+        "version": "PostgreSQL 18.1 on x86_64-windows, compiled by msv"
+      },
+      "timestamp": "2026-03-25T00:31:36.868251"
+    },
+    {
+      "test_name": "Critical Tables Structure",
+      "category": "DB_SCHEMA",
+      "status": "PASSED",
+      "duration": 0.072,
+      "message": "Verified 7 tables",
+      "details": {
+        "all_tables": "present"
+      },
+      "timestamp": "2026-03-25T00:31:36.868251"
+    },
+    {
+      "test_name": "Page Visibility Records",
+      "category": "DATA_INTEGRITY",
+      "status": "PASSED",
+      "duration": 0.0,
+      "message": "Found 8 page visibility settings",
+      "details": {
+        "agricultureAdvisor": {
+          "enabled": true
+        },
+        "communityReports": {
+          "enabled": true
+        },
+        "evacuationPlanner": {
+          "enabled": true
+        },
+        "historicalTimeline": {
+          "enabled": true
+        },
+        "learnHub": {
+          "enabled": true
+        },
+        "recoveryTracker": {
+          "enabled": true
+        },
+        "safetyProfile": {
+          "enabled": true
+        },
+        "whatIfLab": {
+          "enabled": true
+        }
+      },
+      "timestamp": "2026-03-25T00:31:36.868251"
+    },
+    {
+      "test_name": "System Settings Data",
+      "category": "DATA_INTEGRITY",
+      "status": "PASSED",
+      "duration": 0.011,
+      "message": "All system settings present",
+      "details": {
+        "dark_mode": true,
+        "sound_alerts": true,
+        "push_notifications": true,
+        "data_collection": false,
+        "anonymous_reporting": true
+      },
+      "timestamp": "2026-03-25T00:31:36.868251"
+    },
+    {
+      "test_name": "Emergency Contacts Integrity",
+      "category": "DATA_INTEGRITY",
+      "status": "PASSED",
+      "duration": 0.003,
+      "message": "Found 7 emergency contacts",
+      "details": {
+        "total_contacts": 7,
+        "active_contacts": 7,
+        "unique_categories": 3,
+        "by_category": [
+          {
+            "category": "ambulance",
+            "count": 1,
+            "active": true
+          },
+          {
+            "category": "disaster",
+            "count": 1,
+            "active": true
+          },
+          {
+            "category": "police",
+            "count": 5,
+            "active": true
+          }
+        ]
+      },
+      "timestamp": "2026-03-25T00:31:36.868251"
+    },
+    {
+      "test_name": "User-Role Relationships",
+      "category": "DATA_INTEGRITY",
+      "status": "PASSED",
+      "duration": 0.007,
+      "message": "Verified 4 users and 1 roles",
+      "details": {
+        "total_users": 4,
+        "total_roles": 1,
+        "users_with_roles": 1,
+        "roles": [
+          {
+            "name": "citizen",
+            "user_count": 0
+          },
+          {
+            "name": "analyst",
+            "user_count": 0
+          },
+          {
+            "name": "admin",
+            "user_count": 0
+          },
+          {
+            "name": "moderator",
+            "user_count": 0
+          },
+          {
+            "name": "operator",
+            "user_count": 0
+          },
+          {
+            "name": "super_admin",
+            "user_count": 1
+          }
+        ]
+      },
+      "timestamp": "2026-03-25T00:31:36.868251"
+    },
+    {
+      "test_name": "Backend Health Check",
+      "category": "API_HEALTH",
+      "status": "SKIPPED",
+      "duration": 13.202,
+      "message": "Backend not running on port 8001",
+      "details": {},
+      "timestamp": "2026-03-25T00:31:36.868251"
+    },
+    {
+      "test_name": "Auth Endpoint Availability",
+      "category": "API_ENDPOINTS",
+      "status": "SKIPPED",
+      "duration": 13.244,
+      "message": "Backend not running",
+      "details": {},
+      "timestamp": "2026-03-25T00:31:36.868251"
+    },
+    {
+      "test_name": "Admin API Endpoints",
+      "category": "API_ENDPOINTS",
+      "status": "SKIPPED",
+      "duration": 39.688,
+      "message": "Tested 3 endpoints",
+      "details": {
+        "accessible": [],
+        "unreachable": [
+          [
+            "/api/v1/admin/page-visibility",
+            "backend not running"
+          ],
+          [
+            "/api/v1/admin/settings",
+            "backend not running"
+          ],
+          [
+            "/api/v1/integration/emergency-contacts",
+            "backend not running"
+          ]
+        ]
+      },
+      "timestamp": "2026-03-25T00:31:36.868251"
+    },
+    {
+      "test_name": "Referential Integrity",
+      "category": "DB_CONSISTENCY",
+      "status": "PASSED",
+      "duration": 0.0,
+      "message": "Checking orphaned relationships",
+      "details": {
+        "orphaned_user_roles": 0,
+        "orphaned_role_permissions": 0
+      },
+      "timestamp": "2026-03-25T00:31:36.868251"
+    },
+    {
+      "test_name": "Data Type Consistency",
+      "category": "DB_CONSISTENCY",
+      "status": "PASSED",
+      "duration": 0.002,
+      "message": "Checked boolean field consistency",
+      "details": {},
+      "timestamp": "2026-03-25T00:31:36.868251"
+    }
+  ]
+}

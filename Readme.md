@@ -8,7 +8,7 @@
 
 ## QUICK START
 
-### 1. Start Services (3 terminals)
+### 1. Start Services (4 terminals)
 
 **Terminal 1 - Backend:**
 ```powershell
@@ -24,7 +24,14 @@ npm run dev
 # Expect: "VITE ready in XXXXms"
 ```
 
-**Terminal 3 - Quick Validation:**
+**Terminal 3 - Database Connection Status:**
+```powershell
+cd e:\floodweb
+powershell -ExecutionPolicy Bypass -File .\db_connection_status.ps1; & e:\floodweb\server\.venv\Scripts\Activate.ps1
+# Expect: "DATABASE OPERATIONAL - ALL SYSTEMS READY"
+```
+
+**Terminal 4 - Quick Validation:**
 ```powershell
 cd e:\floodweb
 python quick_validation.py
