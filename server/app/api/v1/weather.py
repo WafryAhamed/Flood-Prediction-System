@@ -1,16 +1,21 @@
 """
 Weather data API routes.
 """
-from typing import Annotated
+from typing import Annotated, Optional
 from uuid import UUID
 from datetime import datetime, timedelta
+import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel, Field
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
-from app.api.deps import CurrentUserOptional, AdminUser, OperatorUser
+from app.api.deps import CurrentUserOptional, AdminUser, OperatorUser, require_roles, get_current_user
+from app.models.audit import SystemSetting
+from app.services.integration_state import integration_state_service
+from app.models.auth import UserRole, User
 from app.models.weather import (
     WeatherObservation,
     WeatherForecast,
@@ -441,3 +446,206 @@ async def get_flood_prediction_summary(
     }
     
     return summary
+
+
+# --- Weather Overrides (Admin Testing/Simulation) ---
+
+class WeatherOverridesSchema(BaseModel):
+    """Schema for weather override parameters"""
+    wind_speed_kmh: Optional[float] = Field(None, ge=0, le=200, description="Wind speed in km/h")
+    rainfall_mm: Optional[float] = Field(None, ge=0, le=500, description="Rainfall in millimeters")
+    temperature_c: Optional[float] = Field(None, ge=-50, le=60, description="Temperature in Celsius")
+    humidity_percent: Optional[float] = Field(None, ge=0, le=100, description="Humidity percentage")
+    pressure_hpa: Optional[float] = Field(None, ge=800, le=1100, description="Pressure in hectopascals")
+    visibility_km: Optional[float] = Field(None, ge=0, le=50, description="Visibility in kilometers")
+    affected_districts: Optional[list[str]] = Field(None, description="List of affected district codes")
+    active: bool = Field(True, description="Whether overrides are active")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "wind_speed_kmh": 45.5,
+                "rainfall_mm": 150.0,
+                "temperature_c": 28.5,
+                "humidity_percent": 85,
+                "pressure_hpa": 1012,
+                "visibility_km": 2.0,
+                "affected_districts": ["CMB", "GAL"],
+                "active": True
+            }
+        }
+
+
+class WeatherOverridesResponse(BaseModel):
+    """Response for weather override operations"""
+    status: str
+    active: bool
+    affected_count: int
+    updated_at: datetime
+    overrides: dict
+
+
+@router.get("/overrides", response_model=dict, tags=["Weather Overrides"])
+async def get_weather_overrides(
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
+    """
+    Get current weather overrides (if active).
+    
+    This endpoint returns the current weather overrides that are active for testing/simulation.
+    Returns empty response if no overrides are active.
+    """
+    query = select(SystemSetting).where(
+        SystemSetting.key == "weather_overrides"
+    )
+    result = await db.execute(query)
+    setting = result.scalar_one_or_none()
+    
+    if not setting:
+        return {
+            "active": False,
+            "overrides": None,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    
+    try:
+        data = json.loads(setting.value)
+        if data.get("active"):
+            return {
+                "active": True,
+                "overrides": data,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+    except (json.JSONDecodeError, TypeError):
+        pass
+    
+    return {
+        "active": False,
+        "overrides": None,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+@router.put("/overrides", response_model=WeatherOverridesResponse, tags=["Weather Overrides"])
+async def update_weather_overrides(
+    overrides: WeatherOverridesSchema,
+    admin: Annotated[User, Depends(require_roles(UserRole.ADMIN, UserRole.SUPER_ADMIN))],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> WeatherOverridesResponse:
+    """
+    Update weather override settings for testing/simulation.
+    
+    **Admin endpoint** - Update weather metrics temporarily for testing flood scenarios.
+    Overrides last until cleared or changed. Affects weather API responses and flood predictions.
+    
+    **Parameters:**
+    - `wind_speed_kmh`: Override wind speed (0-200 km/h)
+    - `rainfall_mm`: Override rainfall (0-500 mm)
+    - `temperature_c`: Override temperature (-50 to +60°C)
+    - `humidity_percent`: Override humidity (0-100%)
+    - `pressure_hpa`: Override atmospheric pressure (800-1100 hPa)
+    - `visibility_km`: Override visibility (0-50 km)
+    - `affected_districts`: List of district codes to affect (optional)
+    - `active`: Whether overrides are currently active
+    """
+    
+    # Get or create weather_overrides setting
+    stmt = select(SystemSetting).where(
+        SystemSetting.key == "weather_overrides"
+    )
+    result = await db.execute(stmt)
+    setting = result.scalar_one_or_none()
+    
+    override_data = {
+        "wind_speed_kmh": overrides.wind_speed_kmh,
+        "rainfall_mm": overrides.rainfall_mm,
+        "temperature_c": overrides.temperature_c,
+        "humidity_percent": overrides.humidity_percent,
+        "pressure_hpa": overrides.pressure_hpa,
+        "visibility_km": overrides.visibility_km,
+        "affected_districts": overrides.affected_districts or [],
+        "active": overrides.active,
+        "created_at": datetime.utcnow().isoformat(),
+        "created_by": admin.email if admin else "admin"
+    }
+    
+    if setting:
+        setting.value = json.dumps(override_data)
+        setting.updated_at = datetime.utcnow()
+        setting.updated_by_id = admin.id if admin else None
+    else:
+        setting = SystemSetting(
+            key="weather_overrides",
+            value=json.dumps(override_data),
+            value_type="json",
+            is_encrypted=False,
+            updated_by_id=admin.id if admin else None
+        )
+    
+    db.add(setting)
+    await db.commit()
+    await db.refresh(setting)
+    
+    # Publish override event to all connected clients
+    await integration_state_service.publish_event(
+        "weather_override_changed",
+        {
+            "wind_speed_kmh": overrides.wind_speed_kmh,
+            "rainfall_mm": overrides.rainfall_mm,
+            "temperature_c": overrides.temperature_c,
+            "humidity_percent": overrides.humidity_percent,
+            "pressure_hpa": overrides.pressure_hpa,
+            "visibility_km": overrides.visibility_km,
+            "active": overrides.active,
+            "affected_districts": overrides.affected_districts or [],
+            "changed_by": admin.email if admin else "admin",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    )
+    
+    return WeatherOverridesResponse(
+        status="saved",
+        active=overrides.active,
+        affected_count=len(overrides.affected_districts or []),
+        updated_at=setting.updated_at,
+        overrides=override_data
+    )
+
+
+@router.delete("/overrides", response_model=dict, tags=["Weather Overrides"])  
+async def delete_weather_overrides(
+    admin: Annotated[User, Depends(require_roles(UserRole.ADMIN, UserRole.SUPER_ADMIN))],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
+    """
+    Clear/disable weather overrides.
+    
+    **Admin endpoint** - Removes all active weather overrides and returns to real weather data.
+    """
+    query = select(SystemSetting).where(
+        SystemSetting.key == "weather_overrides"
+    )
+    result = await db.execute(query)
+    setting = result.scalar_one_or_none()
+    
+    message = "No active overrides to clear"
+    
+    if setting:
+        await db.delete(setting)
+        await db.commit()
+        message = "Weather overrides cleared successfully"
+        
+        # Publish clear event
+        await integration_state_service.publish_event(
+            "weather_override_cleared",
+            {
+                "cleared_by": admin.email if admin else "admin",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        )
+    
+    return {
+        "status": "cleared",
+        "message": message,
+        "timestamp": datetime.utcnow().isoformat()
+    }

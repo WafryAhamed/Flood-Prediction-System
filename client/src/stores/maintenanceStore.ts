@@ -26,107 +26,22 @@ import type {
   DashboardOverrides,
 } from '../types/admin';
 
-// ═══ Seed Data ═══
+// ═══ Default Configuration ═══
 
-const SEED_MAP_ZONES: AdminMapZone[] = [
-  {
-    id: 'mz-1',
-    name: 'Kelani River Basin',
-    zoneType: 'critical',
-    description: 'Evacuate Immediately — Critical flood zone',
-    visible: true,
-    polygon: [[6.93, 79.85], [6.95, 79.90], [6.98, 79.92], [7.00, 79.88], [6.97, 79.84], [6.93, 79.85]],
-  },
-  {
-    id: 'mz-2',
-    name: 'Kalu Ganga Basin',
-    zoneType: 'high-risk',
-    description: 'Prepare for evacuation — High risk',
-    visible: true,
-    polygon: [[6.65, 80.35], [6.70, 80.42], [6.72, 80.40], [6.70, 80.33], [6.66, 80.32], [6.65, 80.35]],
-  },
-  {
-    id: 'mz-3',
-    name: 'Mihintale Highland',
-    zoneType: 'safe',
-    description: 'Safe zone — Highland area',
-    visible: true,
-    polygon: [[8.34, 80.48], [8.37, 80.52], [8.39, 80.51], [8.38, 80.47], [8.35, 80.46], [8.34, 80.48]],
-  },
-];
-
-const SEED_CHATBOT_KNOWLEDGE: ChatbotKnowledgeEntry[] = [
-  { id: 'ck-1', category: 'Danger Assessment', keywords: ['danger', 'risk', 'safe', 'am i'], response: 'If water levels are rising near you, move to higher ground immediately. Avoid flooded roads and stay away from rivers. Call the Disaster Management Centre at 117 for live updates.', active: true },
-  { id: 'ck-2', category: 'Emergency Numbers', keywords: ['emergency', 'number', 'hotline', 'call', 'phone', 'contact'], response: 'Emergency Hotline: 112 | Police: 119 | Ambulance/Fire: 110 | Disaster Management Centre (DMC): 117. Call 117 for flood-specific assistance.', active: true },
-  { id: 'ck-3', category: 'Shelter Information', keywords: ['shelter', 'safe place', 'safe zone', 'relief', 'refuge'], response: 'Head to the nearest school, temple, or government building designated as a relief shelter. Follow evacuation signs and local authority directions. Carry water, medicine, and important documents.', active: true },
-  { id: 'ck-4', category: 'Evacuation Guidance', keywords: ['evacuat', 'leave', 'move', 'escape', 'route'], response: 'Follow evacuation notices from local authorities. Move to higher ground or the nearest designated shelter. Carry essential documents, drinking water, medicine, and a flashlight.', active: true },
-  { id: 'ck-5', category: 'Weather Information', keywords: ['weather', 'rain', 'monsoon', 'forecast', 'storm'], response: "Sri Lanka's southwest monsoon runs May–September and the northeast monsoon December–February. Flood risk is highest during these periods. Monitor the DMC (117) and local weather reports closely.", active: true },
-  { id: 'ck-6', category: 'Home Protection', keywords: ['home', 'house', 'protect', 'sandbag', 'property'], response: 'Place sandbags around entry points and move valuables to upper floors. Turn off electricity if water enters your home. Seal ground-level doors and windows with plastic sheeting.', active: true },
-  { id: 'ck-7', category: 'Flood Areas', keywords: ['area', 'district', 'prone', 'colombo', 'ratnapura'], response: 'High-risk flood districts include Colombo, Gampaha, Kalutara, Ratnapura, Matara, Galle, Anuradhapura, and Batticaloa. Residents in low-lying areas should monitor warnings closely.', active: true },
-  { id: 'ck-8', category: 'Agriculture', keywords: ['farm', 'crop', 'agriculture', 'livestock', 'field'], response: 'Move livestock and seeds to higher ground immediately. Drain excess water from fields if possible. Document crop losses for insurance claims and contact your agricultural extension officer.', active: true },
-];
-
-const SEED_USERS: SystemUser[] = [
-  { id: 'usr-1', userId: '#8492', name: 'Nimal Perera', district: 'Gampaha', trustScore: 92, reportCount: 14, status: 'active', joinedAt: Date.now() - 90 * 86400000, lastActive: Date.now() - 120000 },
-  { id: 'usr-2', userId: '#3217', name: 'Kamani Silva', district: 'Colombo', trustScore: 87, reportCount: 8, status: 'active', joinedAt: Date.now() - 60 * 86400000, lastActive: Date.now() - 300000 },
-  { id: 'usr-3', userId: '#5641', name: 'Ruwan Jayawardena', district: 'Gampaha', trustScore: 78, reportCount: 5, status: 'active', joinedAt: Date.now() - 45 * 86400000, lastActive: Date.now() - 480000 },
-  { id: 'usr-4', userId: '#7823', name: 'Dilini Fernando', district: 'Colombo', trustScore: 95, reportCount: 22, status: 'active', joinedAt: Date.now() - 120 * 86400000, lastActive: Date.now() - 180000 },
-  { id: 'usr-5', userId: '#2094', name: 'Saman Kumara', district: 'Colombo', trustScore: 81, reportCount: 3, status: 'active', joinedAt: Date.now() - 30 * 86400000, lastActive: Date.now() - 720000 },
-  { id: 'usr-6', userId: '#4456', name: 'Priyani Bandara', district: 'Colombo', trustScore: 88, reportCount: 11, status: 'active', joinedAt: Date.now() - 75 * 86400000, lastActive: Date.now() - 600000 },
-  { id: 'usr-7', userId: '#6190', name: 'Asanka Fonseka', district: 'Colombo', trustScore: 74, reportCount: 2, status: 'suspended', joinedAt: Date.now() - 15 * 86400000, lastActive: Date.now() - 86400000 },
-  { id: 'usr-8', userId: '#9312', name: 'Nadeesha Gunasekara', district: 'Colombo', trustScore: 90, reportCount: 18, status: 'active', joinedAt: Date.now() - 100 * 86400000, lastActive: Date.now() - 60000 },
-];
-
-const SEED_SYSTEM_SETTINGS: SystemSettings = {
-  defaultMapCenter: [7.8731, 80.7718],
-  defaultMapZoom: 8,
-  riskThresholds: { critical: 80, high: 60, moderate: 40 },
-  alertMessages: {
-    critical: 'CRITICAL: Immediate evacuation required in affected areas.',
-    high: 'HIGH ALERT: Prepare for possible evacuation.',
-    moderate: 'MODERATE: Monitor water levels and stay alert.',
-    safe: 'All clear. No immediate flood risk detected.',
-  },
+const DEFAULT_PAGE_VISIBILITY: PageVisibilityConfig = {
+  dashboard: true,
+  riskMap: true,
+  communityReports: true,
+  evacuation: true,
+  history: true,
+  whatIf: true,
+  agriculture: true,
+  recovery: true,
+  learnHub: true,
+  safetyProfile: true,
 };
 
-const SEED_HISTORY: FloodHistoryEntry[] = [
-  { id: 'fh-1', year: 2018, floods: 2, rainfall: 1200, description: 'Two localized flood events in western regions' },
-  { id: 'fh-2', year: 2019, floods: 1, rainfall: 900, description: 'Single minor flood event in eastern coast' },
-  { id: 'fh-3', year: 2020, floods: 3, rainfall: 1500, description: 'Recovery phase with moderate flood incidents' },
-  { id: 'fh-4', year: 2021, floods: 4, rainfall: 1800, description: 'Increased frequency due to climate variability' },
-  { id: 'fh-5', year: 2022, floods: 2, rainfall: 1100, description: 'Two localized flood events in coastal regions' },
-  { id: 'fh-6', year: 2023, floods: 5, rainfall: 2100, description: 'Severe monsoon rainfall caused widespread flooding in urban areas' },
-];
-
-const SEED_EVACUATION: EvacuationRoute[] = [
-  {
-    id: 'er-1',
-    name: 'Mihintale → Anuradhapura Hospital',
-    from: 'Mihintale',
-    to: 'Anuradhapura Hospital',
-    distance: '12.4 km',
-    status: 'active',
-    path: [[8.3593, 80.5103], [8.3450, 80.4800], [8.3300, 80.4500], [8.3114, 80.4037]],
-  },
-  {
-    id: 'er-2',
-    name: 'Kelaniya → Colombo Shelter',
-    from: 'Kelaniya',
-    to: 'Colombo Central Shelter',
-    distance: '8.2 km',
-    status: 'active',
-    path: [[6.9533, 79.9220], [6.9450, 79.9000], [6.9350, 79.8800], [6.9271, 79.8612]],
-  },
-  {
-    id: 'er-3',
-    name: 'Kaduwela → Malabe Heights',
-    from: 'Kaduwela',
-    to: 'Malabe Heights',
-    distance: '5.6 km',
-    status: 'caution',
-    path: [[6.9310, 79.9830], [6.9350, 79.9650], [6.9400, 79.9450], [6.9500, 79.9300]],
-  },
-];
+const SEED_EVACUATION: EvacuationRoute[] = [];
 
 const SEED_SIMULATION: SimulationDefaults = {
   rainfall: 50,
@@ -318,7 +233,7 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
   },
 
   // ── Map Management ──
-  mapZones: SEED_MAP_ZONES,
+  mapZones: [],
   updateMapZone: (id, updates) => {
     set((s) => ({ mapZones: s.mapZones.map((z) => (z.id === id ? { ...z, ...updates } : z)) }));
     void saveMaintenanceState(pickPersistableState(get()));
@@ -372,7 +287,7 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
   },
 
   // ── Chatbot Knowledge ──
-  chatbotKnowledge: SEED_CHATBOT_KNOWLEDGE,
+  chatbotKnowledge: [],
   addKnowledgeEntry: (entry) => {
     set((s) => ({ chatbotKnowledge: [...s.chatbotKnowledge, { ...entry, id: genId('ck') }] }));
     void saveMaintenanceState(pickPersistableState(get()));
@@ -387,7 +302,7 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
   },
 
   // ── Users ──
-  users: SEED_USERS,
+  users: [],
   userActionError: null as string | null,
   userActionLoading: null as string | null,
   suspendUser: async (id) => {
@@ -446,14 +361,24 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
   },
 
   // ── System Settings ──
-  systemSettings: SEED_SYSTEM_SETTINGS,
+  systemSettings: {
+    defaultMapCenter: [7.8731, 80.7718],
+    defaultMapZoom: 8,
+    riskThresholds: { critical: 80, high: 60, moderate: 40 },
+    alertMessages: {
+      critical: 'CRITICAL: Immediate evacuation required in affected areas.',
+      high: 'HIGH ALERT: Prepare for possible evacuation.',
+      moderate: 'MODERATE: Monitor water levels and stay alert.',
+      safe: 'All clear. No immediate flood risk detected.',
+    },
+  },
   updateSystemSettings: (updates) => {
     set((s) => ({ systemSettings: { ...s.systemSettings, ...updates } }));
     void saveMaintenanceState(pickPersistableState(get()));
   },
 
   // ── History ──
-  historyData: SEED_HISTORY,
+  historyData: [],
   updateHistoryEntry: (id, updates) => {
     set((s) => ({ historyData: s.historyData.map((h) => (h.id === id ? { ...h, ...updates } : h)) }));
     void saveMaintenanceState(pickPersistableState(get()));
@@ -468,7 +393,7 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
   },
 
   // ── Evacuation ──
-  evacuationRoutes: SEED_EVACUATION,
+  evacuationRoutes: [],
   updateEvacuationRoute: (id, updates) => {
     set((s) => ({ evacuationRoutes: s.evacuationRoutes.map((r) => (r.id === id ? { ...r, ...updates } : r)) }));
     void saveMaintenanceState(pickPersistableState(get()));
