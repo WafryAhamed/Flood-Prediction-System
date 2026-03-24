@@ -11,11 +11,13 @@ export function AdminLayout() {
     navigate('/admin/login', { replace: true });
   };
   const isActive = (path: string) => {
-    if (path === '/admin') return location.pathname === '/admin';
+    // ✅ UPDATED: /admin now renders Maintenance component, so highlight Maintenance nav item instead
+    if (path === '/admin/maintenance') return location.pathname === '/admin' || location.pathname.startsWith(path);
+    if (path === '/admin') return location.pathname === '/admin'; // Should never be true now, kept for safety
     return location.pathname.startsWith(path);
   };
   const navItems = [
-    { path: '/admin', label: 'Command Center', icon: LayoutDashboard },
+    // ✅ REMOVED: Command Center (merged into Maintenance) - use Maintenance link instead
     { path: '/admin/situation-room', label: 'Situation Room', icon: Activity },
     { path: '/admin/model-control', label: 'Model Control', icon: ShieldAlert },
     { path: '/admin/reports', label: 'Reports', icon: FileText },
@@ -28,7 +30,7 @@ export function AdminLayout() {
     { path: '/admin/data', label: 'Data Upload', icon: Database },
     { path: '/admin/audit', label: 'Audit Logs', icon: BarChart3 },
     { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
-    { path: '/admin/maintenance', label: 'Maintenance', icon: Wrench },
+    { path: '/admin/maintenance', label: 'Maintenance', icon: Wrench }, // ✅ Default landing page (contains all Command Center modules)
   ];
   return <div className="min-h-screen bg-bg-dark text-gray-200 font-sans admin-theme flex flex-col">
       {/* Top Bar */}

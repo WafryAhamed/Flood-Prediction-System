@@ -1,13 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import {
   Phone, Map, Navigation, History, Sliders, Settings,
   Plus, Trash2, Eye, EyeOff, Save, Edit2, X, Check,
   Wrench, Wind, Droplets, AlertTriangle,
+  LayoutDashboard, Users, MessageSquare, Building2,
+  Sprout, Activity, MapPin, BookOpen, Monitor,
 } from 'lucide-react';
 import { useMaintenanceStore } from '../../stores/maintenanceStore';
 
+// ✅ LAZY LOAD: Command Center tab components (moved from AdminCommandCenter)
+const SituationRoomTab = React.lazy(() => import('./tabs/SituationRoomTab'));
+const UsersTab = React.lazy(() => import('./tabs/UsersTab'));
+const ReportsTab = React.lazy(() => import('./tabs/ReportsTab'));
+const ResourcesTab = React.lazy(() => import('./tabs/ResourcesTab'));
+const WeatherTab = React.lazy(() => import('./tabs/WeatherTab'));
+const AgricultureTab = React.lazy(() => import('./tabs/AgricultureTab'));
+const RecoveryTab = React.lazy(() => import('./tabs/RecoveryTab'));
+const EducationTab = React.lazy(() => import('./tabs/EducationTab'));
+
+// ✅ LAZY LOAD: Frontend Control Center (page visibility control)
+const FrontendControlCenter = React.lazy(() => import('./FrontendControlCenter'));
+
 // ═══ Tab definitions ═══
 const TABS = [
+  // ✅ EXISTING MAINTENANCE TABS (UNCHANGED)
   { id: 'dashboard', label: 'Dashboard', icon: Wind },
   { id: 'emergency', label: 'Emergency Contacts', icon: Phone },
   { id: 'map', label: 'Map Management', icon: Map },
@@ -15,8 +31,32 @@ const TABS = [
   { id: 'history', label: 'Flood History', icon: History },
   { id: 'simulation', label: 'Simulation Config', icon: Sliders },
   { id: 'settings', label: 'System Settings', icon: Settings },
+  
+  // ✅ NEW: Command Center modules (moved from AdminCommandCenter)
+  { id: 'situation', label: 'Situation Room', icon: LayoutDashboard },
+  { id: 'users', label: 'Users', icon: Users },
+  { id: 'reports', label: 'Reports', icon: MessageSquare },
+  { id: 'resources', label: 'Resources', icon: Building2 },
+  { id: 'weather', label: 'Weather', icon: AlertTriangle },
+  { id: 'agriculture', label: 'Agriculture', icon: Sprout },
+  { id: 'recovery', label: 'Recovery', icon: Wrench },
+  { id: 'education', label: 'Education', icon: BookOpen },
+  
+  // ✅ NEW: Frontend Control Center (page visibility + global settings)
+  { id: 'frontend', label: 'Frontend Control', icon: Monitor },
 ] as const;
 type TabId = typeof TABS[number]['id'];
+
+// Loading spinner for lazy-loaded components
+function LoadingSpinner() {
+  return (
+    <div className="flex items-center justify-center h-96">
+      <div className="animate-spin">
+        <Activity size={32} className="text-blue-400" />
+      </div>
+    </div>
+  );
+}
 
 // ═══ Reusable panel wrapper ═══
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
@@ -577,6 +617,7 @@ export function SystemMaintenance() {
 
         {/* Content area */}
         <div className="flex-1 min-w-0">
+          {/* ✅ EXISTING MAINTENANCE TABS */}
           {activeTab === 'dashboard' && <DashboardTab />}
           {activeTab === 'emergency' && <EmergencyContactsTab />}
           {activeTab === 'map' && <MapManagementTab />}
@@ -584,6 +625,17 @@ export function SystemMaintenance() {
           {activeTab === 'history' && <HistoryTab />}
           {activeTab === 'simulation' && <SimulationTab />}
           {activeTab === 'settings' && <SettingsTab />}
+          
+          {/* ✅ NEW: Command Center modules (lazy-loaded) */}
+          {activeTab === 'situation' && <Suspense fallback={<LoadingSpinner />}><SituationRoomTab /></Suspense>}
+          {activeTab === 'users' && <Suspense fallback={<LoadingSpinner />}><UsersTab /></Suspense>}
+          {activeTab === 'reports' && <Suspense fallback={<LoadingSpinner />}><ReportsTab /></Suspense>}
+          {activeTab === 'resources' && <Suspense fallback={<LoadingSpinner />}><ResourcesTab /></Suspense>}
+          {activeTab === 'weather' && <Suspense fallback={<LoadingSpinner />}><WeatherTab /></Suspense>}
+          {activeTab === 'agriculture' && <Suspense fallback={<LoadingSpinner />}><AgricultureTab /></Suspense>}
+          {activeTab === 'recovery' && <Suspense fallback={<LoadingSpinner />}><RecoveryTab /></Suspense>}
+          {activeTab === 'education' && <Suspense fallback={<LoadingSpinner />}><EducationTab /></Suspense>}
+          {activeTab === 'frontend' && <Suspense fallback={<LoadingSpinner />}><FrontendControlCenter /></Suspense>}
         </div>
       </div>
     </div>

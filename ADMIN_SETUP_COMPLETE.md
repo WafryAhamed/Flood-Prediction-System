@@ -14,7 +14,7 @@
 
 ### Admin Credentials
 ```
-📧 Email:    admin@floodresilience.lk
+📧 Email:    
 🔐 Password: admin123
 ```
 

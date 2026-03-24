@@ -25,7 +25,7 @@ import { SafetyProfile } from './pages/SafetyProfile';
 import { AdminLogin } from './pages/admin/AdminLogin';
 import { AdminRouteGuard } from './components/admin/AdminRouteGuard';
 import { AdminLayout } from './pages/admin/AdminLayout';
-import { AdminCommandCenter } from './pages/admin/AdminCommandCenter';
+// ✅ REMOVED: AdminCommandCenter (merged into SystemMaintenance)
 import { ModelControl } from './pages/admin/ModelControl';
 import { ReportModeration } from './pages/admin/ReportModeration';
 import { DistrictControl } from './pages/admin/DistrictControl';
@@ -37,7 +37,7 @@ import { AlertBroadcast } from './pages/admin/AlertBroadcast';
 import { DataUpload } from './pages/admin/DataUpload';
 import { AuditLogs } from './pages/admin/AuditLogs';
 import { Analytics } from './pages/admin/Analytics';
-import { FrontendControlCenter } from './pages/admin/FrontendControlCenter';
+// ✅ REMOVED: FrontendControlCenter (now lazy-loaded in SystemMaintenance)
 import { SystemMaintenance } from './pages/admin/SystemMaintenance';
 import { UserManagement } from './pages/admin/UserManagement';
 import { ChatbotControl } from './pages/admin/ChatbotControl';
@@ -80,7 +80,8 @@ function AppContent() {
         {/* Admin Routes - Protected */}
         <Route path="/admin" element={<AdminRouteGuard />}>
           <Route element={<AdminLayout />}>
-            <Route index element={<AdminCommandCenter />} />
+            {/* ✅ CHANGED: Index route now points to SystemMaintenance (contains all Command Center modules) */}
+            <Route index element={<SystemMaintenance />} />
             <Route path="situation-room" element={<SituationRoom />} />
             <Route path="model-control" element={<ModelControl />} />
             <Route path="reports" element={<ReportModeration />} />
@@ -93,7 +94,7 @@ function AppContent() {
             <Route path="data" element={<DataUpload />} />
             <Route path="audit" element={<AuditLogs />} />
             <Route path="analytics" element={<Analytics />} />
-            <Route path="frontend" element={<FrontendControlCenter />} />
+            {/* ✅ REMOVED: /frontend route (Feature moved to Maintenance 'Frontend Control' tab) */}
             <Route path="maintenance" element={<SystemMaintenance />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="chatbot" element={<ChatbotControl />} />
