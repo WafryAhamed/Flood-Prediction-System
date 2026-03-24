@@ -22,12 +22,15 @@ export function UserManagement() {
   const suspendUser = useMaintenanceStore((s) => s.suspendUser);
   const activateUser = useMaintenanceStore((s) => s.activateUser);
   const deleteUser = useMaintenanceStore((s) => s.deleteUser);
+  const userActionLoading = useMaintenanceStore((s) => s.userActionLoading);
+  const userActionError = useMaintenanceStore((s) => s.userActionError);
   const allReports = useReportStore((s) => s.reports);
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ userId: string; action: string } | null>(null);
+  const [errorDismiss, setErrorDismiss] = useState(false);
 
   const filteredUsers = useMemo(() => {
     let result = users;
@@ -50,12 +53,18 @@ export function UserManagement() {
 
   const getUserReports = (userId: string) => allReports.filter((r) => r.user_id === userId);
 
-  const handleAction = (userId: string, action: string) => {
+  const handleAction = async (userId: string, action: string) => {
     if (confirmAction?.userId === userId && confirmAction?.action === action) {
-      if (action === 'suspend') suspendUser(userId);
-      else if (action === 'activate') activateUser(userId);
-      else if (action === 'delete') deleteUser(userId);
-      setConfirmAction(null);
+      try {
+        if (action === 'suspend') await suspendUser(userId);
+        else if (action === 'activate') await activateUser(userId);
+        else if (action === 'delete') await deleteUser(userId);
+        setConfirmAction(null);
+        setErrorDismiss(false);
+      } catch (error) {
+        // Error already handled by store
+        console.error('Action failed:', error);
+      }
     } else {
       setConfirmAction({ userId, action });
     }
@@ -88,6 +97,23 @@ export function UserManagement() {
           USER CONTROL • {stats.total} REGISTERED USERS
         </p>
       </div>
+
+      {/* Error Message */}
+      {userActionError && !errorDismiss && (
+        <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-4 flex items-start gap-3">
+          <AlertTriangle size={20} className="text-red-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <h4 className="font-bold text-red-400 text-sm mb-1">Action Failed</h4>
+            <p className="text-sm text-red-300">{userActionError}</p>
+          </div>
+          <button
+            onClick={() => setErrorDismiss(true)}
+            className="text-red-400 hover:text-red-300 font-bold text-sm uppercase"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -214,40 +240,49 @@ export function UserManagement() {
                     {user.status !== 'active' && (
                       <button
                         onClick={(e) => { e.stopPropagation(); handleAction(user.id, 'activate'); }}
+                        disabled={userActionLoading === user.id}
                         className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase rounded-lg transition-colors ${
-                          confirmAction?.userId === user.id && confirmAction?.action === 'activate'
+                          userActionLoading === user.id
+                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-60'
+                            : confirmAction?.userId === user.id && confirmAction?.action === 'activate'
                             ? 'bg-green-600 text-white animate-pulse'
                             : 'bg-gray-700 text-green-400 hover:bg-gray-600'
                         }`}
                       >
                         <CheckCircle size={14} />
-                        {confirmAction?.userId === user.id && confirmAction?.action === 'activate' ? 'Confirm Activate' : 'Activate'}
+                        {userActionLoading === user.id ? 'Activating...' : confirmAction?.userId === user.id && confirmAction?.action === 'activate' ? 'Confirm Activate' : 'Activate'}
                       </button>
                     )}
                     {user.status === 'active' && (
                       <button
                         onClick={(e) => { e.stopPropagation(); handleAction(user.id, 'suspend'); }}
+                        disabled={userActionLoading === user.id}
                         className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase rounded-lg transition-colors ${
-                          confirmAction?.userId === user.id && confirmAction?.action === 'suspend'
+                          userActionLoading === user.id
+                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-60'
+                            : confirmAction?.userId === user.id && confirmAction?.action === 'suspend'
                             ? 'bg-yellow-500 text-gray-900 animate-pulse'
                             : 'bg-gray-700 text-yellow-400 hover:bg-gray-600'
                         }`}
                       >
                         <Ban size={14} />
-                        {confirmAction?.userId === user.id && confirmAction?.action === 'suspend' ? 'Confirm Suspend' : 'Suspend'}
+                        {userActionLoading === user.id ? 'Suspending...' : confirmAction?.userId === user.id && confirmAction?.action === 'suspend' ? 'Confirm Suspend' : 'Suspend'}
                       </button>
                     )}
                     {user.status !== 'deleted' && (
                       <button
                         onClick={(e) => { e.stopPropagation(); handleAction(user.id, 'delete'); }}
+                        disabled={userActionLoading === user.id}
                         className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase rounded-lg transition-colors ${
-                          confirmAction?.userId === user.id && confirmAction?.action === 'delete'
+                          userActionLoading === user.id
+                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-60'
+                            : confirmAction?.userId === user.id && confirmAction?.action === 'delete'
                             ? 'bg-red-600 text-white animate-pulse'
                             : 'bg-gray-700 text-red-400 hover:bg-gray-600'
                         }`}
                       >
                         <Trash2 size={14} />
-                        {confirmAction?.userId === user.id && confirmAction?.action === 'delete' ? 'Confirm Delete' : 'Delete'}
+                        {userActionLoading === user.id ? 'Deleting...' : confirmAction?.userId === user.id && confirmAction?.action === 'delete' ? 'Confirm Delete' : 'Delete'}
                       </button>
                     )}
                   </div>

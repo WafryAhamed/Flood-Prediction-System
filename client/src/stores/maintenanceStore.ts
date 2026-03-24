@@ -9,6 +9,9 @@ import {
   createMapMarker as apiCreateMapMarker,
   updateMapMarker as apiUpdateMapMarker,
   deleteMapMarker as apiDeleteMapMarker,
+  activateUser as apiActivateUser,
+  suspendUserApi as apiSuspendUser,
+  deleteUserApi as apiDeleteUser,
 } from '../services/integrationApi';
 import type {
   EmergencyContact,
@@ -166,9 +169,11 @@ interface MaintenanceStore {
 
   // Users
   users: SystemUser[];
-  suspendUser: (id: string) => void;
-  activateUser: (id: string) => void;
-  deleteUser: (id: string) => void;
+  userActionLoading: string | null;
+  userActionError: string | null;
+  suspendUser: (id: string) => Promise<void>;
+  activateUser: (id: string) => Promise<void>;
+  deleteUser: (id: string) => Promise<void>;
 
   // System Settings
   systemSettings: SystemSettings;
@@ -383,17 +388,61 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
 
   // ── Users ──
   users: SEED_USERS,
-  suspendUser: (id) => {
-    set((s) => ({ users: s.users.map((u) => (u.id === id ? { ...u, status: 'suspended' as const } : u)) }));
-    void saveMaintenanceState(pickPersistableState(get()));
+  userActionError: null as string | null,
+  userActionLoading: null as string | null,
+  suspendUser: async (id) => {
+    set({ userActionLoading: id, userActionError: null });
+    try {
+      // Call backend API to suspend user
+      const response = await apiSuspendUser(id);
+      // Update local state with response from backend
+      set((s) => ({ 
+        users: s.users.map((u) => (u.id === id ? { ...u, status: 'suspended' as const } : u)),
+        userActionLoading: null,
+      }));
+      // Save updated state
+      void saveMaintenanceState(pickPersistableState(get()));
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to suspend user';
+      set({ userActionError: errorMsg, userActionLoading: null });
+      console.error('Error suspending user:', error);
+    }
   },
-  activateUser: (id) => {
-    set((s) => ({ users: s.users.map((u) => (u.id === id ? { ...u, status: 'active' as const } : u)) }));
-    void saveMaintenanceState(pickPersistableState(get()));
+  activateUser: async (id) => {
+    set({ userActionLoading: id, userActionError: null });
+    try {
+      // Call backend API to activate user
+      const response = await apiActivateUser(id);
+      // Update local state with response from backend
+      set((s) => ({ 
+        users: s.users.map((u) => (u.id === id ? { ...u, status: 'active' as const } : u)),
+        userActionLoading: null,
+      }));
+      // Save updated state
+      void saveMaintenanceState(pickPersistableState(get()));
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to activate user';
+      set({ userActionError: errorMsg, userActionLoading: null });
+      console.error('Error activating user:', error);
+    }
   },
-  deleteUser: (id) => {
-    set((s) => ({ users: s.users.map((u) => (u.id === id ? { ...u, status: 'deleted' as const } : u)) }));
-    void saveMaintenanceState(pickPersistableState(get()));
+  deleteUser: async (id) => {
+    set({ userActionLoading: id, userActionError: null });
+    try {
+      // Call backend API to delete user
+      const response = await apiDeleteUser(id);
+      // Update local state with response from backend
+      set((s) => ({ 
+        users: s.users.map((u) => (u.id === id ? { ...u, status: 'deleted' as const } : u)),
+        userActionLoading: null,
+      }));
+      // Save updated state
+      void saveMaintenanceState(pickPersistableState(get()));
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to delete user';
+      set({ userActionError: errorMsg, userActionLoading: null });
+      console.error('Error deleting user:', error);
+    }
   },
 
   // ── System Settings ──

@@ -204,3 +204,84 @@ export function openRealtimeStream(
 
   return es;
 }
+
+// ─── User Management API Functions ───
+// These functions call the backend user management endpoints
+
+export interface UserResponse {
+  id: string;
+  email: string;
+  full_name: string;
+  phone?: string;
+  public_id: string;
+  status: 'active' | 'suspended' | 'deleted' | 'pending';
+  is_verified: boolean;
+  trust_score: number;
+  report_count: number;
+  district_id?: string;
+  preferred_language: string;
+  mfa_enabled: boolean;
+  last_login_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Activate a user account (set status to ACTIVE)
+ * Requires admin privileges
+ */
+export async function activateUser(userId: string): Promise<UserResponse> {
+  const response = await fetch(`/api/v1/users/${userId}/activate`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Failed to activate user: ${response.status} ${text || response.statusText}`);
+  }
+
+  return (await response.json()) as UserResponse;
+}
+
+/**
+ * Suspend/deactivate a user account (set status to SUSPENDED)
+ * Requires admin privileges
+ */
+export async function suspendUserApi(userId: string): Promise<UserResponse> {
+  const response = await fetch(`/api/v1/users/${userId}/deactivate`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Failed to suspend user: ${response.status} ${text || response.statusText}`);
+  }
+
+  return (await response.json()) as UserResponse;
+}
+
+/**
+ * Delete a user account (soft delete - sets status to DELETED, revokes tokens)
+ * Requires super admin privileges
+ */
+export async function deleteUserApi(userId: string): Promise<{ message: string; success: boolean }> {
+  const response = await fetch(`/api/v1/users/${userId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Failed to delete user: ${response.status} ${text || response.statusText}`);
+  }
+
+  return (await response.json()) as { message: string; success: boolean };
+}
