@@ -19,7 +19,9 @@ const RecoveryTab = React.lazy(() => import('./tabs/RecoveryTab'));
 const EducationTab = React.lazy(() => import('./tabs/EducationTab'));
 
 // ✅ LAZY LOAD: Frontend Control Center (page visibility control)
-const FrontendControlCenter = React.lazy(() => import('./FrontendControlCenter'));
+const FrontendControlCenter = React.lazy(() => 
+  import('./FrontendControlCenter').then(module => ({ default: module.FrontendControlCenter }))
+);
 
 // ═══ Tab definitions ═══
 const TABS = [
