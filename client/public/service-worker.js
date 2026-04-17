@@ -159,7 +159,7 @@ self.addEventListener('sync', (event) => {
 
 async function syncAlerts() {
   try {
-    const response = await fetch('/api/v1/alerts');
+    const response = await fetch('http://localhost:8001/api/v1/alerts');
     const data = await response.json();
     
     // Notify all clients of synced alerts
@@ -178,7 +178,7 @@ async function syncAlerts() {
 async function syncReports() {
   try {
     const cache = await caches.open(API_CACHE);
-    const response = await fetch('/api/v1/reports');
+    const response = await fetch('http://localhost:8001/api/v1/reports');
     const data = await response.json();
     
     cache.put('/api/v1/reports', response.clone());
@@ -257,7 +257,7 @@ self.addEventListener('periodicsync', (event) => {
 
 async function updateAlerts() {
   try {
-    const response = await fetch('/api/v1/alerts?limit=10');
+    const response = await fetch('http://localhost:8001/api/v1/alerts?limit=10');
     const data = await response.json();
     
     const clients = await self.clients.matchAll();
