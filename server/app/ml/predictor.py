@@ -88,12 +88,12 @@ class FloodPredictor:
         # BUG FIX #3: Fixed import path - use relative import instead of src.ml
         try:
             # Try relative import first (when run as module)
-            from ...src.ml.preprocessing import engineer_features
+            from ...ml_pipeline.ml.preprocessing import engineer_features
         except (ImportError, ValueError):
             # Fallback: add to path and import
             import sys
             sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-            from src.ml.preprocessing import engineer_features
+            from ml_pipeline.ml.preprocessing import engineer_features
         df = engineer_features(df)
         
         # 2. Impute (assuming knn/median imputers are trained)
