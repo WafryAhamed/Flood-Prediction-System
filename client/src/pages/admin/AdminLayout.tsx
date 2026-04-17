@@ -1,16 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Map, MessageSquare, Building2, Radio, Database, BarChart3, ShieldAlert, Sprout, RefreshCw, Activity, FileText, LogOut, Monitor, Wrench, Users, Bot } from 'lucide-react';
 import { AIAssistant } from '../../components/admin/AIAssistant';
 export function AdminLayout() {
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    if (window.confirm('Are you sure you want to log out?')) {
-      localStorage.removeItem('admin_authenticated');
-      navigate('/admin/login', { replace: true });
-    }
+  const initiateLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutModal(false);
+    localStorage.removeItem('admin_authenticated');
+    navigate('/admin/login', { replace: true });
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
   const isActive = (path: string) => {
     // ✅ UPDATED: /admin now renders Maintenance component, so highlight Maintenance nav item instead
@@ -60,7 +68,7 @@ export function AdminLayout() {
             <span className="font-bold text-xs text-white">CP</span>
           </div>
           <button
-            onClick={handleLogout}
+            onClick={initiateLogout}
             className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-400 hover:text-red-400 hover:bg-gray-800 rounded-lg transition-colors"
             title="Logout"
           >
@@ -108,5 +116,34 @@ export function AdminLayout() {
       </div>
 
       <AIAssistant />
+
+      {/* Custom Logout Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4 transition-all scale-100 opacity-100">
+            <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+              <LogOut className="text-red-500" size={24} />
+              Confirm Logout
+            </h3>
+            <p className="text-gray-400 mb-6 text-sm">
+              Are you sure you want to log out? Your current session will be terminated.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={cancelLogout}
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
+              >
+                Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>;
 }
