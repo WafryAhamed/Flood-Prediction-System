@@ -1,7 +1,7 @@
 import pytest
 import pandas as pd
 import numpy as np
-from src.ml.preprocessing import (
+from ml_pipeline.ml.preprocessing import (
     load_and_validate_data, remove_leakage_columns, engineer_features,
     encode_categorical_features, impute_missing_values, scale_features
 )

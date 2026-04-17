@@ -1,7 +1,7 @@
 import pytest
 import pandas as pd
 import numpy as np
-from src.ml.model import evaluate_model_comprehensive
+from ml_pipeline.ml.model import evaluate_model_comprehensive
 
 class MockModel:
     def predict(self, X):
