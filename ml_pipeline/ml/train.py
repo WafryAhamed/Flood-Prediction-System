@@ -6,13 +6,13 @@ import joblib
 import json
 import pandas as pd
 
-from src.ml import config
-from src.ml.preprocessing import (
+from ml_pipeline.ml import config
+from ml_pipeline.ml.preprocessing import (
     load_and_validate_data, remove_leakage_columns, engineer_features,
     encode_categorical_features, impute_missing_values, scale_features,
     split_data_spatially, handle_class_imbalance
 )
-from src.ml.model import (
+from ml_pipeline.ml.model import (
     train_baseline_models, train_random_forest, train_xgboost,
     evaluate_model_comprehensive, analyze_feature_importance
 )
