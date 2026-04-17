@@ -95,7 +95,8 @@ export function SmartAlertCenter({ alerts: initialAlerts = [], onAlertDismiss }:
   // WebSocket connection for real-time alerts
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const wsUrl = `${protocol}://127.0.0.1:8000/api/v1/ws/alerts`;
+    // BUG FIX #1: Use correct port (8001) and dynamic hostname instead of hardcoded 127.0.0.1
+    const wsUrl = `${protocol}://${window.location.hostname}:8001/api/v1/ws/alerts`;
     
     try {
       wsRef.current = new WebSocket(wsUrl);

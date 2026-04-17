@@ -177,8 +177,37 @@ async def _get_map_markers(db: AsyncSession) -> list[dict[str, Any]]:
         select(SystemSetting).where(SystemSetting.key == MAP_MARKERS_SETTING_KEY)
     )
     setting = result.scalar_one_or_none()
+    # BUG FIX #5: Initialize default map markers on first load (like page_visibility does)
     if setting is None:
-        return []
+        default_markers = [
+            {
+                "id": "marker-shelter-1",
+                "label": "Main Evacuation Shelter",
+                "markerType": "shelter",
+                "position": [6.9271, 80.7789],  # Colombo center
+                "detail": "Central evacuation point with capacity for 500+ people",
+                "visible": True
+            },
+            {
+                "id": "marker-hospital-1",
+                "label": "National Hospital",
+                "markerType": "hospital",
+                "position": [6.9370, 80.7640],
+                "detail": "Emergency medical services available",
+                "visible": True
+            },
+            {
+                "id": "marker-infra-1",
+                "label": "Water Pump Station",
+                "markerType": "infrastructure",
+                "position": [6.9200, 80.7950],
+                "detail": "Water distribution infrastructure",
+                "visible": True
+            }
+        ]
+        # Save defaults to database
+        await _save_map_markers(db, default_markers)
+        return default_markers
 
     try:
         markers = json.loads(setting.value)
