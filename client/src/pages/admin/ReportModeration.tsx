@@ -113,7 +113,11 @@ const MemoizedQueueItem = React.memo(function QueueItem({
 
 export function ReportModeration() {
   const allReports = useReportStore((s) => s.reports);
-  const pendingReports = useReportStore((s) => s.getPendingReports());
+  const pendingReports = useMemo(() => {
+    return [...allReports]
+      .filter((r) => r.status === 'pending')
+      .sort((a, b) => b.timestamp - a.timestamp);
+  }, [allReports]);
   const verifyReport = useReportStore((s) => s.verifyReport);
   const rejectReport = useReportStore((s) => s.rejectReport);
   const dispatchHelp = useReportStore((s) => s.dispatchHelp);

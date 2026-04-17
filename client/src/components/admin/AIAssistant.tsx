@@ -189,13 +189,6 @@ export function AIAssistant() {
           </div>
           <div className="flex gap-1">
             <button
-              onClick={handleClearChat}
-              className="p-2 hover:bg-white/15 rounded-lg transition-colors"
-              title="Clear chat"
-            >
-              <Trash2 size={16} />
-            </button>
-            <button
               onClick={() => setIsExpanded(!isExpanded)}
               className="p-2 hover:bg-white/15 rounded-lg transition-colors"
               title={isExpanded ? 'Minimize' : 'Expand'}

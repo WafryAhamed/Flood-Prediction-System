@@ -60,7 +60,7 @@ export function DataUpload() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/v1/admin/upload-jobs?page=1&page_size=20', {
+      const response = await fetch('http://localhost:8001/api/v1/admin/upload-jobs?page=1&page_size=20', {
         headers: {
           'Content-Type': 'application/json',
           ...getAuthHeaders(),

@@ -7,8 +7,10 @@ export function AdminLayout() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('admin_authenticated');
-    navigate('/admin/login', { replace: true });
+    if (window.confirm('Are you sure you want to log out?')) {
+      localStorage.removeItem('admin_authenticated');
+      navigate('/admin/login', { replace: true });
+    }
   };
   const isActive = (path: string) => {
     // ✅ UPDATED: /admin now renders Maintenance component, so highlight Maintenance nav item instead
