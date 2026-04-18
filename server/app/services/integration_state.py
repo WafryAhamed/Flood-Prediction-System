@@ -71,6 +71,12 @@ class IntegrationStateService:
             "reports": [],
         }
 
+    async def reset_cache(self) -> None:
+        """Reset the cache to force reload from database on next access."""
+        async with self._lock:
+            self._loaded = False
+            self._state = self._default_state()
+
     @staticmethod
     def _now_ms() -> int:
         return int(datetime.now(timezone.utc).timestamp() * 1000)

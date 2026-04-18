@@ -130,10 +130,18 @@ export function usePlatformRealtimeSync() {
         const snapshot = await fetchBootstrapState();
         if (!active) return;
 
+        console.info('[DEBUG] Bootstrap snapshot received:', {
+          adminControlKeys: Object.keys(snapshot.adminControl || {}),
+          maintenanceKeys: Object.keys(snapshot.maintenance || {}),
+          reportsCount: (snapshot.reports || []).length,
+          firstReport: (snapshot.reports || [])[0],
+        });
+
         useAdminControlStore.getState().hydrateFromBackend(snapshot.adminControl);
         useMaintenanceStore.getState().hydrateFromBackend(snapshot.maintenance);
         useReportStore.getState().hydrateReports(snapshot.reports);
 
+        console.info('[DEBUG] After hydration, report store has:', useReportStore.getState().reports.length, 'reports');
         console.info('[Sync] Bootstrap complete', snapshot);
       } catch (error) {
         // Fallback to seed data if bootstrap fails; SSE will resync when available

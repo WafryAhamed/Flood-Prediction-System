@@ -177,8 +177,8 @@ export function RiskMap() {
         </div>
       )}
 
-      {/* Legend Control - Top Right */}
-      <div className="absolute top-2 right-2 md:top-4 md:right-4 z-[999] bg-white border-4 border-black rounded-lg shadow-lg p-4 max-w-xs">
+      {/* Legend Control - Bottom Right */}
+      <div className="absolute bottom-2 right-2 md:bottom-4 md:right-4 z-[999] bg-white border-4 border-black rounded-lg shadow-lg p-4 max-w-xs">
         {/* LIVE Badge */}
         <div className="flex items-center gap-2 mb-4 pb-3 border-b-2 border-gray-200">
           <svg width="18" height="18" viewBox="0 0 18 18" className="flex-shrink-0">

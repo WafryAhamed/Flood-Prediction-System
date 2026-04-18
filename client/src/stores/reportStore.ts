@@ -287,11 +287,24 @@ export const useReportStore = create<ReportStore>((set, get) => ({
   reports: SEED_REPORTS,
 
   hydrateReports: (incoming) => {
+    console.debug('[DEBUG] hydrateReports called with:', incoming?.length || 0, 'items');
+    if (!Array.isArray(incoming)) {
+      console.warn('[DEBUG] hydrateReports: incoming is not an array!', typeof incoming);
+      return;
+    }
     const normalized = incoming
-      .map((item) => normalizeReport(item))
+      .map((item, idx) => {
+        const result = normalizeReport(item);
+        if (!result && idx === 0) {
+          console.warn('[DEBUG] First report failed to normalize:', item);
+        }
+        return result;
+      })
       .filter((item): item is FloodReport => item !== null);
+    console.debug('[DEBUG] After normalization:', normalized.length, 'valid reports');
     if (normalized.length > 0) {
       set({ reports: sortReports(normalized) });
+      console.debug('[DEBUG] Store updated with', normalized.length, 'reports');
     }
   },
 

@@ -12,7 +12,7 @@ export default defineConfig({
     // In production, built assets are served from the same origin as the backend
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8001',
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         // Allow WebSocket and SSE connections
         ws: true,
@@ -29,7 +29,7 @@ export default defineConfig({
         rewrite: (path) => path,
       },
       '/health': {
-        target: 'http://127.0.0.1:8001',
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
     },

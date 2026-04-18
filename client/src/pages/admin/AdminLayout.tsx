@@ -52,10 +52,6 @@ export function AdminLayout() {
               National Flood Ops Center
             </h1>
           </div>
-          <div className="h-5 w-[1px] bg-gray-700"></div>
-          <div className="text-xs font-semibold text-gray-400">
-            DEFCON 4 • MONITORING
-          </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="text-right">

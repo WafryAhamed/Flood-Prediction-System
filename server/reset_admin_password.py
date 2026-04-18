@@ -10,7 +10,7 @@ async def reset_password():
         user = result.scalar_one_or_none()
         
         if user:
-            user.hashed_password = hash_password("admin123")
+            user.password_hash = hash_password("admin123")
             await db.commit()
             print("Password reset to 'admin123' for admin@floodresilience.lk")
         else:

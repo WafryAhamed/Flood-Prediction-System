@@ -128,15 +128,20 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
       emergencyContacts?: EmergencyContact[];
       mapMarkers?: AdminMapMarker[];
     };
+    // Helper: only use backend data for arrays if they actually have items.
+    // This prevents empty backend arrays from wiping out the rich frontend demo defaults.
+    const useIfPopulated = <T>(backendVal: T[] | undefined | null, fallback: T[]): T[] =>
+      Array.isArray(backendVal) && backendVal.length > 0 ? backendVal : fallback;
+
     set((state) => ({
-      emergencyContacts: source.emergencyContacts ?? state.emergencyContacts,
-      mapZones: source.mapZones || state.mapZones,
-      mapMarkers: source.mapMarkers ?? state.mapMarkers,
-      chatbotKnowledge: source.chatbotKnowledge || state.chatbotKnowledge,
-      users: source.users || state.users,
+      emergencyContacts: useIfPopulated(source.emergencyContacts, state.emergencyContacts),
+      mapZones: useIfPopulated(source.mapZones, state.mapZones),
+      mapMarkers: useIfPopulated(source.mapMarkers, state.mapMarkers),
+      chatbotKnowledge: useIfPopulated(source.chatbotKnowledge, state.chatbotKnowledge),
+      users: useIfPopulated(source.users, state.users),
       systemSettings: source.systemSettings || state.systemSettings,
-      historyData: source.historyData || state.historyData,
-      evacuationRoutes: source.evacuationRoutes || state.evacuationRoutes,
+      historyData: useIfPopulated(source.historyData, state.historyData),
+      evacuationRoutes: useIfPopulated(source.evacuationRoutes, state.evacuationRoutes),
       simulationDefaults: source.simulationDefaults || state.simulationDefaults,
       dashboardOverrides: source.dashboardOverrides || state.dashboardOverrides,
     }));

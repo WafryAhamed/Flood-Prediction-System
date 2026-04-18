@@ -4,15 +4,20 @@ import json
 
 async def check_bootstrap():
     async with httpx.AsyncClient() as client:
-        res = await client.get('http://localhost:8001/api/v1/integration/bootstrap')
+        res = await client.get('http://localhost:8000/api/v1/integration/bootstrap', timeout=10)
         data = res.json()
-        print("Bootstrap AdminControl keys:", data.get("adminControl", {}).keys())
-        pages = data.get("adminControl", {}).get("pages", [])
-        if pages:
-             print("Pages found:", len(pages))
-             print("First page id:", pages[0].get("id"))
+        print(f"✅ Bootstrap Response Status: {res.status_code}\n")
+        print(f"AdminControl keys: {list(data.get('adminControl', {}).keys())}")
+        print(f"Maintenance keys: {list(data.get('maintenance', {}).keys())}")
+        
+        reports = data.get("reports", [])
+        print(f"\n📊 Reports count: {len(reports)}")
+        if reports:
+            print(f"\n🔴 First report:")
+            print(json.dumps(reports[0], indent=2)[:300])
+            print(f"\n📍 Report IDs: {[r.get('report_id') for r in reports[:5]]}")
         else:
-             print("Pages list is EMPTY or missing in adminControl")
+            print("⚠️  No reports in bootstrap!")
 
 if __name__ == "__main__":
     asyncio.run(check_bootstrap())

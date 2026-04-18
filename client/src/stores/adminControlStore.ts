@@ -138,19 +138,24 @@ const debouncedSave = (state: ReturnType<typeof pickPersistableState>) => {
 export const useAdminControlStore = create<AdminControlStore>((set, get) => ({
   hydrateFromBackend: (incoming) => {
     const source = incoming as Partial<ReturnType<typeof pickPersistableState>>;
+    // Helper: only use backend data for arrays if they actually have items.
+    // This prevents empty backend arrays from wiping out the rich frontend demo defaults.
+    const useIfPopulated = <T>(backendVal: T[] | undefined, fallback: T[]): T[] =>
+      Array.isArray(backendVal) && backendVal.length > 0 ? backendVal : fallback;
+
     set((state) => ({
-      broadcastFeed: source.broadcastFeed || state.broadcastFeed,
-      dashboardResources: source.dashboardResources || state.dashboardResources,
-      agricultureAdvisories: source.agricultureAdvisories || state.agricultureAdvisories,
-      agricultureActions: source.agricultureActions || state.agricultureActions,
-      agricultureZones: source.agricultureZones || state.agricultureZones,
-      inundationForecasts: source.inundationForecasts || state.inundationForecasts,
-      recoveryProgress: source.recoveryProgress || state.recoveryProgress,
-      recoveryNeeds: source.recoveryNeeds || state.recoveryNeeds,
-      recoveryUpdates: source.recoveryUpdates || state.recoveryUpdates,
-      recoveryResources: source.recoveryResources || state.recoveryResources,
-      learnGuides: source.learnGuides || state.learnGuides,
-      learnTips: source.learnTips || state.learnTips,
+      broadcastFeed: useIfPopulated(source.broadcastFeed, state.broadcastFeed),
+      dashboardResources: useIfPopulated(source.dashboardResources, state.dashboardResources),
+      agricultureAdvisories: useIfPopulated(source.agricultureAdvisories, state.agricultureAdvisories),
+      agricultureActions: useIfPopulated(source.agricultureActions, state.agricultureActions),
+      agricultureZones: useIfPopulated(source.agricultureZones, state.agricultureZones),
+      inundationForecasts: useIfPopulated(source.inundationForecasts, state.inundationForecasts),
+      recoveryProgress: useIfPopulated(source.recoveryProgress, state.recoveryProgress),
+      recoveryNeeds: useIfPopulated(source.recoveryNeeds, state.recoveryNeeds),
+      recoveryUpdates: useIfPopulated(source.recoveryUpdates, state.recoveryUpdates),
+      recoveryResources: useIfPopulated(source.recoveryResources, state.recoveryResources),
+      learnGuides: useIfPopulated(source.learnGuides, state.learnGuides),
+      learnTips: useIfPopulated(source.learnTips, state.learnTips),
       featuredWisdom: source.featuredWisdom || state.featuredWisdom,
       frontendSettings: source.frontendSettings || state.frontendSettings,
     }));
