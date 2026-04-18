@@ -38,9 +38,9 @@ const SEED_SIMULATION: SimulationDefaults = {
 };
 
 const SEED_DASHBOARD_OVERRIDES: DashboardOverrides = {
-  windSpeed: null,
-  rainfall: null,
-  riskStatus: null,
+  windSpeed: 18,
+  rainfall: 12,
+  riskStatus: 'MODERATE',
 };
 
 // ═══ Store Interface ═══
