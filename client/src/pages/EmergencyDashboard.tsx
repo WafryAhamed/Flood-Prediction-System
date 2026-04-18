@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AlertTriangle, CheckCircle, Radio, Wind, Droplets, MapPin, Navigation as NavIcon, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Radio, Wind, Droplets, MapPin, Navigation as NavIcon } from 'lucide-react';
 import { UnifiedCard } from '../components/ui/UnifiedCard';
 import { RiskMap } from '../components/RiskMap';
 import { motion } from 'framer-motion';
@@ -11,7 +11,6 @@ import { useMaintenanceStore } from '../stores/maintenanceStore';
 export function EmergencyDashboard() {
   const [time, setTime] = useState(new Date());
   const [isLoading, setIsLoading] = useState(true);
-  const [showNotifications, setShowNotifications] = useState(true);
   const { weather } = useWeatherData();
   const broadcastFeed = useAdminControlStore((s) => s.broadcastFeed);
   const dashboardResources = useAdminControlStore((s) => s.dashboardResources);
@@ -140,54 +139,6 @@ export function EmergencyDashboard() {
               </div>
             </div>
           </UnifiedCard>
-
-          {/* Awareness Ranges */}
-          {showNotifications && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="mt-md grid grid-cols-1 md:grid-cols-2 gap-md"
-            >
-              <div className="relative bg-green-950 border-2 border-green-600 rounded-lg p-md pr-12">
-                <button
-                  onClick={() => setShowNotifications(false)}
-                  className="absolute top-3 right-3 bg-green-600 text-white hover:bg-green-500 p-1.5 rounded-full transition-colors cursor-pointer z-10"
-                  aria-label="Close notification"
-                >
-                  <X size={18} />
-                </button>
-                <h4 className="text-sm font-bold text-green-300 mb-md flex items-center gap-2">
-                  ✓ NORMAL CONDITIONS
-                </h4>
-                <div className="space-y-sm text-xs text-green-100">
-                  <div><span className="font-semibold">Wind Speed:</span> 0-20 km/h</div>
-                  <div><span className="font-semibold">Rainfall:</span> 0-5 mm</div>
-                  <div><span className="font-semibold">Risk Level:</span> LOW</div>
-                  <div><span className="font-semibold">Status:</span> ACTIVE</div>
-                </div>
-              </div>
-
-              <div className="relative bg-red-950 border-2 border-red-600 rounded-lg p-md pr-12">
-                <button
-                  onClick={() => setShowNotifications(false)}
-                  className="absolute top-3 right-3 bg-red-600 text-white hover:bg-red-500 p-1.5 rounded-full transition-colors cursor-pointer z-10"
-                  aria-label="Close notification"
-                >
-                  <X size={18} />
-                </button>
-                <h4 className="text-sm font-bold text-red-300 mb-md flex items-center gap-2">
-                  ⚠️ CRITICAL ALERT
-                </h4>
-                <div className="space-y-sm text-xs text-red-100">
-                  <div><span className="font-semibold">Wind Speed:</span> 60+ km/h</div>
-                  <div><span className="font-semibold">Rainfall:</span> 30+ mm</div>
-                  <div><span className="font-semibold">Risk Level:</span> CRITICAL</div>
-                  <div><span className="font-semibold">Status:</span> EMERGENCY</div>
-                </div>
-              </div>
-            </motion.div>
-          )}
         </div>
       </section>
 
@@ -238,6 +189,42 @@ export function EmergencyDashboard() {
               <MapPin size={20} className="text-text-primary" />
             </button>
           </UnifiedCard>
+        </div>
+      </section>
+
+      {/* Awareness Notifications */}
+      <section className="px-4 sm:px-6 md:px-8">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-md"
+          >
+            <div className="bg-green-950 border-2 border-green-600 rounded-lg p-md">
+              <h4 className="text-sm font-bold text-green-300 mb-md flex items-center gap-2">
+                ✓ NORMAL CONDITIONS
+              </h4>
+              <div className="space-y-sm text-xs text-green-100">
+                <div><span className="font-semibold">Wind Speed:</span> 0-20 km/h</div>
+                <div><span className="font-semibold">Rainfall:</span> 0-5 mm</div>
+                <div><span className="font-semibold">Risk Level:</span> LOW</div>
+                <div><span className="font-semibold">Status:</span> ACTIVE</div>
+              </div>
+            </div>
+
+            <div className="bg-red-950 border-2 border-red-600 rounded-lg p-md">
+              <h4 className="text-sm font-bold text-red-300 mb-md flex items-center gap-2">
+                ⚠️ CRITICAL ALERT
+              </h4>
+              <div className="space-y-sm text-xs text-red-100">
+                <div><span className="font-semibold">Wind Speed:</span> 60+ km/h</div>
+                <div><span className="font-semibold">Rainfall:</span> 30+ mm</div>
+                <div><span className="font-semibold">Risk Level:</span> CRITICAL</div>
+                <div><span className="font-semibold">Status:</span> EMERGENCY</div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
