@@ -114,23 +114,23 @@ export function EmergencyDashboard() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 + index * 0.05 }}
                     className={`flex flex-col items-center text-center p-md rounded-lg border-2 ${
-                      metric.label === 'Wind Speed' ? 'bg-blue-100 border-blue-400' :
-                      metric.label === 'Rainfall' ? 'bg-red-100 border-red-400' :
-                      metric.label === 'Risk Level' ? 'bg-orange-100 border-orange-400' :
-                      'bg-green-100 border-green-400'
+                      metric.label === 'Wind Speed' ? 'bg-blue-700 border-blue-900 text-white' :
+                      metric.label === 'Rainfall' ? 'bg-red-700 border-red-900 text-white' :
+                      metric.label === 'Risk Level' ? 'bg-orange-700 border-orange-900 text-white' :
+                      'bg-green-700 border-green-900 text-white'
                     }`}
                   >
                     <div className={`w-12 h-12 rounded-full ${metric.color} flex items-center justify-center mb-md ${metric.animation}`}>
                       <metric.icon size={24} />
                     </div>
-                    <div className="text-text-secondary text-xs uppercase font-semibold mb-xs">
+                    <div className="text-xs uppercase font-semibold mb-xs opacity-90">
                       {metric.label}
                     </div>
-                    <div className="text-2xl font-bold text-text-primary">
+                    <div className="text-2xl font-bold">
                       {metric.value}
                     </div>
                     {metric.unit && (
-                      <div className="text-xs text-text-secondary font-medium">
+                      <div className="text-xs font-medium opacity-75">
                         {metric.unit}
                       </div>
                     )}
