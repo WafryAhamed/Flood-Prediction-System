@@ -176,49 +176,6 @@ export function RiskMap() {
           </div>
         </div>
       )}
-
-      {/* Legend Control - Bottom Left */}
-      <div className="absolute bottom-2 left-2 md:bottom-4 md:left-4 z-[999] bg-white border-4 border-black rounded-lg shadow-lg p-4 max-w-xs">
-        {/* LIVE Badge */}
-        <div className="flex items-center gap-2 mb-4 pb-3 border-b-2 border-gray-200">
-          <svg width="18" height="18" viewBox="0 0 18 18" className="flex-shrink-0">
-            <circle cx="9" cy="9" r="7" fill="none" stroke="#2563EB" strokeWidth="1.5" strokeDasharray="3 2" opacity="0.6" />
-            <circle cx="9" cy="9" r="2" fill="#2563EB" />
-          </svg>
-          <span className="text-xs font-bold text-blue-600 uppercase tracking-wide">LIVE</span>
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-        </div>
-
-        {/* Risk Zones Section */}
-        <div className="mb-4 pb-3 border-b-2 border-gray-200">
-          <div className="text-xs font-bold uppercase text-black mb-2">Risk Zones</div>
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-red-600 border border-gray-300"></div>
-              <span className="text-xs font-semibold text-black uppercase">Critical</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-orange-500 border border-gray-300"></div>
-              <span className="text-xs font-semibold text-black uppercase">High</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-600 border border-gray-300"></div>
-              <span className="text-xs font-semibold text-black uppercase">Safe</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Markers Section */}
-        <div>
-          <div className="text-xs font-bold uppercase text-black mb-2 pb-2 border-b-2 border-blue-600">Markers</div>
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-500 border border-gray-300"></div>
-              <span className="text-xs font-semibold text-black">Shelters</span>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
