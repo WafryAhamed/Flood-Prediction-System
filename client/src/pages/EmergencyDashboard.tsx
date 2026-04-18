@@ -134,11 +134,63 @@ export function EmergencyDashboard() {
                         {metric.unit}
                       </div>
                     )}
+                    {metric.label === 'Wind Speed' && (
+                      <div className="text-xs opacity-70 mt-xs border-t border-opacity-30 border-white pt-xs">
+                        Safe: 0-20 | Caution: 20-40 | Alert: 40+
+                      </div>
+                    )}
+                    {metric.label === 'Rainfall' && (
+                      <div className="text-xs opacity-70 mt-xs border-t border-opacity-30 border-white pt-xs">
+                        Safe: 0-5 | Caution: 5-15 | Alert: 15+
+                      </div>
+                    )}
                   </motion.div>
                 ))}
               </div>
             </div>
           </UnifiedCard>
+
+          {/* Emergency Ranges Reference */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-md bg-gray-900 border border-gray-700 rounded-lg p-md"
+          >
+            <h3 className="text-sm font-bold uppercase text-gray-300 mb-md flex items-center gap-2">
+              📊 Emergency Ranges & Thresholds
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-md text-xs">
+              <div className="space-y-sm">
+                <div className="bg-blue-900/30 border border-blue-600 rounded p-sm">
+                  <span className="font-semibold text-blue-300">🌬️ Wind Speed (km/h)</span>
+                  <div className="text-gray-300 mt-xs">
+                    Safe: 0-20 | Caution: 20-40 | Alert: 40-60 | Critical: 60+
+                  </div>
+                </div>
+                <div className="bg-red-900/30 border border-red-600 rounded p-sm">
+                  <span className="font-semibold text-red-300">🌧️ Rainfall (mm)</span>
+                  <div className="text-gray-300 mt-xs">
+                    Safe: 0-5 | Caution: 5-15 | Alert: 15-30 | Critical: 30+
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-sm">
+                <div className="bg-orange-900/30 border border-orange-600 rounded p-sm">
+                  <span className="font-semibold text-orange-300">⚠️ Risk Level</span>
+                  <div className="text-gray-300 mt-xs">
+                    LOW | MODERATE | HIGH | CRITICAL
+                  </div>
+                </div>
+                <div className="bg-green-900/30 border border-green-600 rounded p-sm">
+                  <span className="font-semibold text-green-300">✓ System Status</span>
+                  <div className="text-gray-300 mt-xs">
+                    ACTIVE | MONITORING | WARNING | EMERGENCY
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
