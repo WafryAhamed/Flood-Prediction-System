@@ -179,6 +179,19 @@ body {
   filter: grayscale(100%) contrast(1.2);
 }
 
+/* Hide all Leaflet controls and legends */
+.leaflet-control {
+  display: none !important;
+}
+
+.leaflet-control-attribution {
+  display: none !important;
+}
+
+.leaflet-control-scale {
+  display: none !important;
+}
+
 /* Admin Map Style */
 .admin-map .leaflet-tile-pane {
   filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
