@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Polygon, Marker, Popup, Circle, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Polygon, Marker, Popup, Circle } from 'react-leaflet';
 import { Icon, LatLngBoundsExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useWeatherData, SRI_LANKA_CENTER, SRI_LANKA_BOUNDS, DEFAULT_ZOOM } from '../hooks/useWeatherData';
@@ -58,39 +58,6 @@ const ZONE_STYLES: Record<string, { color: string; fillColor: string; fillOpacit
   safe: { color: '#16A34A', fillColor: '#16A34A', fillOpacity: 0.4, title: 'Safe Assembly Area' },
   evacuation: { color: '#3B82F6', fillColor: '#3B82F6', fillOpacity: 0.25, title: 'Evacuation Zone' },
 };
-
-// Component to fly to user location when detected
-function UserLocationMarker() {
-  const [position, setPosition] = useState<[number, number] | null>(null);
-  const map = useMap();
-
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const latlng: [number, number] = [pos.coords.latitude, pos.coords.longitude];
-        // Only fly if inside Sri Lanka bounds
-        if (latlng[0] >= 5.8 && latlng[0] <= 9.9 && latlng[1] >= 79.5 && latlng[1] <= 81.9) {
-          setPosition(latlng);
-          map.flyTo(latlng, 12, { duration: 1.5 });
-        }
-      },
-      () => { /* silently ignore denial */ },
-      { timeout: 8000 }
-    );
-  }, [map]);
-
-  if (!position) return null;
-  return (
-    <Circle
-      center={position}
-      radius={500}
-      pathOptions={{ color: '#2563EB', fillColor: '#2563EB', fillOpacity: 0.25, weight: 2 }}
-    >
-      <Popup><div className="font-bold text-sm">📍 Your Location</div></Popup>
-    </Circle>
-  );
-}
 
 export function RiskMap() {
   const { weather, radarTileUrl, error } = useWeatherData();
@@ -169,9 +136,6 @@ export function RiskMap() {
             </Popup>
           </Marker>
         ))}
-
-        {/* User's real location */}
-        <UserLocationMarker />
 
         {/* Verified Community Reports */}
         {verifiedReports.map((r) => (
