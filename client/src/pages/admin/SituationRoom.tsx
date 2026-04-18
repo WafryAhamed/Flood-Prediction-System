@@ -134,7 +134,7 @@ export function SituationRoom() {
           </div>
           <div className="flex-1 relative">
             <MapContainer center={[7.8731, 80.7718]} zoom={7} className="h-full w-full bg-gray-900">
-              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" maxNativeZoom={19} maxZoom={22} />
               {reports.slice(0, 20).map((report) => <CircleMarker key={report.report_id} center={[report.latitude, report.longitude]} radius={report.severity_level === 'CRITICAL' ? 8 : report.severity_level === 'HIGH' ? 7 : 6} pathOptions={{
                 color: SEVERITY_COLOR[report.severity_level] || '#3B82F6',
                 fillColor: SEVERITY_COLOR[report.severity_level] || '#3B82F6',

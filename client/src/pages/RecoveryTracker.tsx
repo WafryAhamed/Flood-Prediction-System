@@ -1,8 +1,17 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, Truck, Hammer, HeartHandshake, type LucideIcon } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
 import { UnifiedCard } from '../components/ui/UnifiedCard';
 import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
 import { useAdminControlStore } from '../stores/adminControlStore';
+
+const MOCK_CAMP_DATA = [
+  { name: 'North Dist.', capacity: 500, occupied: 480 },
+  { name: 'Central Hub', capacity: 1200, occupied: 900 },
+  { name: 'East Clinic', capacity: 300, occupied: 150 },
+  { name: 'South Temp', capacity: 800, occupied: 800 },
+  { name: 'West School', capacity: 400, occupied: 120 }
+];
 
 const UPDATE_ICON_MAP: Record<string, LucideIcon> = { CheckCircle, Truck, Hammer, HeartHandshake };
 const URGENCY_STYLE: Record<string, { bg: string; label: string }> = {
@@ -66,11 +75,20 @@ export function RecoveryTracker() {
               </div>
             </UnifiedCard>
 
-            {/* Relief Map Placeholder */}
-            <UnifiedCard noPadding className="h-80 flex items-center justify-center">
-              <p className="font-semibold uppercase text-text-secondary text-sm">
-                Relief Camp Map Visualization
-              </p>
+            {/* Relief Camp Visual Graph */}
+            <UnifiedCard title="Relief Camp Map Visualization" noPadding className="h-80 flex flex-col">
+              <div className="flex-1 w-full p-4 pb-6">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={MOCK_CAMP_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                    <RechartsTooltip cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }} contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: '#fff', borderRadius: '8px' }} />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                    <Bar dataKey="capacity" name="Total Capacity" fill="#374151" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="occupied" name="Occupied Beds" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </UnifiedCard>
           </div>
 
