@@ -212,11 +212,6 @@ export function RiskMap() {
           </div>
         </div>
       )}
-      {error && !weather && (
-        <div className="absolute top-2 right-2 md:top-4 md:right-4 z-[1000] bg-red-50 border border-red-200 rounded-lg shadow-md px-3 py-2 text-xs text-red-700 font-semibold">
-          {error}
-        </div>
-      )}
     </div>
   );
 }
