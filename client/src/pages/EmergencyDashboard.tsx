@@ -139,6 +139,38 @@ export function EmergencyDashboard() {
               </div>
             </div>
           </UnifiedCard>
+
+          {/* Awareness Ranges */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-md grid grid-cols-1 md:grid-cols-2 gap-md"
+          >
+            <div className="bg-green-900/40 border-2 border-green-600 rounded-lg p-md">
+              <h4 className="text-sm font-bold text-green-300 mb-md flex items-center gap-2">
+                ✓ NORMAL CONDITIONS
+              </h4>
+              <div className="space-y-sm text-xs text-green-200">
+                <div><span className="font-semibold">Wind Speed:</span> 0-20 km/h</div>
+                <div><span className="font-semibold">Rainfall:</span> 0-5 mm</div>
+                <div><span className="font-semibold">Risk Level:</span> LOW</div>
+                <div><span className="font-semibold">Status:</span> ACTIVE</div>
+              </div>
+            </div>
+
+            <div className="bg-red-900/40 border-2 border-red-600 rounded-lg p-md">
+              <h4 className="text-sm font-bold text-red-300 mb-md flex items-center gap-2">
+                ⚠️ CRITICAL ALERT
+              </h4>
+              <div className="space-y-sm text-xs text-red-200">
+                <div><span className="font-semibold">Wind Speed:</span> 60+ km/h</div>
+                <div><span className="font-semibold">Rainfall:</span> 30+ mm</div>
+                <div><span className="font-semibold">Risk Level:</span> CRITICAL</div>
+                <div><span className="font-semibold">Status:</span> EMERGENCY</div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
