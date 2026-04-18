@@ -179,8 +179,28 @@ body {
   filter: grayscale(100%) contrast(1.2);
 }
 
-/* Hide all Leaflet controls and legends */
+/* Hide all Leaflet controls, legends, and UI elements */
 .leaflet-control {
+  display: none !important;
+}
+
+.leaflet-control-container {
+  display: none !important;
+}
+
+.leaflet-top {
+  display: none !important;
+}
+
+.leaflet-bottom {
+  display: none !important;
+}
+
+.leaflet-left {
+  display: none !important;
+}
+
+.leaflet-right {
   display: none !important;
 }
 
@@ -189,6 +209,10 @@ body {
 }
 
 .leaflet-control-scale {
+  display: none !important;
+}
+
+.leaflet-control-zoom {
   display: none !important;
 }
 
