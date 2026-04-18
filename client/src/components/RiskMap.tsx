@@ -220,14 +220,6 @@ export function RiskMap() {
               <div className="w-3 h-3 rounded-full bg-blue-600 border border-gray-300"></div>
               <span className="text-xs font-semibold text-black">Hospitals</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-lg">📍</span>
-              <span className="text-xs font-semibold text-black">Food Reports</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-lg">✓</span>
-              <span className="text-xs font-semibold text-black">Verified Reports</span>
-            </div>
           </div>
         </div>
       </div>
