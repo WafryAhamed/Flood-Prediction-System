@@ -11,6 +11,7 @@ import type {
   AgricultureAdvisory,
   AgricultureActionItem,
   AgricultureRiskZone,
+  InundationForecast,
   RecoveryProgressItem,
   RecoveryCriticalNeed,
   RecoveryUpdate,
@@ -69,6 +70,8 @@ interface AdminControlStore {
   updateAction: (id: string, text: string) => void;
   agricultureZones: AgricultureRiskZone[];
   updateZone: (id: string, updates: Partial<AgricultureRiskZone>) => void;
+  inundationForecasts: InundationForecast[];
+  updateInundationForecast: (id: string, updates: Partial<InundationForecast>) => void;
 
   // Recovery
   recoveryProgress: RecoveryProgressItem[];
@@ -104,6 +107,7 @@ function pickPersistableState(state: AdminControlStore) {
     agricultureAdvisories: state.agricultureAdvisories,
     agricultureActions: state.agricultureActions,
     agricultureZones: state.agricultureZones,
+    inundationForecasts: state.inundationForecasts,
     recoveryProgress: state.recoveryProgress,
     recoveryNeeds: state.recoveryNeeds,
     recoveryUpdates: state.recoveryUpdates,
@@ -140,6 +144,7 @@ export const useAdminControlStore = create<AdminControlStore>((set, get) => ({
       agricultureAdvisories: source.agricultureAdvisories || state.agricultureAdvisories,
       agricultureActions: source.agricultureActions || state.agricultureActions,
       agricultureZones: source.agricultureZones || state.agricultureZones,
+      inundationForecasts: source.inundationForecasts || state.inundationForecasts,
       recoveryProgress: source.recoveryProgress || state.recoveryProgress,
       recoveryNeeds: source.recoveryNeeds || state.recoveryNeeds,
       recoveryUpdates: source.recoveryUpdates || state.recoveryUpdates,
@@ -424,6 +429,66 @@ export const useAdminControlStore = create<AdminControlStore>((set, get) => ({
   updateZone: (id, updates) => {
     set((s) => ({
       agricultureZones: s.agricultureZones.map((z) => z.id === id ? { ...z, ...updates } : z),
+    }));
+    debouncedSave(pickPersistableState(get()));
+  },
+
+  // ── Inundation Forecasts ──
+  inundationForecasts: [
+    {
+      id: 'if-1',
+      district: 'Colombo District',
+      expectedLevel: 'CRITICAL',
+      waterHeightCm: 185,
+      rainfallMm: 45,
+      timeToFlood: '2-3 hours',
+      affectedArea: '12,500 hectares',
+      color: 'bg-red-600',
+    },
+    {
+      id: 'if-2',
+      district: 'Gampaha District',
+      expectedLevel: 'HIGH',
+      waterHeightCm: 145,
+      rainfallMm: 38,
+      timeToFlood: '3-4 hours',
+      affectedArea: '8,900 hectares',
+      color: 'bg-orange-600',
+    },
+    {
+      id: 'if-3',
+      district: 'Batticaloa District',
+      expectedLevel: 'CRITICAL',
+      waterHeightCm: 165,
+      rainfallMm: 52,
+      timeToFlood: '1-2 hours',
+      affectedArea: '15,200 hectares',
+      color: 'bg-red-600',
+    },
+    {
+      id: 'if-4',
+      district: 'Kalutara District',
+      expectedLevel: 'MODERATE',
+      waterHeightCm: 95,
+      rainfallMm: 28,
+      timeToFlood: '4-5 hours',
+      affectedArea: '4,500 hectares',
+      color: 'bg-yellow-600',
+    },
+    {
+      id: 'if-5',
+      district: 'Kandy District',
+      expectedLevel: 'HIGH',
+      waterHeightCm: 125,
+      rainfallMm: 35,
+      timeToFlood: '5-6 hours',
+      affectedArea: '6,800 hectares',
+      color: 'bg-orange-600',
+    },
+  ],
+  updateInundationForecast: (id, updates) => {
+    set((s) => ({
+      inundationForecasts: s.inundationForecasts.map((f) => f.id === id ? { ...f, ...updates } : f),
     }));
     debouncedSave(pickPersistableState(get()));
   },

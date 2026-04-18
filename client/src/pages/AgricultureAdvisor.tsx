@@ -16,6 +16,7 @@ export function AgricultureAdvisor() {
   const agricultureAdvisories = useAdminControlStore((s) => s.agricultureAdvisories);
   const agricultureActions = useAdminControlStore((s) => s.agricultureActions);
   const agricultureZones = useAdminControlStore((s) => s.agricultureZones);
+  const inundationForecasts = useAdminControlStore((s) => s.inundationForecasts);
 
   return (
     <div className="min-h-screen px-4 sm:px-6 md:px-8 pb-xl bg-bg-primary">
@@ -76,11 +77,35 @@ export function AgricultureAdvisor() {
           </UnifiedCard>
 
           {/* Inundation Forecast */}
-          <UnifiedCard title="Inundation Forecast">
-            <div className="h-64 bg-bg-primary border border-border-light rounded-card flex items-center justify-center">
-              <p className="font-semibold uppercase text-text-secondary text-sm">
-                Map Visualization Placeholder
-              </p>
+          <UnifiedCard title="Inundation Forecast" accentColor="critical">
+            <div className="space-y-md max-h-96 overflow-y-auto">
+              {inundationForecasts.map((forecast) => (
+                <div
+                  key={forecast.id}
+                  className={`p-md rounded-lg border-l-4 border-l-white ${forecast.color} text-white`}
+                >
+                  <div className="flex justify-between items-start mb-md">
+                    <div>
+                      <p className="font-bold text-sm uppercase mb-xs">{forecast.district}</p>
+                      <p className="text-xs opacity-90">{forecast.expectedLevel}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-xl">{forecast.waterHeightCm} cm</p>
+                      <p className="text-xs opacity-90">{forecast.rainfallMm}mm rain</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-md text-xs">
+                    <div>
+                      <span className="opacity-75">Flooding in:</span>
+                      <p className="font-semibold">{forecast.timeToFlood}</p>
+                    </div>
+                    <div>
+                      <span className="opacity-75">Affected Area:</span>
+                      <p className="font-semibold">{forecast.affectedArea}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </UnifiedCard>
         </div>

@@ -62,6 +62,18 @@ export interface AgricultureRiskZone {
   accentColor: 'critical' | 'high' | 'warning' | 'caution' | 'safe' | 'info' | 'neutral';
 }
 
+// ═══ Inundation Forecast ═══
+export interface InundationForecast {
+  id: string;
+  district: string;
+  expectedLevel: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW';
+  waterHeightCm: number;
+  rainfallMm: number;
+  timeToFlood: string;
+  affectedArea: string;
+  color: string;
+}
+
 // ═══ Recovery Updates ═══
 export interface RecoveryProgressItem {
   id: string;
