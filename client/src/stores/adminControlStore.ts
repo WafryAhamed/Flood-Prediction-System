@@ -137,6 +137,7 @@ const debouncedSave = (state: ReturnType<typeof pickPersistableState>) => {
 
 export const useAdminControlStore = create<AdminControlStore>((set, get) => ({
   hydrateFromBackend: (incoming) => {
+    if (!incoming) return; // Backend returned nothing — keep frontend defaults
     const source = incoming as Partial<ReturnType<typeof pickPersistableState>>;
     // Helper: only use backend data for arrays if they actually have items.
     // This prevents empty backend arrays from wiping out the rich frontend demo defaults.

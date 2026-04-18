@@ -49,7 +49,7 @@ export function AdminLayout() {
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse shadow-[0_0_8px_#DC2626]"></div>
             <h1 className="font-bold uppercase tracking-widest text-blue-400 text-base">
-              National Flood Ops Center
+              Flood Emergency Response & Control Center
             </h1>
           </div>
         </div>

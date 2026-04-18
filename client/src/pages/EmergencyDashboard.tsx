@@ -87,7 +87,7 @@ export function EmergencyDashboard() {
                     transition={{ delay: 0.1 }}
                     className="text-headline-lg font-bold text-text-primary"
                   >
-                    Emergency Response Center
+                    Flood Emergency Response & Control Center
                   </motion.h1>
                 </div>
                 <motion.div

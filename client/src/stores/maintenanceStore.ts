@@ -124,6 +124,7 @@ function pickPersistableState(state: MaintenanceStore) {
 
 export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
   hydrateFromBackend: (incoming) => {
+    if (!incoming) return; // Backend returned nothing — keep frontend defaults
     const source = incoming as Partial<ReturnType<typeof pickPersistableState>> & {
       emergencyContacts?: EmergencyContact[];
       mapMarkers?: AdminMapMarker[];
