@@ -149,18 +149,18 @@ export function EmergencyDashboard() {
               transition={{ delay: 0.3 }}
               className="mt-md grid grid-cols-1 md:grid-cols-2 gap-md"
             >
-              <div className="relative bg-green-900/40 border-2 border-green-600 rounded-lg p-md">
+              <div className="relative bg-green-950 border-2 border-green-600 rounded-lg p-md pr-12">
                 <button
                   onClick={() => setShowNotifications(false)}
-                  className="absolute top-md right-md text-green-300 hover:text-green-100 transition-colors"
+                  className="absolute top-3 right-3 bg-green-600 text-white hover:bg-green-500 p-1.5 rounded-full transition-colors cursor-pointer z-10"
                   aria-label="Close notification"
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
                 <h4 className="text-sm font-bold text-green-300 mb-md flex items-center gap-2">
                   ✓ NORMAL CONDITIONS
                 </h4>
-                <div className="space-y-sm text-xs text-green-200">
+                <div className="space-y-sm text-xs text-green-100">
                   <div><span className="font-semibold">Wind Speed:</span> 0-20 km/h</div>
                   <div><span className="font-semibold">Rainfall:</span> 0-5 mm</div>
                   <div><span className="font-semibold">Risk Level:</span> LOW</div>
@@ -168,18 +168,18 @@ export function EmergencyDashboard() {
                 </div>
               </div>
 
-              <div className="relative bg-red-900/40 border-2 border-red-600 rounded-lg p-md">
+              <div className="relative bg-red-950 border-2 border-red-600 rounded-lg p-md pr-12">
                 <button
                   onClick={() => setShowNotifications(false)}
-                  className="absolute top-md right-md text-red-300 hover:text-red-100 transition-colors"
+                  className="absolute top-3 right-3 bg-red-600 text-white hover:bg-red-500 p-1.5 rounded-full transition-colors cursor-pointer z-10"
                   aria-label="Close notification"
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
                 <h4 className="text-sm font-bold text-red-300 mb-md flex items-center gap-2">
                   ⚠️ CRITICAL ALERT
                 </h4>
-                <div className="space-y-sm text-xs text-red-200">
+                <div className="space-y-sm text-xs text-red-100">
                   <div><span className="font-semibold">Wind Speed:</span> 60+ km/h</div>
                   <div><span className="font-semibold">Rainfall:</span> 30+ mm</div>
                   <div><span className="font-semibold">Risk Level:</span> CRITICAL</div>
