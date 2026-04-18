@@ -113,11 +113,11 @@ export function EmergencyDashboard() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 + index * 0.05 }}
-                    className={`flex flex-col items-center text-center p-md rounded-lg border ${
-                      metric.label === 'Wind Speed' ? 'bg-blue-50 border-blue-200' :
-                      metric.label === 'Rainfall' ? 'bg-red-50 border-red-200' :
-                      metric.label === 'Risk Level' ? 'bg-orange-50 border-orange-200' :
-                      'bg-green-50 border-green-200'
+                    className={`flex flex-col items-center text-center p-md rounded-lg border-2 ${
+                      metric.label === 'Wind Speed' ? 'bg-blue-100 border-blue-400' :
+                      metric.label === 'Rainfall' ? 'bg-red-100 border-red-400' :
+                      metric.label === 'Risk Level' ? 'bg-orange-100 border-orange-400' :
+                      'bg-green-100 border-green-400'
                     }`}
                   >
                     <div className={`w-12 h-12 rounded-full ${metric.color} flex items-center justify-center mb-md ${metric.animation}`}>
