@@ -217,29 +217,6 @@ export function RiskMap() {
           {error}
         </div>
       )}
-
-      {/* Legend Overlay - Risk Zones Only */}
-      <div className="absolute bottom-2 left-2 md:bottom-4 md:left-4 z-[1000] bg-white border-2 border-gray-300 p-2 md:p-3 rounded-lg shadow-md flex flex-col gap-2">
-        <h4 className="font-bold text-xs text-gray-700 uppercase">
-          Risk Zones
-        </h4>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 md:w-4 md:h-4 bg-red-600 rounded-full"></div>
-          <span className="text-xs text-gray-700">Critical</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 md:w-4 md:h-4 bg-orange-500 rounded-full"></div>
-          <span className="text-xs text-gray-700">High</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 md:w-4 md:h-4 bg-yellow-400 rounded-full"></div>
-          <span className="text-xs text-gray-700">Medium</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 md:w-4 md:h-4 bg-green-600 rounded-full"></div>
-          <span className="text-xs text-gray-700">Safe</span>
-        </div>
-      </div>
     </div>
   );
 }
