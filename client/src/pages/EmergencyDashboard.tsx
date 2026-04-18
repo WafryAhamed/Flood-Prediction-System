@@ -150,40 +150,6 @@ export function EmergencyDashboard() {
               <RiskMap />
             </div>
 
-            {/* Radar Indicator */}
-            <div className="absolute top-3 left-3 md:top-6 md:left-6 z-20 flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-md px-2 py-1.5 border border-border-light">
-              <svg width="20" height="20" viewBox="0 0 20 20" className="animate-radar" aria-hidden="true">
-                <circle cx="10" cy="10" r="8" fill="none" stroke="#2563EB" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.4" />
-                <line x1="10" y1="10" x2="10" y2="2" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="10" cy="10" r="2" fill="#2563EB" />
-              </svg>
-              <span className="text-[10px] md:text-xs font-bold text-blue-600 uppercase tracking-wide">Live</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-live-dot"></span>
-            </div>
-
-            {/* Map Controls - Floating Legend */}
-            <div className="absolute top-3 right-3 md:top-6 md:right-6 z-20 bg-white rounded-lg shadow-lg p-2 md:p-md border border-border-light max-w-[160px] md:max-w-xs">
-              <div className="text-sm font-bold text-text-primary mb-md">Risk Zones</div>
-              <div className="space-y-xs">
-                <div className="flex items-center gap-md">
-                  <div className="w-3 h-3 rounded-full bg-red-600"></div>
-                  <span className="text-xs text-text-secondary">Critical</span>
-                </div>
-                <div className="flex items-center gap-md">
-                  <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                  <span className="text-xs text-text-secondary">High</span>
-                </div>
-                <div className="flex items-center gap-md">
-                  <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                  <span className="text-xs text-text-secondary">Medium</span>
-                </div>
-                <div className="flex items-center gap-md">
-                  <div className="w-3 h-3 rounded-full bg-green-600"></div>
-                  <span className="text-xs text-text-secondary">Safe</span>
-                </div>
-              </div>
-            </div>
-
             {/* My Location Button - Bottom Left */}
             <button className="absolute bottom-6 left-6 z-20 bg-white rounded-full shadow-lg p-3 border border-border-light hover:shadow-xl transition-shadow">
               <MapPin size={20} className="text-text-primary" />
