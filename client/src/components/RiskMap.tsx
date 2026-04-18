@@ -216,6 +216,10 @@ export function RiskMap() {
               <div className="w-3 h-3 rounded-full bg-green-500 border border-gray-300"></div>
               <span className="text-xs font-semibold text-black">Shelters</span>
             </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-blue-600 border border-gray-300"></div>
+              <span className="text-xs font-semibold text-black">Hospitals</span>
+            </div>
           </div>
         </div>
       </div>
