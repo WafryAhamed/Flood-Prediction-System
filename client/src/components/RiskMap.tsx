@@ -218,43 +218,7 @@ export function RiskMap() {
         </div>
       )}
 
-      {/* Legend Overlay */}
-      <div className="absolute bottom-2 left-2 md:bottom-4 md:left-4 z-[1000] bg-white border-4 border-black p-2 md:p-3 flex flex-col gap-1.5 md:gap-2">
-        <h4 className="font-black uppercase text-xs border-b-2 border-black pb-1 mb-1">
-          Risk Zones
-        </h4>
-        <div className="flex items-center gap-1.5 md:gap-2">
-          <div className="w-4 h-4 md:w-6 md:h-6 bg-red-600 border-2 border-black opacity-80"></div>
-          <span className="font-bold text-[10px] md:text-xs uppercase">Critical</span>
-        </div>
-        <div className="flex items-center gap-1.5 md:gap-2">
-          <div className="w-4 h-4 md:w-6 md:h-6 bg-orange-500 border-2 border-black opacity-80"></div>
-          <span className="font-bold text-[10px] md:text-xs uppercase">High</span>
-        </div>
-        <div className="flex items-center gap-1.5 md:gap-2">
-          <div className="w-4 h-4 md:w-6 md:h-6 bg-green-600 border-2 border-black opacity-80"></div>
-          <span className="font-bold text-[10px] md:text-xs uppercase">Safe</span>
-        </div>
-        <h4 className="font-black uppercase text-xs border-b-2 border-black pb-1 mb-1 mt-1">
-          Markers
-        </h4>
-        <div className="flex items-center gap-1.5 md:gap-2">
-          <div className="w-3 h-3 bg-green-500 rounded-full border border-black"></div>
-          <span className="font-bold text-[10px] md:text-xs">Shelters</span>
-        </div>
-        <div className="flex items-center gap-1.5 md:gap-2">
-          <div className="w-3 h-3 bg-blue-500 rounded-full border border-black"></div>
-          <span className="font-bold text-[10px] md:text-xs">Hospitals</span>
-        </div>
-        <div className="flex items-center gap-1.5 md:gap-2">
-          <div className="w-3 h-3 bg-orange-500 rounded-full border border-black"></div>
-          <span className="font-bold text-[10px] md:text-xs">Flood Reports</span>
-        </div>
-        <div className="flex items-center gap-1.5 md:gap-2">
-          <div className="w-3 h-3 bg-red-500 rounded-full border border-black"></div>
-          <span className="font-bold text-[10px] md:text-xs">Verified Reports</span>
-        </div>
-      </div>
+      {/* Legend Overlay - REMOVED */}
     </div>
   );
 }
